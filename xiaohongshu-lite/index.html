@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#FBF3E9">
+<title>陪读小喵 · 专注陪伴</title>
+<style>
+  :root{
+    --bg:#FBF3E9; --card:#FFFDF8; --ink:#5B4A42; --sub:#9C8A7E;
+    --line:#F0E2D2; --accent:#F2A48C; --accent2:#F7C9A9;
+    --water:#8CCFD3; --gold:#E8A55C;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    overflow:hidden;
+  }
+  #app{
+    height:100%;display:flex;flex-direction:column;
+    max-width:520px;margin:0 auto;position:relative;
+    padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  }
+  .top{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 18px 6px;flex:0 0 auto;
+  }
+  .brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:16px;letter-spacing:.5px}
+  .brand i{width:22px;height:22px;border-radius:50%;background:var(--accent2);display:inline-block;position:relative}
+  .brand i::after{content:"";position:absolute;inset:6px;border-radius:50%;background:var(--accent)}
+  .stats{display:flex;gap:14px;font-size:13px;color:var(--sub)}
+  .stat{display:flex;align-items:center;gap:4px}
+  .stat b{color:var(--ink);font-size:14px}
+  .stat svg{width:15px;height:15px;fill:var(--gold)}
+
+  main{flex:1 1 auto;position:relative;overflow:hidden}
+  .screen{
+    position:absolute;inset:0;display:flex;flex-direction:column;
+    opacity:0;pointer-events:none;transform:translateY(8px);
+    transition:opacity .25s ease,transform .25s ease;
+  }
+  .screen.active{opacity:1;pointer-events:auto;transform:none}
+
+  /* ---------- 专注 ---------- */
+  .stage{
+    position:relative;flex:1 1 auto;display:flex;align-items:center;justify-content:center;
+    min-height:0;padding:6px 0 0;
+  }
+  .glow{
+    position:absolute;width:250px;height:250px;border-radius:50%;
+    background:radial-gradient(circle,rgba(247,201,169,.55),rgba(247,201,169,0) 68%);
+    filter:blur(2px);
+  }
+  .cat{
+    position:relative;width:min(64vw,268px);height:auto;
+    animation:breathe 4.6s ease-in-out infinite;
+    user-select:none;-webkit-user-drag:none;
+  }
+  .cat.sleep{animation-duration:6.5s}
+  @keyframes breathe{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-4px) scale(1.015)}}
+  .cat-shadow{
+    position:absolute;bottom:12%;width:120px;height:18px;border-radius:50%;
+    background:rgba(120,92,70,.14);filter:blur(5px);
+  }
+
+  .timer-card{
+    flex:0 0 auto;margin:0 16px 10px;padding:16px 18px 18px;
+    background:var(--card);border-radius:22px;border:1px solid var(--line);
+    box-shadow:0 10px 26px rgba(150,120,95,.08);
+  }
+  .state{font-size:13px;color:var(--sub);text-align:center}
+  .time{
+    text-align:center;font-size:44px;font-weight:700;letter-spacing:1px;
+    margin:2px 0 8px;font-variant-numeric:tabular-nums;
+  }
+  .time.dim{color:#C7B6A8}
+  .bar{height:6px;background:#F3E7D8;border-radius:99px;overflow:hidden}
+  .bar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .3s linear}
+  .chips{display:flex;gap:8px;margin:12px 0 0}
+  .chips button{
+    flex:1;padding:9px 0;border-radius:14px;border:1px solid var(--line);
+    background:#FFF9F0;color:var(--sub);font-size:13px;font-family:inherit;
+  }
+  .chips button.on{background:#FFEEE2;border-color:#F6CDB5;color:#C4705A;font-weight:600}
+  .chips.locked button{opacity:.55}
+  .actions{display:flex;gap:8px;margin-top:12px}
+  .btn{
+    border:0;border-radius:15px;padding:13px 14px;font-size:15px;font-family:inherit;
+    font-weight:600;flex:1;cursor:pointer;transition:transform .12s ease,opacity .2s;
+  }
+  .btn:active{transform:scale(.985)}
+  .btn.primary{background:linear-gradient(180deg,#F7B79B,#EF9B80);color:#fff;box-shadow:0 8px 18px rgba(239,155,128,.28)}
+  .btn.ghost{background:#FFF6EC;color:#8A7365;border:1px solid var(--line)}
+  .btn[disabled]{opacity:.5}
+  .hidden{display:none!important}
+  .meta{text-align:center;font-size:12px;color:#BCA797;margin-top:10px}
+
+  /* ---------- 鱼塘 ---------- */
+  .pond-wrap{position:relative;flex:1 1 auto;min-height:0;margin:6px 14px 0;border-radius:20px;overflow:hidden;background:#CFE9EA}
+  #pond{display:block;width:100%;height:100%}
+  .pond-tip{
+    position:absolute;left:50%;top:12px;transform:translateX(-50%);
+    background:rgba(255,253,248,.9);color:#6B5A4E;font-size:12px;
+    padding:7px 12px;border-radius:99px;white-space:nowrap;max-width:92%;
+    box-shadow:0 4px 12px rgba(120,100,80,.1);
+  }
+  .casts{position:absolute;left:14px;bottom:12px;display:flex;gap:6px}
+  .casts i{width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.65);border:1px solid rgba(255,255,255,.9)}
+  .casts i.on{background:#EF9B80;border-color:#EF9B80}
+  .pond-actions{display:flex;gap:10px;padding:12px 16px 4px;flex:0 0 auto}
+  .pond-note{text-align:center;font-size:12px;color:#BCA797;padding:0 16px 12px}
+
+  /* ---------- 底部 ---------- */
+  .tabs{
+    flex:0 0 auto;display:flex;gap:10px;padding:8px 16px 12px;
+  }
+  .tab{
+    flex:1;padding:11px 0;border-radius:16px;border:1px solid var(--line);
+    background:#FFFDF8;color:var(--sub);font-size:14px;font-family:inherit;
+  }
+  .tab.on{background:#FFF1E4;border-color:#F4CDB6;color:#C4705A;font-weight:600}
+
+  /* ---------- 浮层 ---------- */
+  .toast{
+    position:fixed;left:50%;bottom:96px;transform:translate(-50%,10px);
+    background:rgba(70,55,45,.9);color:#fff;font-size:13px;padding:9px 14px;border-radius:99px;
+    opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:40;max-width:80%;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  .modal{
+    position:fixed;inset:0;background:rgba(60,46,38,.42);z-index:50;
+    display:flex;align-items:center;justify-content:center;padding:22px;
+  }
+  .modal.hidden{display:none}
+  .modal-card{
+    width:100%;max-width:340px;background:var(--card);border-radius:24px;padding:20px;
+    box-shadow:0 20px 50px rgba(80,60,45,.25);
+  }
+  .modal-card h2{margin:0 0 6px;font-size:18px;text-align:center}
+  .modal-card p.sub{margin:0 0 14px;font-size:13px;color:var(--sub);text-align:center;line-height:1.6}
+  .rows{border-top:1px dashed var(--line);border-bottom:1px dashed var(--line);padding:10px 0;margin-bottom:14px}
+  .row{display:flex;justify-content:space-between;font-size:13.5px;padding:5px 0;color:#7A6659}
+  .row b{color:var(--ink)}
+  .modal-actions{display:flex;gap:8px}
+  .share-box textarea{display:none}
+  #shareCanvas{width:100%;border-radius:16px;display:block;background:#FBF3E9}
+  .share-hint{font-size:12px;color:var(--sub);text-align:center;margin:8px 0 12px}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="brand"><i></i>陪读小喵</div>
+    <div class="stats">
+      <div class="stat">
+        <svg viewBox="0 0 24 24"><path d="M15 6.4c3.8 0 6.6 2.5 6.6 5.6s-2.8 5.6-6.6 5.6c-3.1 0-5.7-1.6-7.2-4.1l-3.5 2.3c-.6.4-1.2.1-1-.6l.8-3.2-.8-3.2c-.2-.7.4-1 1-.6l3.5 2.3C9.3 8 11.9 6.4 15 6.4z"/></svg>
+        <b id="fishCount">0</b>
+      </div>
+      <div class="stat">小屋 <b id="levelText">Lv.1</b></div>
+    </div>
+  </header>
+
+  <main>
+    <section id="screen-focus" class="screen active">
+      <div class="stage">
+        <div class="glow"></div>
+        <div class="cat-shadow"></div>
+        <img id="cat" class="cat" src="assets/cat/cat_idle.png" alt="小喵">
+      </div>
+      <div class="timer-card">
+        <div class="state" id="stateText">小喵在等你开始</div>
+        <div class="time dim" id="timeText">25:00</div>
+        <div class="bar"><i id="bar"></i></div>
+        <div class="chips" id="chips">
+          <button data-min="15">15 分钟</button>
+          <button data-min="25" class="on">25 分钟</button>
+          <button data-min="45">45 分钟</button>
+        </div>
+        <div class="actions">
+          <button class="btn primary" id="btnStart">开始陪读</button>
+          <button class="btn ghost hidden" id="btnPause">暂停</button>
+          <button class="btn ghost hidden" id="btnStop">结束</button>
+        </div>
+        <div class="meta" id="meta">今日 0 分钟 · 连续 0 天</div>
+      </div>
+    </section>
+
+    <section id="screen-fish" class="screen">
+      <div class="pond-wrap">
+        <canvas id="pond"></canvas>
+        <div class="pond-tip" id="fishTip">还剩 3 杆 · 浮标沉下去的一瞬间收竿</div>
+        <div class="casts" id="casts"><i class="on"></i><i class="on"></i><i class="on"></i></div>
+      </div>
+      <div class="pond-actions">
+        <button class="btn primary" id="btnCast">抛竿</button>
+        <button class="btn ghost" id="btnFishHome">回小屋</button>
+      </div>
+      <div class="pond-note">钓鱼不花鱼干，钓上来的鱼按稀有度直接换小鱼干</div>
+    </section>
+  </main>
+
+  <nav class="tabs">
+    <button class="tab on" data-screen="focus">专注</button>
+    <button class="tab" data-screen="fish">鱼塘</button>
+  </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal hidden" id="modal">
+  <div class="modal-card" id="modalCard"></div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
