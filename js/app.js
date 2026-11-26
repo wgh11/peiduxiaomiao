@@ -31,6 +31,7 @@ window.PDM = window.PDM || {};
     tipTimer: 0,
     decorMode: false,
     drag: null,
+    decorUndo: [],
     lastTouched: null,
     debug: false
   };
@@ -802,6 +803,7 @@ window.PDM = window.PDM || {};
           return;
         }
         app.lastTouched = id;
+        if (app.decorMode) app.decorUndo.push(JSON.stringify(core.state().layout || {}));
         if (core.isPlaced(id)) {
           core.unplaceItem(id);
           ui.toast('「' + item.name + '」收进柜子啦');
@@ -816,6 +818,14 @@ window.PDM = window.PDM || {};
       }
       case 'decorRotate': {
         rotateCurrent();
+        break;
+      }
+      case 'decorUndo': {
+        const snapshot = app.decorUndo.pop();
+        if (!snapshot) { ui.toast('还没有可撤销的布置'); return; }
+        core.state().layout = JSON.parse(snapshot);
+        core.save();
+        ui.toast('已撤销上一步布置', 1600);
         break;
       }
       case 'decorDrag': {
@@ -1032,6 +1042,7 @@ window.PDM = window.PDM || {};
   function setDecorMode(on) {
     app.decorMode = !!on;
     app.drag = null;
+    if (on) app.decorUndo = [];
     const bar = $('decorBar');
     if (bar) bar.classList.toggle('hidden', !on);
     const tip = $('stageTip');
@@ -1108,6 +1119,7 @@ window.PDM = window.PDM || {};
     if (!id) { ui.toast('先点一下要旋转的家具'); return; }
     const item = core.itemById(id);
     if (!item) return;
+    if (app.decorMode) app.decorUndo.push(JSON.stringify(core.state().layout || {}));
     core.rotateItem(id, 90);
     ui.toast('「' + item.name + '」转了个方向');
   }
@@ -1222,7 +1234,7 @@ window.PDM = window.PDM || {};
         const cx = e.clientX - rect.left, cy = e.clientY - rect.top;
         const p = pickPlacement(cx, cy);
         if (!p) return;
-        app.drag = { id: p.id, ox: cx - p.x, oy: cy - p.y };
+        app.drag = { id: p.id, ox: cx - p.x, oy: cy - p.y, before: JSON.stringify(core.state().layout || {}) };
         try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
         e.preventDefault();
       });
@@ -1269,7 +1281,9 @@ window.PDM = window.PDM || {};
           return;
         }
         if (!app.drag) return;
+        const before = app.drag.before;
         core.save();
+        if (before && before !== JSON.stringify(core.state().layout || {})) app.decorUndo.push(before);
         app.drag = null;
         if (e) e.preventDefault();
       };
