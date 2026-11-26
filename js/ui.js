@@ -213,6 +213,17 @@ window.PDM = window.PDM || {};
       btn + '</div></div>';
   }
 
+  function foodCard(f) {
+    const st = core.state();
+    const owned = (st.foods && st.foods[f.id]) || 0;
+    return '<div class="item-card food-card">' +
+      '<div class="food-art food-' + f.id + '">' + (f.id === 'fish' ? '🐟' : f.id === 'milk' ? '🥛' : '🍪') + '</div>' +
+      '<div class="item-name">' + f.name + '</div>' +
+      '<div class="item-desc">' + f.desc + '</div>' +
+      '<div class="item-foot"><span class="tiny">已有 ' + owned + ' 份</span>' +
+      '<button class="buy-btn" data-action="buyFood" data-id="' + f.id + '"><span class="price">' + icon('fish') + f.price + '</span>买一份</button></div></div>';
+  }
+
   function slotName(slot) {
     const s = core.SLOTS.find(x => x.id === slot);
     return s ? s.name : '';
@@ -228,6 +239,9 @@ window.PDM = window.PDM || {};
       html = '<div class="shop-grid">' + core.FURNITURE.filter(f => !f.ad).map(f => furnitureCard(f)).join('') + '</div>';
     } else if (uiState.shopTab === 'outfit') {
       html = '<div class="shop-grid">' + core.OUTFITS.filter(o => !o.ad).map(o => outfitCard(o)).join('') + '</div>';
+    } else if (uiState.shopTab === 'food') {
+      html = '<div class="tiny shop-note">完成专注会得到基础零食，也可以用小鱼干给小喵换不同口味。</div>' +
+        '<div class="shop-grid">' + core.FOODS.map(f => foodCard(f)).join('') + '</div>';
     } else {
       const adFurn = core.FURNITURE.filter(f => f.ad);
       const adOutfits = core.OUTFITS.filter(o => o.ad);
