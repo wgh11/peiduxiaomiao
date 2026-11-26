@@ -1043,6 +1043,7 @@ window.PDM = window.PDM || {};
     app.decorMode = !!on;
     app.drag = null;
     if (on) app.decorUndo = [];
+    if (PDM.room3d && PDM.room3d.setDecorating) PDM.room3d.setDecorating(!!on);
     const bar = $('decorBar');
     if (bar) bar.classList.toggle('hidden', !on);
     const tip = $('stageTip');
@@ -1211,7 +1212,9 @@ window.PDM = window.PDM || {};
           const hit = PDM.room3d.pick(e.clientX, e.clientY);
           if (hit && app.decorMode) {
             app.lastTouched = hit.id;
+            const before = JSON.stringify(core.state().layout || {});
             if (!PDM.room3d.beginDrag(e.clientX, e.clientY)) return;
+            app.drag = { id: hit.id, before: before };
             try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
             canvas.style.cursor = 'grabbing';
             e.preventDefault();
@@ -1271,6 +1274,10 @@ window.PDM = window.PDM || {};
         if (use3d()) {
           if (PDM.room3d.dragging()) {
             PDM.room3d.endDrag();
+            if (app.drag && app.drag.before && app.drag.before !== JSON.stringify(core.state().layout || {})) {
+              app.decorUndo.push(app.drag.before);
+            }
+            app.drag = null;
             canvas.style.cursor = 'grab';
             if (e) e.preventDefault();
           } else if (PDM.room3d.isOrbiting()) {
