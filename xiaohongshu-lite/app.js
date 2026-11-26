@@ -106,7 +106,13 @@
     idle: 'assets/cat/cat_idle.png',
     read: 'assets/cat/cat_read.png',
     cheer: 'assets/cat/cat_cheer.png',
-    sleep: 'assets/cat/cat_sleep.png'
+    sleep: 'assets/cat/cat_sleep.png',
+    surprise: 'assets/cat/cat_surprise.png',
+    sad: 'assets/cat/cat_sad.png',
+    pat: 'assets/cat/cat_pat.png',
+    fish: 'assets/cat/cat_fish.png',
+    yawn: 'assets/cat/cat_yawn.png',
+    curious: 'assets/cat/cat_curious.png'
   };
   const preload = {};
   Object.keys(CATS).forEach(function (k) {
@@ -116,14 +122,20 @@
   });
 
   let catTimer = 0;
+  function baseMood() {
+    const s = timer.session;
+    if (!s) return 'idle';
+    return s.pausedAt ? 'sleep' : 'read';
+  }
   function setCat(mood) {
     const img = $('cat');
     img.src = CATS[mood] || CATS.idle;
     img.classList.toggle('sleep', mood === 'sleep');
+  }
+  function flashCat(mood, ms) {
+    setCat(mood);
     clearTimeout(catTimer);
-    if (mood === 'cheer') {
-      catTimer = setTimeout(function () { setCat(timer.session ? 'read' : 'idle'); }, 4200);
-    }
+    catTimer = setTimeout(function () { setCat(baseMood()); }, ms || 2000);
   }
 
   /* ---------------- 专注计时 ---------------- */
@@ -226,7 +238,9 @@
     if (S.days.indexOf(today) < 0) S.days.push(today);
     save();
 
-    setCat(completed ? 'cheer' : 'idle');
+    if (!completed) flashCat('sad', 4200);
+    else if (minutes >= 45) flashCat('yawn', 3600);
+    else flashCat('cheer', 4200);
     refreshHeader();
     showReward(minutes, minutes, completed);
   }
@@ -520,6 +534,23 @@
   }
 
   /* ---------------- 事件 ---------------- */
+  $('cat').addEventListener('click', function () {
+    flashCat('pat', 1800);
+  });
+
+  let lastTouch = Date.now();
+  document.addEventListener('pointerdown', function () {
+    lastTouch = Date.now();
+    if (!timer.session && $('cat').src.indexOf('cat_curious') >= 0) setCat('idle');
+  });
+  setInterval(function () {
+    if (timer.session) return;
+    if (!$('screen-focus').classList.contains('active')) return;
+    if (Date.now() - lastTouch < 9000) return;
+    if ($('cat').src.indexOf('cat_curious') >= 0) return;
+    setCat('curious');
+  }, 4000);
+
   $('chips').addEventListener('click', function (e) {
     const b = e.target.closest('button');
     if (!b || timer.session) return;
@@ -564,7 +595,13 @@
     else if (act === 'fish') { closeModal(); switchScreen('fish'); }
     else if (act === 'share') openShare();
     else if (act === 'fishAgain') { closeModal(); resetPond(); }
-    else if (act === 'fishHome') { closeModal(); resetPond(); switchScreen('focus'); }
+    else if (act === 'fishHome') {
+      closeModal();
+      const caught = P.total > 0;
+      resetPond();
+      switchScreen('focus');
+      flashCat(caught ? 'fish' : 'sad', 2600);
+    }
   });
 
   $('modal').addEventListener('click', function (e) {

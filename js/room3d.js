@@ -474,7 +474,8 @@ window.PDM = window.PDM || {};
 
   /* ---------- 2D billboard cat (AI sprite sheets) ---------- */
   const CAT_ART_KEYS = ['idle', 'blink', 'read', 'sleep', 'stretch', 'cheer', 'eat', 'play', 'side', 'back',
-    'pj', 'academy', 'festival', 'pj_read', 'academy_read', 'festival_read'];
+    'pj', 'academy', 'festival', 'pj_read', 'academy_read', 'festival_read',
+    'surprise', 'sad', 'pat', 'fish', 'yawn', 'curious'];
   const CAT_ART_BASE = 'assets/cat/cat_';
   let catArt = {};          // key -> SpriteMaterial
   let catArtBox = {};       // key -> {top, cx, bottom}
@@ -544,7 +545,12 @@ window.PDM = window.PDM || {};
       case 'celebrate': return 'cheer';
       case 'eat': return 'eat';
       case 'play': return 'play';
-      case 'pet': return 'blink';
+      case 'pet': return 'pat';
+      case 'sad': return 'sad';
+      case 'surprise': return 'surprise';
+      case 'fish': return 'fish';
+      case 'yawn': return 'yawn';
+      case 'curious': return 'curious';
       case 'wash':
       case 'doze': return 'idle';
       default: return 'idle';

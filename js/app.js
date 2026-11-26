@@ -47,7 +47,12 @@ window.PDM = window.PDM || {};
     pet: '小喵眯起眼睛呼噜呼噜',
     eat: '小喵在吃零食',
     play: '小喵追着毛线球玩',
-    nap: '小猫找了个地方趴下打盹'
+    nap: '小猫找了个地方趴下打盹',
+    sad: '小喵耳朵垂下来，有点舍不得',
+    surprise: '小喵被吓了一跳，耳朵竖起来了',
+    fish: '小喵抱着鱼，尾巴都翘起来了',
+    yawn: '小喵打了个大大的哈欠',
+    curious: '小喵歪着头，好奇地看着你'
   };
 
   /* ---------------- canvas ---------------- */
@@ -141,7 +146,7 @@ window.PDM = window.PDM || {};
     const focusing = !!app.session;
     const pool = focusing
       ? [['read', 9000], ['read', 11000], ['cheer', 5000], ['stretch', 4000], ['wash', 5000], ['doze', 6000], ['idle', 5000]]
-      : [['idle', 8000], ['idle', 10000], ['wash', 4500], ['stretch', 4000], ['read', 8000], ['idle', 6000]];
+      : [['idle', 8000], ['idle', 10000], ['wash', 4500], ['stretch', 4000], ['read', 8000], ['idle', 6000], ['curious', 4500]];
     const pick = pool[Math.floor(Math.random() * pool.length)];
     setCatState(pick[0]);
     app.catNextAt = now + pick[1];
@@ -463,9 +468,19 @@ window.PDM = window.PDM || {};
     $('btnPause').classList.add('hidden');
     $('durationChips').classList.remove('locked');
     updateModeUI();
-    app.celebrateUntil = performance.now() + 7000;
-    setCatState('celebrate');
-    app.catNextAt = performance.now() + 7500;
+    if (!completed) {
+      app.celebrateUntil = 0;
+      setCatState('sad');
+      app.catNextAt = performance.now() + 6000;
+    } else if (minutes >= 45) {
+      app.celebrateUntil = 0;
+      setCatState('yawn');
+      app.catNextAt = performance.now() + 6000;
+    } else {
+      app.celebrateUntil = performance.now() + 7000;
+      setCatState('celebrate');
+      app.catNextAt = performance.now() + 7500;
+    }
 
     if (minutes < 1) {
       core.logEvent('focus_partial', { minutes: 0, away: Math.round(s.awayMs / 1000) });
