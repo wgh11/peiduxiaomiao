@@ -903,6 +903,7 @@ window.PDM = window.PDM || {};
   let catLastT = 0, catHop = 0, nextWander = 0, catLastState = '';
   let bowlObj = null, toyObj = null, snackObj = null, toySpinUntil = 0;
   let shadeMat = null, glowMat = null, snapRing = null, dustMotes = null;
+  let decorGrid = null, decorating = false;
   let finger = null;
   let ptr = { x: 0, y: 0 }, ptrS = { x: 0, y: 0 };
   let raycaster = null;
@@ -922,6 +923,27 @@ window.PDM = window.PDM || {};
     dustMotes = new THREE.Points(geo, m);
     dustMotes.renderOrder = 5;
     return dustMotes;
+  }
+
+  function buildDecorGrid() {
+    const g = new THREE.Group();
+    const floorGrid = new THREE.GridHelper(3.9, 13, '#C89778', '#E8CDB9');
+    floorGrid.position.set(0, .012, .16);
+    floorGrid.material.transparent = true;
+    floorGrid.material.opacity = .42;
+    floorGrid.material.depthWrite = false;
+    g.add(floorGrid);
+    // 桌面单独给一层小网格，拖动桌面摆件时更容易对齐。
+    const deskGrid = new THREE.GridHelper(1.42, 7, '#C89778', '#E8CDB9');
+    deskGrid.position.set(1.16, ROOM.deskY + .006, - .94);
+    deskGrid.scale.set(1, 1, .4);
+    deskGrid.material = deskGrid.material.clone();
+    deskGrid.material.transparent = true;
+    deskGrid.material.opacity = .34;
+    deskGrid.material.depthWrite = false;
+    g.add(deskGrid);
+    g.visible = false;
+    return g;
   }
 
   function buildRoom() {
@@ -1099,6 +1121,8 @@ window.PDM = window.PDM || {};
 
     dustMotes = buildDustMotes();
     g.add(dustMotes);
+    decorGrid = buildDecorGrid();
+    g.add(decorGrid);
 
     // cat (AI sprite billboard, Paper-Mario style)
     cat = buildCatSprite();
@@ -1763,6 +1787,28 @@ window.PDM = window.PDM || {};
     }
   }
 
+  function avoidOverlap(id, slot, n) {
+    const layout = core.state().layout || {};
+    const occupied = Object.keys(layout).filter(otherId => {
+      if (otherId === id) return false;
+      const other = core.itemById(otherId);
+      return other && other.slot === slot && core.isOwned(otherId);
+    }).map(otherId => layout[otherId]);
+    if (!occupied.length) return n;
+    const minDist = slot === 'desk' ? .13 : (slot === 'wall' || slot === 'window' ? .11 : .12);
+    let x = n.x, y = n.y;
+    for (let i = 0; i < 18; i++) {
+      if (!occupied.some(p => Math.hypot((p.x || 0) - x, (p.y || 0) - y) < minDist)) {
+        return { x: x, y: y };
+      }
+      const a = i * 2.39996;
+      const r = minDist * (.7 + Math.floor(i / 3) * .55);
+      x = Math.max(.05, Math.min(.95, n.x + Math.cos(a) * r));
+      y = Math.max(.05, Math.min(.95, n.y + Math.sin(a) * r));
+    }
+    return { x: Math.max(.05, Math.min(.95, x)), y: Math.max(.05, Math.min(.95, y)) };
+  }
+
   function fadeItem(g, on) {
     if (!drag) return;
     if (on) {
@@ -1832,6 +1878,9 @@ window.PDM = window.PDM || {};
     }
     n.x = Math.max(.04, Math.min(.96, n.x));
     n.y = Math.max(.04, Math.min(.96, n.y));
+    const safe = avoidOverlap(drag.id, drag.slot, n);
+    n.x = safe.x;
+    n.y = safe.y;
     core.setPlacement(drag.id, n.x, n.y, null, { save: false });
   }
 
@@ -1842,6 +1891,12 @@ window.PDM = window.PDM || {};
     if (g) fadeItem(g, false);
     drag = null;
     core.save();
+  }
+
+  function setDecorating(on) {
+    decorating = !!on;
+    if (decorGrid) decorGrid.visible = decorating;
+    if (!decorating && snapRing) snapRing.visible = false;
   }
 
   function setPointer(clientX, clientY) {
@@ -1860,6 +1915,7 @@ window.PDM = window.PDM || {};
     beginDrag: beginDrag,
     moveDrag: moveDrag,
     endDrag: endDrag,
+    setDecorating: setDecorating,
     dragging: () => !!drag,
     selected: () => lastId,
     pickCatHouse: pickCatHouse,
