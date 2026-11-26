@@ -127,10 +127,15 @@
 }
 .house-btn { left: 10px; right: auto; }
 .rotate-btn { left: 50%; right: auto; margin-left: -39px; width: 78px; justify-content: center; white-space: nowrap; display: none; }
+.turn-left, .turn-right { bottom: 48px; width: 32px; padding: 0; justify-content: center; font-size: 18px; }
+.turn-left { left: 50%; margin-left: -38px; }
+.turn-right { left: 50%; right: auto; margin-left: 6px; }
 .back-room { left: 50%; right: auto; top: 42px; bottom: auto; margin-left: -44px; }
 #stageWrap.decorating .house-btn,
 #stageWrap.decorating .rotate-btn { display: none; }
 #stageWrap.decorating { box-shadow: inset 0 0 0 2px rgba(240, 138, 114, .5), 0 8px 24px rgba(150, 115, 82, .14); }
+#screen-home.decorating #timerCard { display: none; }
+#screen-home.decorating #stageWrap { margin-bottom: 10px; }
 
 .stage-tip {
   position: absolute;
