@@ -1663,7 +1663,7 @@ window.PDM = window.PDM || {};
       else toyObj.rotation.y *= .9;
     }
     if (dustMotes) dustMotes.rotation.y = Math.sin(t * .18) * .035;
-    if (!houseFocus) camZoomGoal = opts && opts.focus ? 1.12 : 1.06;
+    if (!houseFocus && !blueprint) camZoomGoal = opts && opts.focus ? 1.12 : 1.06;
     if (lampLight) {
       lampLight.intensity = env.night ? 1.35 : (opts && opts.focus ? .85 : .35);
     }
