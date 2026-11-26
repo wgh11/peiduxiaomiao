@@ -939,6 +939,10 @@ window.PDM = window.PDM || {};
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = true;
     g.add(floor);
+    const slab = box(ROOM.w + .16, .16, ROOM.d + .16, '#777970');
+    slab.position.set(0, -.1, .03);
+    slab.receiveShadow = true;
+    g.add(slab);
 
     // baked-looking contact AO along the walls
     const aoTex = tex(256, 256, (c, w, h) => {
@@ -1066,6 +1070,16 @@ window.PDM = window.PDM || {};
     const deskBooks2 = box(.2, .22, .18, '#E7B69C'); deskBooks2.position.set(-.2, .44, -.1); desk.add(deskBooks2);
     desk.position.set(1.12, 0, -.95);
     g.add(desk);
+
+    // simple study chair: gives the desk a clear purpose and anchors the room composition
+    const chair = new THREE.Group();
+    const seat = box(.62, .09, .55, '#9C8B76'); seat.position.set(0, .43, 0); chair.add(seat);
+    const back = box(.58, .58, .07, '#7B7568'); back.position.set(0, .72, -.22); chair.add(back);
+    [[-.23, -.19], [.23, -.19], [-.23, .19], [.23, .19]].forEach(([x, z]) => {
+      const leg = box(.055, .43, .055, '#655D52'); leg.position.set(x, .21, z); chair.add(leg);
+    });
+    chair.position.set(1.12, 0, -.05);
+    g.add(chair);
 
     // ambient food bowl
     const bowl = new THREE.Group();
@@ -1534,7 +1548,7 @@ window.PDM = window.PDM || {};
 
     // where should the cat be?
     if (state === 'read') {
-      const hx = -.62, hz = .7;
+      const hx = .25, hz = .02;
       if (!catTarget && Math.hypot(catX - hx, catZ - hz) > .06) catTarget = { x: hx, z: hz };
     } else if (state === 'idle' && !catTarget && t > nextWander) {
       const spot = CAT_SPOTS[Math.floor(Math.random() * CAT_SPOTS.length)];
@@ -1630,8 +1644,9 @@ window.PDM = window.PDM || {};
       else toyObj.rotation.y *= .9;
     }
     if (dustMotes) dustMotes.rotation.y = Math.sin(t * .18) * .035;
+    if (!houseFocus) camZoomGoal = opts && opts.focus ? 1.12 : 1.06;
     if (lampLight) {
-      lampLight.intensity = env.night ? 1.35 : .35;
+      lampLight.intensity = env.night ? 1.35 : (opts && opts.focus ? .85 : .35);
     }
     // isometric camera with gentle parallax + focus tween
     ptrS.x += (ptr.x - ptrS.x) * .05;
