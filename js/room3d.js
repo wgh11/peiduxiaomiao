@@ -215,13 +215,16 @@ window.PDM = window.PDM || {};
   B.w_calendar = function () {
     const g = frameBoard(.44, .58, '#FFFDF7');
     const head = box(.44, .16, .012, '#F08A72'); put(head, 0, .2, .038); g.add(head);
+    const now = new Date();
+    const day = String(now.getDate());
+    const month = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][now.getMonth()];
     const t = tex(200, 160, (c, w, h) => {
       c.textAlign = 'center'; c.fillStyle = '#B77B5E';
       c.font = '700 84px "PingFang SC", sans-serif';
-      c.fillText('26', w / 2, 96);
+      c.fillText(day, w / 2, 96);
       c.font = '500 26px "PingFang SC", sans-serif';
       c.fillStyle = '#C9A386';
-      c.fillText('NOV', w / 2, 138);
+      c.fillText(month, w / 2, 138);
     });
     const num = new THREE.Mesh(new THREE.PlaneGeometry(.36, .3), new THREE.MeshBasicMaterial({ map: t, transparent: true }));
     num.position.set(0, -.1, .04); g.add(num);
@@ -331,6 +334,19 @@ window.PDM = window.PDM || {};
       const b = box(w, h, d, c); put(b, (i - 1) * .015, y + h / 2, 0); b.rotation.y = (i - 1) * .04; g.add(b);
       const pages = box(w - .03, h, d - .02, '#FFFDF7'); put(pages, (i - 1) * .015, y + h / 2, .002); g.add(pages);
     });
+    return g;
+  };
+
+  B.d_foodbox = function () {
+    const g = new THREE.Group();
+    const boxBody = box(.38, .16, .27, '#F3C58D'); put(boxBody, 0, .08, 0); g.add(boxBody);
+    const lid = box(.4, .035, .29, '#E8947B'); put(lid, 0, .175, 0); g.add(lid);
+    const dish = cyl(.11, .12, .025, '#FFF4E6', 20); put(dish, 0, .2, .02); g.add(dish);
+    [-.035, .035, 0].forEach((x, i) => {
+      const bite = sph(.025, i === 1 ? '#D97B5A' : '#EFB27A', 1.3, .65, .7);
+      put(bite, x, .225, .02); g.add(bite);
+    });
+    const tag = box(.12, .055, .012, '#FFF8EE'); put(tag, 0, .085, .145); g.add(tag);
     return g;
   };
 
@@ -462,6 +478,34 @@ window.PDM = window.PDM || {};
     return g;
   };
 
+  B.o_fishbowl = function () {
+    const g = new THREE.Group();
+    const water = sph(.22, '#BFE0E8', 1, .8, .8, { transparent: true, opacity: .62, roughness: .15 });
+    put(water, 0, .28, 0); g.add(water);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(.225, .018, 8, 24), mat('#D9B894'));
+    rim.rotation.x = Math.PI / 2; rim.position.y = .28; g.add(rim);
+    const fish = sph(.065, '#F09A63', 1.5, .7, .6); put(fish, -.06, .29, .11); g.add(fish);
+    const tail = new THREE.Mesh(new THREE.ConeGeometry(.045, .08, 3), mat('#E8836B'));
+    tail.position.set(.045, .29, .11); tail.rotation.z = -Math.PI / 2; g.add(tail);
+    const base = cyl(.16, .19, .05, '#C99B72', 20); put(base, 0, .025, 0); g.add(base);
+    g.userData.fishbowl = fish;
+    return g;
+  };
+
+  B.o_starprojector = function () {
+    const g = new THREE.Group();
+    const base = cyl(.15, .18, .08, '#6879B8', 20); put(base, 0, .04, 0); g.add(base);
+    const dome = sph(.16, '#8EA5D8', 1, .72, 1, { transparent: true, opacity: .8, emissive: '#4D6098', emissiveIntensity: .4 });
+    put(dome, 0, .18, 0); g.add(dome);
+    [[-.08, .2, .035], [.05, .25, .025], [.1, .14, .02]].forEach(([x, y, r]) => {
+      const star = sph(r, '#FFE7A8', 1, 1, 1, { emissive: '#F3B45C', emissiveIntensity: 1.1 });
+      put(star, x, y, .14); g.add(star);
+    });
+    const light = new THREE.PointLight('#9CB7FF', .22, 1.3); light.position.set(0, .22, .1); g.add(light);
+    g.userData.projectorLight = light;
+    return g;
+  };
+
   function fallback(slot) {
     const g = new THREE.Group();
     const c = slot === 'wall' ? '#E7D0B8' : '#E7B69C';
@@ -473,6 +517,7 @@ window.PDM = window.PDM || {};
   /* ---------- 2D billboard cat (AI sprite sheets) ---------- */
   const CAT_ART_KEYS = ['idle', 'blink', 'read', 'sleep', 'stretch', 'cheer', 'eat', 'play', 'side', 'back',
     'pj', 'academy', 'festival', 'pj_read', 'academy_read', 'festival_read'];
+  const PROCEDURAL_OUTFITS = new Set(['raincoat', 'chef', 'wizard']);
   const CAT_ART_BASE = 'assets/cat/cat_';
   let catArt = {};          // key -> SpriteMaterial
   let catArtBox = {};       // key -> {top, cx, bottom}
@@ -693,6 +738,17 @@ window.PDM = window.PDM || {};
 
   function paintCat(state, outfit, t) {
     if (!catCtx || !cat) return;
+    if (PROCEDURAL_OUTFITS.has(outfit)) {
+      if (cat.material !== catBaseMat) cat.material = catBaseMat;
+      if (t - lastCatDraw >= .055) {
+        lastCatDraw = t;
+        catCtx.clearRect(0, 0, 512, 512);
+        PDM.art.drawCat(catCtx, 256, 496, 3.45, { state: state, outfit: outfit, t: t });
+        catTex.needsUpdate = true;
+      }
+      drawCatFx(state, t);
+      return;
+    }
     let key = catKeyFor(state, outfit);
     const dress = outfit === 'pj' || outfit === 'academy' || outfit === 'festival';
     if (!dress && catMoveDir !== 'front' && (key === 'idle' || key === 'read')) {
@@ -844,12 +900,27 @@ window.PDM = window.PDM || {};
   let catX = -.62, catZ = .7, catTarget = null, catCb = null, catFacing = 1;
   let catLastT = 0, catHop = 0, nextWander = 0, catLastState = '';
   let bowlObj = null, toyObj = null, snackObj = null, toySpinUntil = 0;
-  let shadeMat = null, glowMat = null, snapRing = null;
+  let shadeMat = null, glowMat = null, snapRing = null, dustMotes = null;
   let finger = null;
   let ptr = { x: 0, y: 0 }, ptrS = { x: 0, y: 0 };
   let raycaster = null;
   let drag = null;
   let lastId = null;
+
+  function buildDustMotes() {
+    const geo = new THREE.BufferGeometry();
+    const pos = new Float32Array(34 * 3);
+    for (let i = 0; i < 34; i++) {
+      pos[i * 3] = .35 + ((i * 37) % 120) / 100;
+      pos[i * 3 + 1] = .35 + ((i * 53) % 210) / 100;
+      pos[i * 3 + 2] = -.82 + ((i * 29) % 150) / 100;
+    }
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const m = new THREE.PointsMaterial({ color: '#FFE7B8', size: .025, transparent: true, opacity: .42, depthWrite: false });
+    dustMotes = new THREE.Points(geo, m);
+    dustMotes.renderOrder = 5;
+    return dustMotes;
+  }
 
   function buildRoom() {
     const g = new THREE.Group();
@@ -1009,6 +1080,9 @@ window.PDM = window.PDM || {};
     // yarn toy, clickable
     toyObj = buildYarnToy();
     g.add(toyObj);
+
+    dustMotes = buildDustMotes();
+    g.add(dustMotes);
 
     // cat (AI sprite billboard, Paper-Mario style)
     cat = buildCatSprite();
@@ -1539,12 +1613,23 @@ window.PDM = window.PDM || {};
     const env = PDM.room.tod();
     applyTod(env);
     syncItems();
+    Object.values(items).forEach(g => {
+      if (!g.visible) return;
+      if (g.userData && g.userData.fishbowl) {
+        g.userData.fishbowl.position.x = Math.sin(t * 1.8) * .07 - .06;
+        g.userData.fishbowl.rotation.y = Math.sin(t * 1.8) * .18;
+      }
+      if (g.userData && g.userData.projectorLight) {
+        g.userData.projectorLight.intensity = .16 + Math.abs(Math.sin(t * 1.5)) * .18;
+      }
+    });
     updateCat(t, opts || {});
     if (snackObj) snackObj.position.y = .01 + Math.abs(Math.sin(t * 3)) * .03;
     if (toyObj) {
       if (t < toySpinUntil) toyObj.rotation.y += .32;
       else toyObj.rotation.y *= .9;
     }
+    if (dustMotes) dustMotes.rotation.y = Math.sin(t * .18) * .035;
     if (lampLight) {
       lampLight.intensity = env.night ? 1.35 : .35;
     }
