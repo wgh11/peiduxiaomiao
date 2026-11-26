@@ -8,10 +8,10 @@ window.PDM = window.PDM || {};
 
   const ROOM = { w: 4.4, d: 3.0, h: 3.0, backZ: -1.5, leftX: -2.2, deskY: 0.84 };
   const CL = {
-    wall: '#F3DFC4', wallTop: '#FDF4E7', floor: '#D8AB7E', floor2: '#CFA273',
-    base: '#E7C9A4', desk: '#C8905D', deskTop: '#E8C9A4', white: '#FFF9F0',
-    ink: '#5B4A42', coral: '#F08A72', coralDeep: '#DE6E57', sage: '#8FBFAC',
-    honey: '#F3B45C', sky: '#BFDFEF', cream: '#FFF3DE'
+    wall: '#E3E2D9', wallTop: '#F5F5F0', floor: '#A79E8D', floor2: '#958A78',
+    base: '#C8C0AE', desk: '#806F5E', deskTop: '#CFC6B5', white: '#F6F6F1',
+    ink: '#34444A', coral: '#B96E5B', coralDeep: '#9D5045', sage: '#789889',
+    honey: '#B68B4B', sky: '#B8C8C9', cream: '#F1EFE6'
   };
   const MAP = {
     wall: { x: [-2.02, 2.02], y: [2.72, 0.88], z: -1.42 },
@@ -976,10 +976,10 @@ window.PDM = window.PDM || {};
     const winX0 = 0.55, winX1 = 1.75, winY0 = 0.95, winY1 = 2.32;
     const wallTexV = tex(8, 160, (c, w, h) => {
       const gr = c.createLinearGradient(0, 0, 0, h);
-      gr.addColorStop(0, '#FCF2E1');
-      gr.addColorStop(.55, '#F3DFC4');
-      gr.addColorStop(.86, '#E9CFAE');
-      gr.addColorStop(1, '#DFC29C');
+      gr.addColorStop(0, '#F5F5F0');
+      gr.addColorStop(.55, '#E5E4DB');
+      gr.addColorStop(.86, '#D5D1C5');
+      gr.addColorStop(1, '#C6C0B1');
       c.fillStyle = gr; c.fillRect(0, 0, w, h);
     });
     const wallMat = new THREE.MeshStandardMaterial({ map: wallTexV, roughness: .95 });
@@ -1009,9 +1009,9 @@ window.PDM = window.PDM || {};
     // wallpaper stripes on the open part of the back wall
     const wallTex = tex(160, 160, (c, w, h) => {
       const gr = c.createLinearGradient(0, 0, 0, h);
-      gr.addColorStop(0, '#FCF3E3');
-      gr.addColorStop(.6, '#F3DFC4');
-      gr.addColorStop(1, '#E2C6A2');
+      gr.addColorStop(0, '#F7F7F2');
+      gr.addColorStop(.6, '#E5E4DB');
+      gr.addColorStop(1, '#D0CABD');
       c.fillStyle = gr; c.fillRect(0, 0, w, h);
       c.fillStyle = 'rgba(255, 250, 240, .5)';
       for (let x = 0; x < w; x += 40) c.fillRect(x, 0, 14, h);
