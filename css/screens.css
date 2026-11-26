@@ -1032,3 +1032,23 @@
 .food-milk { background: radial-gradient(circle at 35% 25%, #fff, #d8edf1 72%); }
 .food-cookie { background: radial-gradient(circle at 35% 25%, #fff8e1, #e8b889 72%); }
 .shop-note { margin: 0 4px 10px; line-height: 1.7; }
+.activity-grid { display: grid; gap: 8px; }
+.activity-card {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--card);
+  box-shadow: var(--shadow-soft);
+}
+.activity-icon {
+  flex: none; width: 34px; height: 34px;
+  display: grid; place-items: center;
+  border-radius: 9px;
+  background: var(--honey-soft);
+  color: var(--coral-deep);
+  font-size: 19px; font-weight: 600;
+}
+.activity-card h3 { font-size: 13px; font-weight: 700; }
+.activity-card p { margin-top: 4px; color: var(--ink-soft); font-size: 11px; line-height: 1.6; }
+.activity-card span { display: block; margin-top: 5px; color: var(--ink-faint); font-size: 9.5px; }
