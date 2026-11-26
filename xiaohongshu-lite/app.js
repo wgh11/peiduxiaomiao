@@ -375,18 +375,40 @@
   const RARITY = { common: '普通', rare: '稀有', epic: '史诗', legend: '传说' };
 
   const SPECIES = [
-    { id: 'crucian', name: '小鲫鱼', value: 1, w: 26, rarity: 'common' },
-    { id: 'loach', name: '小泥鳅', value: 1, w: 20, rarity: 'common' },
-    { id: 'bighead', name: '胖头鱼', value: 2, w: 16, rarity: 'common' },
-    { id: 'koi', name: '锦鲤', value: 3, w: 12, rarity: 'rare' },
-    { id: 'mandarin', name: '鳜鱼', value: 4, w: 8, rarity: 'rare' },
-    { id: 'silver', name: '银鲴鱼', value: 4, w: 7, rarity: 'rare' },
-    { id: 'puffer', name: '河豚', value: 5, w: 5, rarity: 'epic' },
-    { id: 'lantern', name: '灯笼鱼', value: 6, w: 4, rarity: 'epic' },
-    { id: 'butterfly', name: '蝴蝶鱼', value: 6, w: 3, rarity: 'epic' },
-    { id: 'arowana', name: '金龙鱼', value: 8, w: 2, rarity: 'legend' },
-    { id: 'sturgeon', name: '中华鲟', value: 10, w: 1.2, rarity: 'legend' },
-    { id: 'moon', name: '月光鱼', value: 12, w: 0.8, rarity: 'legend' }
+    { id: 'crucian', name: '小鲫鱼', value: 1, w: 26, rarity: 'common', img: 'assets/fish/crucian.png' },
+    { id: 'loach', name: '小泥鳅', value: 1, w: 20, rarity: 'common', img: 'assets/fish/loach.png' },
+    { id: 'bighead', name: '胖头鱼', value: 2, w: 16, rarity: 'common', img: 'assets/fish/bighead.png' },
+    { id: 'koi', name: '锦鲤', value: 3, w: 12, rarity: 'rare', img: 'assets/fish/koi.png' },
+    { id: 'mandarin', name: '鳜鱼', value: 4, w: 8, rarity: 'rare', img: 'assets/fish/mandarin.png' },
+    { id: 'silver', name: '银鲴鱼', value: 4, w: 7, rarity: 'rare', img: 'assets/fish/silver.png' },
+    { id: 'puffer', name: '河豚', value: 5, w: 5, rarity: 'epic', img: 'assets/fish/puffer.png' },
+    { id: 'lantern', name: '灯笼鱼', value: 6, w: 4, rarity: 'epic', img: 'assets/fish/lantern.png' },
+    { id: 'butterfly', name: '蝴蝶鱼', value: 6, w: 3, rarity: 'epic', img: 'assets/fish/butterfly.png' },
+    { id: 'arowana', name: '金龙鱼', value: 8, w: 2, rarity: 'legend', img: 'assets/fish/arowana.png' },
+    { id: 'sturgeon', name: '中华鲟', value: 10, w: 1.2, rarity: 'legend', img: 'assets/fish/sturgeon.png' },
+    { id: 'moon', name: '月光鱼', value: 12, w: 0.8, rarity: 'legend', img: 'assets/fish/moon.png' }
+  ];
+
+  const CAT_POSES = [
+    { name: '待机', src: 'assets/cat/cat_idle.png' },
+    { name: '眨眼', src: 'assets/cat/cat_blink.png' },
+    { name: '看书', src: 'assets/cat/cat_read.png' },
+    { name: '睡觉', src: 'assets/cat/cat_sleep.png' },
+    { name: '伸懒腰', src: 'assets/dex/cat_stretch.png' },
+    { name: '开心', src: 'assets/cat/cat_cheer.png' },
+    { name: '吃零食', src: 'assets/dex/cat_eat.png' },
+    { name: '玩毛线', src: 'assets/dex/cat_play.png' },
+    { name: '侧身', src: 'assets/dex/cat_side.png' },
+    { name: '背影', src: 'assets/dex/cat_back.png' },
+    { name: '摸头', src: 'assets/cat/cat_pat.png' },
+    { name: '委屈', src: 'assets/cat/cat_sad.png' },
+    { name: '抱鱼', src: 'assets/cat/cat_fish.png' },
+    { name: '打哈欠', src: 'assets/cat/cat_yawn.png' },
+    { name: '歪头', src: 'assets/cat/cat_curious.png' },
+    { name: '惊喜', src: 'assets/cat/cat_surprise.png' },
+    { name: '睡衣·看书', src: 'assets/dex/cat_pj_read.png' },
+    { name: '学院·看书', src: 'assets/dex/cat_academy_read.png' },
+    { name: '节日·看书', src: 'assets/dex/cat_festival_read.png' }
   ];
 
   const OUTFITS = [
@@ -660,11 +682,19 @@
         const locked = n <= 0;
         if (!locked) got++;
         html += '<div class="card' + (locked ? ' locked' : '') + '">' +
-          '<div class="nm" style="margin-top:40px">' + (locked ? '未发现' : sp.name) + '</div>' +
+          '<img src="' + sp.img + '" alt="' + sp.name + '">' +
+          '<div class="nm">' + (locked ? '未发现' : sp.name) + '</div>' +
           '<div class="rb">' + RARITY[sp.rarity] + ' · ' + sp.value + ' 鱼干</div>' +
           '<div class="rb">' + (locked ? '继续抛竿试试' : '已钓到 ' + n + ' 条') + '</div></div>';
       });
       if (note) note.textContent = '已点亮 ' + got + ' / ' + SPECIES.length + ' 种鱼';
+    } else if (dexKind === 'cat') {
+      CAT_POSES.forEach(function (c) {
+        html += '<div class="card">' +
+          '<img src="' + c.src + '" alt="' + c.name + '">' +
+          '<div class="nm">' + c.name + '</div></div>';
+      });
+      if (note) note.textContent = '共 ' + CAT_POSES.length + ' 张小猫立绘，全部已解锁';
     } else {
       OUTFITS.forEach(function (o) {
         const owned = S.owned.indexOf(o.id) >= 0;
@@ -769,7 +799,7 @@
   $('dexSeg').addEventListener('click', function (e) {
     const b = e.target.closest('button');
     if (!b) return;
-    dexKind = b.dataset.dex === 'cloth' ? 'cloth' : 'fish';
+    dexKind = b.dataset.dex === 'cloth' ? 'cloth' : (b.dataset.dex === 'cat' ? 'cat' : 'fish');
     document.querySelectorAll('#dexSeg button').forEach(function (x) {
       x.classList.toggle('on', x === b);
     });
