@@ -31,7 +31,8 @@ window.PDM = window.PDM || {};
     tipTimer: 0,
     decorMode: false,
     drag: null,
-    lastTouched: null
+    lastTouched: null,
+    debug: false
   };
 
   const CAT_LABEL = {
@@ -342,7 +343,6 @@ window.PDM = window.PDM || {};
       s.hiddenAt = 0;
       setCatState('idle');
       ui.toast('已暂停计时，小猫陪你休息一下', 2200);
-      if (activeElapsedMs(s) >= 60000) core.startBreak();
     }
     syncPauseBtn();
     updateTimerUI();
@@ -742,11 +742,13 @@ window.PDM = window.PDM || {};
   function updateSpeedChip() {
     const chip = $('speedChip');
     if (!chip) return;
+    chip.classList.toggle('hidden', !app.debug);
     chip.textContent = app.speed > 1 ? '演示 ×' + app.speed : '实时';
     chip.classList.toggle('fast', app.speed > 1);
   }
 
   function toggleSpeed() {
+    if (!app.debug) return;
     if (app.session) {
       ui.toast('专注中不能切换速度，先坐完这一轮吧');
       return;
@@ -833,6 +835,17 @@ window.PDM = window.PDM || {};
         }
         core.setOutfit(el.dataset.id);
         ui.toast('小喵换上了「' + r.outfit.name + '」');
+        refreshAll();
+        break;
+      }
+      case 'buyFood': {
+        const r = core.buyFood(el.dataset.id);
+        if (!r.ok) {
+          ui.toast(r.reason === 'fish' ? '小鱼干还不够，先去专注一会儿吧' : '这份猫粮暂时买不了');
+          return;
+        }
+        updatePetBar();
+        ui.toast('买好了「' + r.food.name + '」，小喵已经闻到香味', 2200);
         refreshAll();
         break;
       }
@@ -936,6 +949,13 @@ window.PDM = window.PDM || {};
         core.reset();
         app.session = null;
         clearSessionStore();
+        try {
+          localStorage.removeItem('peiduxiaomiao.quiz.v1');
+          localStorage.removeItem('pdm.camAz');
+          localStorage.removeItem('pdm.catHouseRot');
+        } catch (e) {}
+        if (PDM.quiz && PDM.quiz.reset) PDM.quiz.reset();
+        if (PDM.room3d && PDM.room3d.resetCamera) PDM.room3d.resetCamera();
         app.selMin = 25;
         app.speed = core.state().settings.speed;
         app.reward = null;
@@ -1039,7 +1059,7 @@ window.PDM = window.PDM || {};
       ui.toast('完成一次专注，就能拿到小猫零食', 2400);
       return;
     }
-    if (!core.useSnack()) return;
+    if (!core.useFood()) return;
     updatePetBar();
     app.eatPending = true;
     app.eatUntil = 0;
@@ -1164,7 +1184,7 @@ window.PDM = window.PDM || {};
             return;
           }
           const hit = PDM.room3d.pick(e.clientX, e.clientY);
-          if (hit) {
+          if (hit && app.decorMode) {
             app.lastTouched = hit.id;
             if (!PDM.room3d.beginDrag(e.clientX, e.clientY)) return;
             try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
@@ -1361,6 +1381,7 @@ window.PDM = window.PDM || {};
   /* ---------------- boot ---------------- */
   function boot() {
     core.load();
+    app.debug = /(?:\?|&)debug=1(?:&|$)/.test(location.search);
     app.speed = core.state().settings.speed || 1;
     if (app.speed <= 1) app.speed = 1;
     ui.init();
