@@ -3,7 +3,7 @@ window.PDM = window.PDM || {};
 (function (PDM) {
   'use strict';
   const A = PDM.art;
-  const rr = A.rr, ell = A.ell;
+  const rr = A.rr, ell = A.ell, star = A.star;
   const ITEMS = PDM.furniture.ITEMS;
 
   /* ---------------- wall ---------------- */
