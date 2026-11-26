@@ -330,6 +330,28 @@ window.PDM = window.PDM || {};
       ctx.fill();
       ctx.fillStyle = '#FFF4E4';
       ell(ctx, 5, -127, 6, 6); ctx.fill();
+    } else if (outfit === 'raincoat') {
+      ctx.fillStyle = '#F2C85B';
+      ctx.beginPath();
+      ctx.moveTo(-31, -96); ctx.quadraticCurveTo(-26, -116, 0, -119);
+      ctx.quadraticCurveTo(26, -116, 31, -96); ctx.lineTo(24, -91);
+      ctx.quadraticCurveTo(0, -101, -24, -91); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(-18, -103); ctx.lineTo(18, -103); ctx.stroke();
+    } else if (outfit === 'chef') {
+      ctx.fillStyle = '#FFF8EE';
+      ctx.beginPath();
+      ctx.moveTo(-29, -96); ctx.quadraticCurveTo(-26, -118, -12, -114);
+      ctx.quadraticCurveTo(0, -129, 12, -114); ctx.quadraticCurveTo(27, -119, 30, -96);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#E7B69C'; ctx.lineWidth = 1.6; ctx.stroke();
+      ctx.fillStyle = '#E8947B'; ell(ctx, 0, -112, 3, 3); ctx.fill();
+    } else if (outfit === 'wizard') {
+      ctx.fillStyle = '#6879B8';
+      ctx.beginPath(); ctx.moveTo(-25, -102); ctx.lineTo(3, -139); ctx.lineTo(28, -101);
+      ctx.quadraticCurveTo(0, -108, -25, -102); ctx.closePath(); ctx.fill();
+      star(ctx, 3, -122, 5, '#FFE7A8', .95);
+      ctx.fillStyle = '#F5D37A'; ell(ctx, 25, -101, 5, 3); ctx.fill();
     }
     ctx.restore();
   }
@@ -450,6 +472,28 @@ window.PDM = window.PDM || {};
       ctx.beginPath();
       ctx.moveTo(3, -23); ctx.lineTo(7, -23); ctx.lineTo(6, -17); ctx.closePath();
       ctx.fill();
+    } else if (outfit === 'raincoat') {
+      ctx.fillStyle = '#E7B83F';
+      ctx.beginPath();
+      ctx.moveTo(-25, -50); ctx.bezierCurveTo(-38, -35, -37, -14, -21, -8);
+      ctx.quadraticCurveTo(0, -3, 21, -8); ctx.bezierCurveTo(37, -14, 38, -35, 25, -50);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.65)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(0, -48); ctx.lineTo(0, -10); ctx.stroke();
+      ctx.fillStyle = '#FFF4D0'; ell(ctx, 0, -30, 3, 3); ctx.fill();
+    } else if (outfit === 'chef') {
+      ctx.fillStyle = '#FFF8EE';
+      ctx.beginPath(); ctx.moveTo(-25, -50); ctx.bezierCurveTo(-38, -35, -37, -14, -21, -8);
+      ctx.quadraticCurveTo(0, -3, 21, -8); ctx.bezierCurveTo(37, -14, 38, -35, 25, -50);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#E7B69C'; ctx.lineWidth = 1.6; ctx.stroke();
+      ctx.fillStyle = '#E8947B'; ell(ctx, 0, -31, 4, 4); ctx.fill();
+    } else if (outfit === 'wizard') {
+      ctx.fillStyle = '#6879B8';
+      ctx.beginPath(); ctx.moveTo(-25, -50); ctx.bezierCurveTo(-38, -35, -37, -14, -21, -8);
+      ctx.quadraticCurveTo(0, -3, 21, -8); ctx.bezierCurveTo(37, -14, 38, -35, 25, -50);
+      ctx.closePath(); ctx.fill();
+      star(ctx, -12, -30, 4, '#FFE7A8', .9); star(ctx, 13, -18, 3, '#FFE7A8', .85);
     }
   }
 
