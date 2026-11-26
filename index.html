@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#FBF3E9">
+<meta name="description" content="陪读小喵：一只原创小猫陪你专注学习的竖屏桌宠。专注计时、小鱼干奖励、小屋布置、换装、图鉴番外和学习记录。">
+<meta property="og:title" content="陪读小喵 · 学习自习室桌宠">
+<meta property="og:description" content="你专注学习，小喵就在旁边安静陪读。学得越久，小屋越温馨。">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>陪读小喵 · 学习自习室桌宠</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='34' r='20' fill='%23F7E3CC'/%3E%3Cpath d='M12 18l10 8-11 5zM52 18L42 26l11 5z' fill='%23F2A48C'/%3E%3Ccircle cx='25' cy='33' r='2.6' fill='%235B4A42'/%3E%3Ccircle cx='39' cy='33' r='2.6' fill='%235B4A42'/%3E%3Cpath d='M29 40q3 3 6 0' stroke='%235B4A42' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/screens.css">
+<link rel="stylesheet" href="css/quiz.css">
+</head>
+<body>
+
+<svg class="svg-sprite" aria-hidden="true">
+  <defs>
+    <symbol id="i-fish" viewBox="0 0 24 24">
+      <path d="M15 6.4c3.8 0 6.6 2.5 6.6 5.6s-2.8 5.6-6.6 5.6c-3.1 0-5.7-1.6-7.2-4.1l-3.5 2.3c-.6.4-1.2.1-1-.6l.8-3.2-.8-3.2c-.2-.7.4-1 1-.6l3.5 2.3C9.3 8 11.9 6.4 15 6.4z" fill="currentColor"/>
+      <circle cx="16" cy="10.9" r="1.05" fill="#FFFDF8"/>
+    </symbol>
+    <symbol id="i-flame" viewBox="0 0 24 24">
+      <path d="M12.3 2.2c1.1 3.2-.4 4.7-1.6 6.1-1.3 1.6-2 3.1-1.4 4.7.4-1 .9-1.7 1.9-2.4-.3 1.8.8 2.7 1.7 3.5 1.1 1 1.5 2.3 1 3.8 2.6-1.2 4-3.5 4-6 0-4.2-2.9-7.6-5.6-9.7z" fill="currentColor"/>
+      <path d="M9.6 13.2c-.9 1.1-1.4 2.4-1.2 3.7.2 2.4 1.9 4.1 4.2 4.4-1.1-1-1.5-2.2-1.2-3.5.2-1.2 1-2.2 1-3.4 0-1-.9-1.9-1.7-2.6-.2 1-.5 1.6-1.1 1.4z" fill="currentColor" opacity=".65"/>
+    </symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="3.1" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <path d="M12 3.2v2.4M12 18.4v2.4M3.2 12h2.4M18.4 12h2.4M5.7 5.7l1.7 1.7M16.6 16.6l1.7 1.7M18.3 5.7l-1.7 1.7M7.4 16.6l-1.7 1.7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-home" viewBox="0 0 24 24">
+      <path d="M4 11.1 12 4l8 7.1V20a1.1 1.1 0 0 1-1.1 1.1H14.4V15H9.6v6.1H5.1A1.1 1.1 0 0 1 4 20z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="i-shop" viewBox="0 0 24 24">
+      <path d="M5 8h14l-1.1 11.2a2 2 0 0 1-2 1.8H8.1a2 2 0 0 1-2-1.8z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>
+      <path d="M8.6 9.4V7a3.4 3.4 0 0 1 6.8 0v2.4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-book" viewBox="0 0 24 24">
+      <path d="M12 6.3C10.3 4.9 8 4.2 4.6 4.2v13.2c3.4 0 5.7.7 7.4 2.1 1.7-1.4 4-2.1 7.4-2.1V4.2c-3.4 0-5.7.7-7.4 2.1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+      <path d="M12 6.3v13.2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+    </symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24">
+      <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="i-star" viewBox="0 0 24 24">
+      <path d="M12 2.6l2.3 7.1 7.1 2.3-7.1 2.3L12 21.4l-2.3-7.1-7.1-2.3 7.1-2.3z" fill="currentColor"/>
+    </symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24">
+      <rect x="5" y="10.4" width="14" height="10" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <path d="M8.4 10.4V7.6a3.6 3.6 0 0 1 7.2 0v2.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-check" viewBox="0 0 24 24">
+      <path d="M4.8 12.6l4.6 4.6L19.2 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="i-close" viewBox="0 0 24 24">
+      <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <path d="M12 7.4V12l3.2 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-share" viewBox="0 0 24 24">
+      <path d="M12 16V3.6M12 3.6L7.6 8M12 3.6L16.4 8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M5 12.4v6.2a1.8 1.8 0 0 0 1.8 1.8h10.4a1.8 1.8 0 0 0 1.8-1.8v-6.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-paw" viewBox="0 0 24 24">
+      <ellipse cx="12" cy="16.2" rx="4.6" ry="3.8" fill="currentColor"/>
+      <circle cx="7.1" cy="11.1" r="2.2" fill="currentColor"/>
+      <circle cx="12" cy="9.3" r="2.3" fill="currentColor"/>
+      <circle cx="16.9" cy="11.1" r="2.2" fill="currentColor"/>
+    </symbol>
+    <symbol id="i-play" viewBox="0 0 24 24">
+      <path d="M8.4 5.4l10.2 6.6-10.2 6.6z" fill="currentColor"/>
+    </symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24">
+      <path d="M4 20h4.2L20 8.2 15.8 4 4 15.8z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+      <path d="M13.6 6.2l4.2 4.2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+    </symbol>
+    <symbol id="i-quiz" viewBox="0 0 24 24">
+      <rect x="4.4" y="3.4" width="15.2" height="17.2" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <path d="M8.2 8.6h4.6M8.2 12.4h7.6M8.2 16.2h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <circle cx="17.4" cy="8.4" r="2.4" fill="currentColor"/>
+      <path d="M16.4 8.4l.8.8 1.5-1.6" fill="none" stroke="#FFFDF8" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div id="phone">
+  <div id="app">
+    <header id="topbar">
+      <div class="brand">
+        <span class="brand-mark"><svg><use href="#i-paw"/></svg></span>
+        <span class="brand-text">陪读小喵</span>
+      </div>
+      <div class="top-stats">
+        <div class="stat" id="statFish">
+          <svg class="stat-ico fish"><use href="#i-fish"/></svg><b>0</b>
+        </div>
+        <div class="stat" id="statStreak">
+          <svg class="stat-ico flame"><use href="#i-flame"/></svg><b>0</b><span class="stat-unit">天</span>
+        </div>
+        <button class="icon-btn" id="btnSettings" aria-label="设置">
+          <svg><use href="#i-gear"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main id="screens">
+      <!-- 小屋 -->
+      <section class="screen active" id="screen-home">
+        <div id="stageWrap">
+          <canvas id="room"></canvas>
+          <canvas id="room3d"></canvas>
+          <div class="stage-top">
+            <div class="level-chip" id="levelChip">
+              <span class="level-dot"></span><span id="levelText">Lv.1 初识</span>
+            </div>
+            <div class="tod-chip"><svg><use href="#i-clock"/></svg><span id="todText">傍晚</span></div>
+          </div>
+          <div class="pet-bar" id="petBar">
+            <button data-pet="pet">摸摸</button>
+            <button data-pet="feed">投喂<i id="snackCount">0</i></button>
+            <button data-pet="play">逗猫</button>
+          </div>
+          <button class="stage-btn" id="btnDecor">
+            <svg><use href="#i-edit"/></svg><span>布置小屋</span>
+          </button>
+          <button class="stage-btn house-btn" id="btnCatHouse">小猫屋</button>
+          <button class="stage-btn rotate-btn" id="btnRotate">旋转</button>
+          <button class="stage-btn back-room hidden" id="btnBackRoom">返回书屋</button>
+          <div class="stage-tip hidden" id="stageTip"></div>
+          <div class="decor-bar hidden" id="decorBar">
+            <span>拖动空白处旋转视角，拖家具对齐网格</span>
+            <button class="decor-rot" data-action="decorRotate">旋转 90°</button>
+            <button class="decor-done" data-action="decorDone">完成</button>
+          </div>
+        </div>
+
+        <div id="timerCard">
+          <div class="timer-head">
+            <div class="cat-state"><span class="state-dot" id="stateDot"></span><span id="catStateText">小喵在等你开始</span></div>
+            <button class="speed-chip" id="speedChip">实时</button>
+          </div>
+          <div class="timer-time" id="timeText">25:00</div>
+          <div class="timer-sub" id="timeSub">选一个时长，开始今天的陪读</div>
+          <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+          <div class="study-modes" id="studyModes">
+            <button data-mode="free" class="on">自由学习</button>
+            <button data-mode="strict">严格专注</button>
+          </div>
+          <div class="mode-hint" id="modeHint">切到其他页面时，计时自动暂停</div>
+          <div class="task-tag-row">
+            <label for="taskTag">学习任务</label>
+            <select id="taskTag">
+              <option value="阅读">阅读</option>
+              <option value="刷题">刷题</option>
+              <option value="写作">写作</option>
+              <option value="复习">复习</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+          <div class="durations" id="durationChips">
+            <button data-min="15">15 分钟</button>
+            <button data-min="25" class="on">25 分钟</button>
+            <button data-min="45">45 分钟</button>
+            <button data-min="custom" id="chipCustom">自定义</button>
+          </div>
+          <div class="timer-actions">
+            <button class="btn primary wide" id="btnStart">开始陪读</button>
+            <button class="btn ghost hidden" id="btnPause">暂停</button>
+            <button class="btn ghost hidden" id="btnStop">提前结束</button>
+            <button class="btn ghost wide hidden" id="btnFishing">休息一下 · 去鱼塘</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 刷题 -->
+      <section class="screen" id="screen-quiz">
+        <div id="quizBody"></div>
+      </section>
+
+      <!-- 商店 -->
+      <section class="screen" id="screen-shop">
+        <div class="screen-head">
+          <div>
+            <h1>小喵杂货铺</h1>
+            <p>专注赚小鱼干，把房间慢慢填满</p>
+          </div>
+          <div class="head-fish"><svg><use href="#i-fish"/></svg><b id="shopFish">0</b></div>
+        </div>
+        <div class="seg" id="shopTabs">
+          <button data-tab="furniture" class="on">家具</button>
+          <button data-tab="outfit">服装</button>
+          <button data-tab="limited">限定</button>
+        </div>
+        <div class="scroll" id="shopBody"></div>
+      </section>
+
+      <!-- 图鉴 -->
+      <section class="screen" id="screen-book">
+        <div class="screen-head">
+          <div>
+            <h1>喵喵图鉴</h1>
+            <p>家具、服装和它的小故事</p>
+          </div>
+          <div class="head-progress" id="bookProgress">0%</div>
+        </div>
+        <div class="seg" id="bookTabs">
+          <button data-tab="furniture" class="on">家具</button>
+          <button data-tab="outfit">服装</button>
+          <button data-tab="comic">番外</button>
+        </div>
+        <div class="scroll" id="bookBody"></div>
+      </section>
+
+      <!-- 记录 -->
+      <section class="screen" id="screen-log">
+        <div class="screen-head">
+          <div>
+            <h1>学习记录</h1>
+            <p>慢慢来，小猫都记得</p>
+          </div>
+          <button class="icon-btn" id="btnShare" aria-label="分享卡片">
+            <svg><use href="#i-share"/></svg>
+          </button>
+        </div>
+        <div class="scroll" id="logBody"></div>
+      </section>
+    </main>
+
+    <nav id="tabbar">
+      <button class="tab on" data-screen="home"><svg><use href="#i-home"/></svg><span>小屋</span></button>
+      <button class="tab" data-screen="quiz"><svg><use href="#i-quiz"/></svg><span>刷题</span></button>
+      <button class="tab" data-screen="shop"><svg><use href="#i-shop"/></svg><span>商店</span></button>
+      <button class="tab" data-screen="book"><svg><use href="#i-book"/></svg><span>图鉴</span></button>
+      <button class="tab" data-screen="log"><svg><use href="#i-chart"/></svg><span>记录</span></button>
+    </nav>
+  </div>
+
+<div class="overlay" id="overlay"></div>
+
+<div class="sheet" id="sheet" aria-hidden="true">
+  <div class="sheet-grip"></div>
+  <div class="sheet-head">
+    <h2 id="sheetTitle">标题</h2>
+    <button class="icon-btn" id="sheetClose" aria-label="关闭"><svg><use href="#i-close"/></svg></button>
+  </div>
+  <div class="sheet-body" id="sheetBody"></div>
+</div>
+
+<div class="modal-wrap" id="modalWrap" aria-hidden="true">
+  <div class="modal" id="modal">
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<div class="modal-wrap" id="rewardWrap" aria-hidden="true">
+  <div class="modal reward-modal">
+    <div id="rewardBody"></div>
+  </div>
+</div>
+
+<div class="ad-wrap" id="adWrap" aria-hidden="true">
+  <div class="ad-top">
+    <span class="ad-tag">模拟广告</span>
+    <span class="ad-timer" id="adTimer">5s</span>
+  </div>
+  <div class="ad-body">
+    <div class="ad-art" id="adArt">
+      <div class="ad-coin"></div>
+      <div class="ad-coin c2"></div>
+      <div class="ad-cat"><svg><use href="#i-paw"/></svg></div>
+    </div>
+    <h3>陪读小喵 · 伙伴广告位</h3>
+    <p id="adDesc">看一段短片，帮小喵换更多小鱼干</p>
+    <div class="ad-note">原型演示：此处为模拟激励视频，正式版接微信/TapTap 广告 SDK</div>
+  </div>
+  <button class="btn primary wide" id="adClaim" disabled>广告播放中…</button>
+</div>
+
+<div class="comic-wrap" id="comicWrap" aria-hidden="true">
+  <div class="comic-top">
+    <button class="icon-btn" id="comicClose" aria-label="关闭"><svg><use href="#i-close"/></svg></button>
+    <span id="comicTitle">番外</span>
+    <span class="comic-page" id="comicPage">1 / 3</span>
+  </div>
+  <div class="comic-body" id="comicBody"></div>
+  <div class="comic-nav">
+    <button class="btn ghost" id="comicPrev">上一页</button>
+    <button class="btn primary" id="comicNext">下一页</button>
+  </div>
+</div>
+
+<div class="fish-wrap" id="fishWrap" aria-hidden="true">
+  <canvas id="fishCanvas"></canvas>
+  <div class="fish-top">
+    <button class="icon-btn" id="fishClose" aria-label="离开鱼塘"><svg><use href="#i-close"/></svg></button>
+    <div class="fish-title">
+      <b>休息鱼塘</b>
+      <span id="fishSub">钓几条鱼，换小鱼干</span>
+    </div>
+    <div class="fish-balance"><svg><use href="#i-fish"/></svg><b id="fishSnacks">0</b></div>
+  </div>
+
+  <div class="fish-hud">
+    <div class="fish-meta-row">
+      <span id="fishDaily">今日兑换 0 / 10</span>
+      <span id="fishRaw">鱼篓 0 条</span>
+    </div>
+    <div class="fish-tip" id="fishTip">还剩 3 杆 · 等浮标沉下去的一瞬间收竿</div>
+    <div class="fish-casts" id="fishCasts"><i class="on"></i><i class="on"></i><i class="on"></i></div>
+    <div class="fish-actions">
+      <button class="btn primary" id="btnCast">抛竿</button>
+      <button class="btn ghost" id="btnFishDone">收竿回家</button>
+    </div>
+    <div class="fish-gear" id="fishGear"></div>
+  </div>
+
+  <div class="fish-result" id="fishResult">
+    <div class="fish-result-card" id="fishResultCard"></div>
+  </div>
+</div>
+
+<div class="share-wrap" id="shareWrap" aria-hidden="true">
+  <div class="share-card">
+    <canvas id="shareCanvas"></canvas>
+  </div>
+  <div class="share-actions">
+    <button class="btn primary" id="shareSave">保存图片</button>
+    <button class="btn ghost" id="shareNative">系统分享</button>
+    <button class="btn ghost" id="shareClose">关闭</button>
+  </div>
+</div>
+
+<div class="modal-wrap" id="welcomeWrap" aria-hidden="true">
+  <div class="modal welcome-modal">
+    <div class="welcome-art"><canvas id="welcomeCanvas"></canvas></div>
+    <h2>你好呀，我是小喵</h2>
+    <p>你专注学习，我就在旁边安静陪读。<br>学得越久，小屋会越温馨，我也会解锁新的小动作。</p>
+    <button class="btn primary wide" id="welcomeStart">进入小屋</button>
+    <div class="welcome-note">原创角色 · 单机 · 无需登录</div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+</div>
+
+<script src="js/core.js"></script>
+<script src="js/vendor/three.min.js"></script>
+<script src="js/art.js"></script>
+<script src="js/furniture.js"></script>
+<script src="js/furniture2.js"></script>
+<script src="js/furniture3.js"></script>
+<script src="js/room.js"></script>
+<script src="js/room3d.js"></script>
+<script src="js/extras.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/ui2.js"></script>
+<script src="js/quiz.js"></script>
+<script src="js/paper.js"></script>
+<script src="js/fishing.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
