@@ -87,6 +87,8 @@ window.PDM = window.PDM || {};
     const tr = $('btnTurnRight');
     if (tl) tl.classList.toggle('hidden', !app.use3d);
     if (tr) tr.classList.toggle('hidden', !app.use3d);
+    const bp = $('btnBlueprint');
+    if (bp) bp.classList.toggle('hidden', !app.use3d);
     const pb = $('petBar');
     if (pb) pb.classList.toggle('hidden', !app.use3d);
     window.addEventListener('resize', resize);
@@ -1045,6 +1047,8 @@ window.PDM = window.PDM || {};
     const tr = $('btnTurnRight');
     if (tl) tl.classList.toggle('hidden', !app.use3d);
     if (tr) tr.classList.toggle('hidden', !app.use3d);
+    const bp = $('btnBlueprint');
+    if (bp) bp.classList.toggle('hidden', !app.use3d);
   }
 
   function updatePetBar() {
@@ -1304,6 +1308,12 @@ window.PDM = window.PDM || {};
     });
     $('btnTurnRight').addEventListener('click', () => {
       if (PDM.room3d && PDM.room3d.rotateRoom) PDM.room3d.rotateRoom(Math.PI / 2);
+    });
+    $('btnBlueprint').addEventListener('click', () => {
+      if (PDM.room3d && PDM.room3d.toggleBlueprint) {
+        const on = PDM.room3d.toggleBlueprint();
+        ui.toast(on ? '已切换到俯视平面图' : '已回到陪读视角', 1600);
+      }
     });
     document.addEventListener('keydown', e => {
       if (e.key !== 'r' && e.key !== 'R') return;
