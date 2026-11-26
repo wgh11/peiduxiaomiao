@@ -213,15 +213,17 @@ window.PDM = window.PDM || {};
   };
 
   B.w_calendar = function () {
+    const now = new Date();
+    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
     const g = frameBoard(.44, .58, '#FFFDF7');
     const head = box(.44, .16, .012, '#F08A72'); put(head, 0, .2, .038); g.add(head);
     const t = tex(200, 160, (c, w, h) => {
       c.textAlign = 'center'; c.fillStyle = '#B77B5E';
       c.font = '700 84px "PingFang SC", sans-serif';
-      c.fillText('26', w / 2, 96);
+      c.fillText(String(now.getDate()), w / 2, 96);
       c.font = '500 26px "PingFang SC", sans-serif';
       c.fillStyle = '#C9A386';
-      c.fillText('NOV', w / 2, 138);
+      c.fillText(months[now.getMonth()], w / 2, 138);
     });
     const num = new THREE.Mesh(new THREE.PlaneGeometry(.36, .3), new THREE.MeshBasicMaterial({ map: t, transparent: true }));
     num.position.set(0, -.1, .04); g.add(num);

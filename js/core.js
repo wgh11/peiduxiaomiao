@@ -573,38 +573,53 @@ window.PDM = window.PDM || {};
   }
 
   /* ---------- sessions ---------- */
+  // 跨零点的一轮专注按自然日拆分，避免 23:45 开始的那天漏打卡
+  function splitMinutesByDay(startedAt, minutes) {
+    if (!startedAt || minutes <= 0) return [{ date: dateKey(), minutes: minutes }];
+    const segs = [];
+    let t = startedAt;
+    let left = minutes;
+    while (left > 0 && segs.length < 4) {
+      const d = new Date(t);
+      const nextMidnight = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime();
+      const spanMin = Math.max(1, Math.round((nextMidnight - t) / 60000));
+      const take = Math.min(left, spanMin);
+      segs.push({ date: dateKey(d), minutes: take });
+      left -= take;
+      t = nextMidnight;
+    }
+    if (left > 0) segs[segs.length - 1].minutes += left;
+    return segs;
+  }
+
   function commitSession(opts) {
     const minutes = Math.max(0, Math.floor(opts.minutes || 0));
     const awaySec = Math.max(0, Math.floor(opts.awaySec || 0));
-    const today = dateKey();
+    const segs = splitMinutesByDay(opts.startedAt, minutes);
     const beforeLevel = levelInfo();
-    const hadToday = state.checkins.indexOf(today) >= 0;
-    const streakBefore = computeStreak(state);
-    const firstToday = !hadToday;
 
     const base = minutes;
     let first = 0, s3 = 0, s7 = 0;
 
-    state.sessions.push({
-      date: today,
-      minutes: minutes,
-      away: awaySec,
-      tag: opts.tag || '',
-      at: Date.now(),
-      completed: !!opts.completed
+    segs.forEach((seg, i) => {
+      state.sessions.push({
+        date: seg.date,
+        minutes: seg.minutes,
+        away: segs.length > 1 ? 0 : awaySec,
+        tag: opts.tag || '',
+        at: Date.now(),
+        completed: !!opts.completed
+      });
+      if (seg.minutes <= 0) return;
+      if (state.checkins.indexOf(seg.date) >= 0) return;
+      // 断签则清空连续里程碑，重新累计
+      if (state.checkins.indexOf(addDays(seg.date, -1)) < 0) state.streakAwards = [];
+      state.checkins.push(seg.date);
+      // 「今天第一次专注」只给这轮结束时所在的那一天，跨零点不重复发放
+      if (i === segs.length - 1) first += 5;
     });
 
-    if (minutes > 0) {
-      if (!hadToday) state.checkins.push(today);
-      // streak award bookkeeping: reset milestones if streak broke
-      if (hadToday) {
-        // same-day extra session: keep awards
-      } else {
-        const prev = streakBefore > 0 && state.checkins.indexOf(addDays(today, -1)) >= 0;
-        if (!prev) state.streakAwards = [];
-      }
-      if (firstToday) first = 5;
-    }
+    const firstToday = first > 0;
 
     const streak = computeStreak(state);
     if (streak >= 3 && state.streakAwards.indexOf(3) < 0) { s3 = 10; state.streakAwards.push(3); }

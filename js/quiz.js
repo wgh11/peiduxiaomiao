@@ -242,6 +242,26 @@ const DOMAINS = [
   const domainOf = id => DOMAINS.find(d => d.id === id);
 
   const QKEY = 'peiduxiaomiao.quiz.v1';
+  const WRONG_SEP = '|';
+  /* 错题键用 lessonId|题号；早期版本用 '-' 拼接，论文课 ID 自带连字符会解析错位 */
+  function wrongKey(lessonId, idx) { return lessonId + WRONG_SEP + idx; }
+  function parseWrongKey(k) {
+    if (typeof k !== 'string' || !k) return null;
+    let id = '', idx = NaN;
+    const p = k.lastIndexOf(WRONG_SEP);
+    if (p > 0) {
+      id = k.slice(0, p);
+      idx = Number(k.slice(p + 1));
+    } else {
+      const q = k.lastIndexOf('-');
+      if (q > 0) {
+        id = k.slice(0, q);
+        idx = Number(k.slice(q + 1));
+      }
+    }
+    if (!id || isNaN(idx)) return null;
+    return { id: id, q: idx };
+  }
   const CAP = 60;
   function defQ(){ return { done:{}, wrong:[], coinDay:{date:'',earned:0} }; }
   let Q = defQ();
@@ -373,15 +393,21 @@ const DOMAINS = [
 
   function openWrong(){
     if (!Q.wrong.length) { ui.openSheet('错题本', '<p class="tiny" style="line-height:1.8">还没有错题。去刷两关，答错的题会自动收进这里。</p>'); return; }
+    const valid = [];
+    let stale = 0;
     const html = Q.wrong.map(k => {
-      const parts = k.split('-'); const L = findLesson(parts[0]); if (!L) return '';
-      const q = L.quiz[+parts[1]];
+      const ref = parseWrongKey(k);
+      const L = ref ? findLesson(ref.id) : null;
+      const q = (L && L.quiz[ref.q]) ? L.quiz[ref.q] : null;
+      if (!q) { stale++; return ''; }
+      valid.push(k);
       return '<div class="qz-wcard"><div class="wtag">' + L.domainName + ' · ' + L.title + '</div>' +
         '<div class="wq">' + q.q + '</div>' +
         '<div class="wa">正确答案：' + 'ABCD'[q.a] + '. ' + q.opts[q.a] + '</div>' +
         '<div class="we">' + q.exp + '</div></div>';
     }).join('');
-    ui.openSheet('错题本', html);
+    if (stale > 0) { Q.wrong = valid; saveQ(); }
+    ui.openSheet('错题本', html || '<p class="tiny" style="line-height:1.8">错题已经都重做对了，错题本清空啦。</p>');
   }
 
   function onClick(e){
@@ -400,9 +426,14 @@ const DOMAINS = [
     else if (act === 'pick') {
       const i = +el.dataset.i; st.answers[st.q] = i;
       const L = findLesson(st.lessonId);
+      const key = wrongKey(L.id, st.q);
+      const at = Q.wrong.indexOf(key);
       if (i !== L.quiz[st.q].a) {
-        const key = L.id + '-' + st.q;
-        if (Q.wrong.indexOf(key) < 0) { Q.wrong.push(key); saveQ(); }
+        if (at < 0) { Q.wrong.push(key); saveQ(); }
+      } else if (at >= 0) {
+        // 复习答对就移出错题本
+        Q.wrong.splice(at, 1);
+        saveQ();
       }
       render();
     }
@@ -438,6 +469,17 @@ const DOMAINS = [
     data: DOMAINS,
     all: ALL,
     addLesson: function (l) { ALL.push(l); },
+    resetProgress: function () {
+      Q = defQ();
+      try { localStorage.removeItem(QKEY); } catch (e) {}
+      st.mode = 'map';
+      st.lessonId = null;
+      st.card = 0;
+      st.q = 0;
+      st.answers = [];
+      st.res = null;
+      render();
+    },
     open: function (id) { st.lessonId = id; st.card = 0; st.q = 0; st.answers = []; st.mode = 'card'; render(); }
   };
 

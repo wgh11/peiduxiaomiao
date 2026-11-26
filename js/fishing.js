@@ -35,8 +35,8 @@ window.PDM = window.PDM || {};
       PDM.ui.toast('先专心坐完这一轮，休息时再来钓鱼');
       return;
     }
-    if (!core.canFish()) {
-      PDM.ui.toast('完成一轮专注或先暂停，就能去鱼塘休息');
+    if (!core.canFish() && core.bagCount() <= 0) {
+      PDM.ui.toast('完成一轮专注后就能去鱼塘；鱼篓里有鱼随时可以来兑换');
       return;
     }
     if (G.open) return;
@@ -82,10 +82,13 @@ window.PDM = window.PDM || {};
     if (!btn) return;
     const f = core.state().fishing || {};
     const app = PDM.app && PDM.app.state;
-    const resting = !!f.breakReady && (!app || !app.session || app.session.pausedAt);
-    btn.classList.toggle('hidden', !resting);
-    if (resting) {
-      const left = f.castsLeft | 0;
+    const idle = !app || !app.session || app.session.pausedAt;
+    const resting = !!f.breakReady && idle;
+    const hasBag = core.bagCount() > 0;
+    const show = idle && (resting || hasBag);
+    btn.classList.toggle('hidden', !show);
+    if (show) {
+      const left = resting ? (f.castsLeft | 0) : 0;
       btn.textContent = left > 0 ? '休息一下 · 去鱼塘' : '去鱼塘兑换小鱼干';
     }
   }
@@ -274,9 +277,10 @@ window.PDM = window.PDM || {};
     if (!tip || !btn) return;
     const total = F.castsPerBreak;
     if (G.phase === 'idle') {
+      const hasBag = core.bagCount() > 0;
       tip.textContent = left > 0
         ? '还剩 ' + left + ' / ' + total + ' 杆 · 等浮标沉下去的一瞬间收竿'
-        : '这一轮的鱼竿收好了';
+        : (hasBag ? '这一轮没有鱼竿了，先把鱼篓里的鱼兑换掉' : '这一轮的鱼竿收好了');
       btn.textContent = left > 0 ? '抛竿' : '没鱼竿啦';
       btn.disabled = left <= 0;
       btn.classList.remove('urgent');

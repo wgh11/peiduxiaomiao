@@ -342,7 +342,6 @@ window.PDM = window.PDM || {};
       s.hiddenAt = 0;
       setCatState('idle');
       ui.toast('已暂停计时，小猫陪你休息一下', 2200);
-      if (activeElapsedMs(s) >= 60000) core.startBreak();
     }
     syncPauseBtn();
     updateTimerUI();
@@ -475,6 +474,7 @@ window.PDM = window.PDM || {};
 
     const summary = core.commitSession({
       minutes: minutes,
+      startedAt: s.startedAt,
       awaySec: Math.round(s.awayMs / 1000 * app.speed),
       tag: s.tag || '',
       completed: completed
@@ -483,7 +483,7 @@ window.PDM = window.PDM || {};
     summary.mode = s.mode;
     summary.tag = s.tag || '';
     summary.snacks = 0;
-    if (completed && minutes >= 15) {
+    if (minutes >= 15) {
       core.addSnack(1);
       summary.snacks = 1;
       updatePetBar();
@@ -715,11 +715,16 @@ window.PDM = window.PDM || {};
 
   function exportSave() {
     try {
+      let quizRaw = null, paperRaw = null;
+      try { quizRaw = localStorage.getItem('peiduxiaomiao.quiz.v1'); } catch (e) {}
+      try { paperRaw = localStorage.getItem('peiduxiaomiao.paper.lessons.v1'); } catch (e) {}
       const payload = {
         app: 'peiduxiaomiao',
-        v: 1,
+        v: 2,
         exportedAt: new Date().toISOString(),
-        save: core.state()
+        save: core.state(),
+        quiz: quizRaw,
+        paper: paperRaw
       };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -903,6 +908,39 @@ window.PDM = window.PDM || {};
         exportSave();
         break;
       }
+      case 'importSave': {
+        ui.openModal(
+          '<h2 style="font-size:17px;margin-bottom:6px">导入存档</h2>' +
+          '<p class="tiny" style="line-height:1.7;margin-bottom:10px">粘贴之前导出的整段 JSON，会覆盖当前进度（包括刷题记录）。</p>' +
+          '<textarea id="importSaveInput" class="text-input" placeholder="粘贴存档 JSON" ' +
+          'style="width:100%;height:150px;resize:vertical;font-size:12px"></textarea>' +
+          '<div class="reward-actions" style="margin-top:12px">' +
+          '<button class="btn primary" data-action="confirmImport">确认导入</button>' +
+          '<button class="btn ghost" data-action="closeModal">取消</button></div>');
+        break;
+      }
+      case 'confirmImport': {
+        const inp = $('importSaveInput');
+        const raw = inp ? inp.value : '';
+        let data = null;
+        try { data = JSON.parse(raw); } catch (e) { data = null; }
+        if (!data || data.app !== 'peiduxiaomiao' || !data.save) {
+          ui.toast('这不是「陪读小喵」的存档内容', 2400);
+          return;
+        }
+        try {
+          localStorage.setItem('peiduxiaomiao.save.v1', JSON.stringify(data.save));
+          if (data.quiz) localStorage.setItem('peiduxiaomiao.quiz.v1', String(data.quiz));
+          if (data.paper) localStorage.setItem('peiduxiaomiao.paper.lessons.v1', String(data.paper));
+        } catch (e) {
+          ui.toast('写入失败，可能是浏览器存储空间不足', 2400);
+          return;
+        }
+        ui.closeModal();
+        ui.toast('存档已导入，正在刷新…', 1800);
+        setTimeout(() => location.reload(), 600);
+        break;
+      }
       case 'confirmCustomMin': {
         const inp = $('customMinInput');
         let v = Math.round(Number(inp ? inp.value : 0));
@@ -934,6 +972,11 @@ window.PDM = window.PDM || {};
       }
       case 'confirmReset': {
         core.reset();
+        if (PDM.quiz && PDM.quiz.resetProgress) PDM.quiz.resetProgress();
+        try {
+          localStorage.removeItem('pdm.camAz');
+          localStorage.removeItem('pdm.catHouseRot');
+        } catch (e) {}
         app.session = null;
         clearSessionStore();
         app.selMin = 25;
@@ -1163,7 +1206,7 @@ window.PDM = window.PDM || {};
             e.preventDefault();
             return;
           }
-          const hit = PDM.room3d.pick(e.clientX, e.clientY);
+          const hit = app.decorMode ? PDM.room3d.pick(e.clientX, e.clientY) : null;
           if (hit) {
             app.lastTouched = hit.id;
             if (!PDM.room3d.beginDrag(e.clientX, e.clientY)) return;
@@ -1328,7 +1371,7 @@ window.PDM = window.PDM || {};
       const el = e.target.closest('[data-action]');
       if (!el) return;
       const action = el.dataset.action;
-      if (action === 'closeModal' || action === 'confirmReset' || action === 'confirmStop' || action === 'adDouble' || action.startsWith('ad') || action.startsWith('buy') || action.startsWith('decor') || action === 'openDecor' || action === 'comic' || action === 'makeup' || action === 'toggleSpeed' || action === 'toggleBreak' || action === 'exportSave' || action === 'confirmCustomMin' || action === 'share' || action === 'analytics' || action === 'resetData' || action === 'closeReward' || action === 'goShop' || action === 'wearOutfit' || action === 'closeWelcome' || action === 'goStart' || action === 'goFishing') {
+      if (action === 'closeModal' || action === 'confirmReset' || action === 'confirmStop' || action === 'adDouble' || action.startsWith('ad') || action.startsWith('buy') || action.startsWith('decor') || action === 'openDecor' || action === 'comic' || action === 'makeup' || action === 'toggleSpeed' || action === 'toggleBreak' || action === 'exportSave' || action === 'importSave' || action === 'confirmImport' || action === 'confirmCustomMin' || action === 'share' || action === 'analytics' || action === 'resetData' || action === 'closeReward' || action === 'goShop' || action === 'wearOutfit' || action === 'closeWelcome' || action === 'goStart' || action === 'goFishing') {
         if (el.tagName === 'BUTTON' || el.classList.contains('switch') || el.dataset.action === 'openDecor') e.preventDefault();
         handleAction(action, el);
       }
@@ -1361,8 +1404,14 @@ window.PDM = window.PDM || {};
   /* ---------------- boot ---------------- */
   function boot() {
     core.load();
-    app.speed = core.state().settings.speed || 1;
+    // 演示加速只在 ?debug=1 下可用，避免误触刷掉正式存档的养成节奏
+    const debugMode = /(?:\?|&)(?:debug|demo)=1/.test(location.search || '');
+    app.speed = debugMode ? (core.state().settings.speed || 1) : 1;
     if (app.speed <= 1) app.speed = 1;
+    if (!debugMode) {
+      const chip = $('speedChip');
+      if (chip) chip.classList.add('hidden');
+    }
     ui.init();
     setupCanvas();
     bindStatic();

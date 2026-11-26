@@ -88,6 +88,33 @@ window.PDM = window.PDM || {};
   let current = null;
   let currentLessonId = null;
 
+  /* 每日论文只当天生成，跨天后错题本会找不到课程定义，
+     因此把最近几天的课程缓存到本地，重新打开时注册回题库。 */
+  const PKEY = 'peiduxiaomiao.paper.lessons.v1';
+
+  function registerLesson(lesson) {
+    const all = PDM.quiz.all || [];
+    if (all.some(l => l.id === lesson.id)) return;
+    PDM.quiz.addLesson(lesson);
+  }
+
+  function cacheLesson(lesson) {
+    try {
+      const arr = JSON.parse(localStorage.getItem(PKEY) || '[]');
+      const list = Array.isArray(arr) ? arr : [];
+      if (!list.some(l => l && l.id === lesson.id)) list.push(lesson);
+      while (list.length > 14) list.shift();
+      localStorage.setItem(PKEY, JSON.stringify(list));
+    } catch (e) {}
+  }
+
+  function loadCached() {
+    try {
+      const arr = JSON.parse(localStorage.getItem(PKEY) || '[]');
+      if (Array.isArray(arr)) arr.forEach(l => { if (l && l.id && l.quiz) registerLesson(l); });
+    } catch (e) {}
+  }
+
   function buildLesson(p, dateKey) {
     return {
       id: 'paper_' + p.id + '_' + dateKey,
@@ -104,10 +131,12 @@ window.PDM = window.PDM || {};
     current = p;
     const lesson = buildLesson(p, core.dateKey());
     currentLessonId = lesson.id;
-    PDM.quiz.addLesson(lesson);
+    registerLesson(lesson);
+    cacheLesson(lesson);
     if (PDM.quiz.state.mode === 'map') PDM.quiz.render();
   }
 
+  loadCached();
   apply(JSON.parse(JSON.stringify(PAPERS[dayIndex() % PAPERS.length])));
 
   /* ---------------- 视图 ---------------- */
