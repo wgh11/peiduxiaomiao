@@ -8,10 +8,10 @@ window.PDM = window.PDM || {};
 
   const ROOM = { w: 4.4, d: 3.0, h: 3.0, backZ: -1.5, leftX: -2.2, deskY: 0.84 };
   const CL = {
-    wall: '#E3E2D9', wallTop: '#F5F5F0', floor: '#A79E8D', floor2: '#958A78',
-    base: '#C8C0AE', desk: '#806F5E', deskTop: '#CFC6B5', white: '#F6F6F1',
-    ink: '#34444A', coral: '#B96E5B', coralDeep: '#9D5045', sage: '#789889',
-    honey: '#B68B4B', sky: '#B8C8C9', cream: '#F1EFE6'
+    wall: '#E8E0D2', wallTop: '#FBF5EA', floor: '#B49B7E', floor2: '#A1896D',
+    base: '#D1BFA5', desk: '#8E6F55', deskTop: '#D7C5A9', white: '#FFF9EF',
+    ink: '#5B4A42', coral: '#C9826D', coralDeep: '#AA604F', sage: '#879F8E',
+    honey: '#C39A5B', sky: '#D3D0C5', cream: '#F7F0E1'
   };
   const MAP = {
     wall: { x: [-2.02, 2.02], y: [2.72, 0.88], z: -1.42 },
@@ -1291,8 +1291,8 @@ window.PDM = window.PDM || {};
     lights.fill.intensity = env.night ? .08 : .18;
     lights.win.intensity = env.night ? .06 : env.dusk ? .55 : env.morning ? .3 : .42;
     lights.win.color.set(env.night ? '#9FB6E8' : env.dusk ? '#FFB07A' : '#FFD9A6');
-    if (glowMat) glowMat.opacity = env.night ? 0 : env.dusk ? .36 : .44;
-    scene.background = new THREE.Color(env.night ? '#2F3B57' : env.dusk ? '#F6D6BC' : '#FBF1E2');
+    if (glowMat) glowMat.opacity = env.night ? .08 : env.dusk ? .38 : .46;
+    scene.background = new THREE.Color(env.night ? '#3E4549' : env.dusk ? '#EBD0B6' : '#F4E9DA');
     if (skyMesh) {
       skyMesh.material.map.dispose();
       skyMesh.material.map = skyTexture(env);
@@ -1317,7 +1317,7 @@ window.PDM = window.PDM || {};
     renderer.toneMappingExposure = 1.02;
 
     scene = new THREE.Scene();
-    scene.background = new THREE.Color('#FBF1E2');
+    scene.background = new THREE.Color('#F4E9DA');
     camera = new THREE.OrthographicCamera(-VIEW_H / 2, VIEW_H / 2, VIEW_H / 2, -VIEW_H / 2, .1, 60);
     try {
       const a = parseFloat(localStorage.getItem('pdm.camAz'));
