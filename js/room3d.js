@@ -886,7 +886,7 @@ window.PDM = window.PDM || {};
   let available = false, active = false;
   const VIEW_H = 5.35;
   const CAM_R = 9.0, CAM_H = 4.95;
-  const AZ_DEFAULT = .6435, AZ_MIN = .2, AZ_MAX = 1.08;
+  const AZ_DEFAULT = .6435;
   let baseTarget = new THREE.Vector3(-.06, .84, -.48);
   let camTarget = baseTarget.clone();
   let camGoal = baseTarget.clone();
@@ -1321,7 +1321,7 @@ window.PDM = window.PDM || {};
     camera = new THREE.OrthographicCamera(-VIEW_H / 2, VIEW_H / 2, VIEW_H / 2, -VIEW_H / 2, .1, 60);
     try {
       const a = parseFloat(localStorage.getItem('pdm.camAz'));
-      if (!isNaN(a)) camAz = camAzGoal = Math.max(AZ_MIN, Math.min(AZ_MAX, a));
+      if (!isNaN(a)) camAz = camAzGoal = a;
       const h = parseFloat(localStorage.getItem('pdm.catHouseRot'));
       if (!isNaN(h)) houseRot = h;
     } catch (err) {}
@@ -1389,7 +1389,7 @@ window.PDM = window.PDM || {};
 
   function moveOrbit(clientX, clientY) {
     if (!orbit) return;
-    camAzGoal = Math.max(AZ_MIN, Math.min(AZ_MAX, orbit.az - (clientX - orbit.x) * .0036));
+    camAzGoal = orbit.az - (clientX - orbit.x) * .0036;
   }
 
   function endOrbit() {
@@ -1411,6 +1411,12 @@ window.PDM = window.PDM || {};
     if (house) house.rotation.y = houseRot;
     try { localStorage.setItem('pdm.catHouseRot', String(houseRot)); } catch (e) {}
     return houseRot;
+  }
+
+  function rotateRoom(step) {
+    camAzGoal += Number(step) || Math.PI / 2;
+    try { localStorage.setItem('pdm.camAz', String(camAzGoal)); } catch (e) {}
+    return camAzGoal;
   }
 
   function pickCatHouse(clientX, clientY) {
@@ -1862,6 +1868,7 @@ window.PDM = window.PDM || {};
     isOrbiting: isOrbiting,
     zoomBy: zoomBy,
     rotateHouse: rotateHouse,
+    rotateRoom: rotateRoom,
     cameraInfo: () => ({ az: camAzGoal, zoom: camZoomGoal, focused: houseFocus }),
     setPointer: setPointer,
     items: () => items
