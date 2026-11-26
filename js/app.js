@@ -83,6 +83,10 @@ window.PDM = window.PDM || {};
     if (hb) hb.classList.toggle('hidden', !app.use3d);
     const rb = $('btnRotate');
     if (rb) rb.classList.toggle('hidden', !app.use3d);
+    const tl = $('btnTurnLeft');
+    const tr = $('btnTurnRight');
+    if (tl) tl.classList.toggle('hidden', !app.use3d);
+    if (tr) tr.classList.toggle('hidden', !app.use3d);
     const pb = $('petBar');
     if (pb) pb.classList.toggle('hidden', !app.use3d);
     window.addEventListener('resize', resize);
@@ -1037,6 +1041,10 @@ window.PDM = window.PDM || {};
     if (hb) hb.classList.toggle('hidden', !app.use3d || !!on || (PDM.room3d && PDM.room3d.isFocused && PDM.room3d.isFocused()));
     const rb = $('btnRotate');
     if (rb) rb.classList.toggle('hidden', !app.use3d || !!on);
+    const tl = $('btnTurnLeft');
+    const tr = $('btnTurnRight');
+    if (tl) tl.classList.toggle('hidden', !app.use3d);
+    if (tr) tr.classList.toggle('hidden', !app.use3d);
   }
 
   function updatePetBar() {
@@ -1291,6 +1299,12 @@ window.PDM = window.PDM || {};
     $('btnCatHouse').addEventListener('click', enterCatHouse);
     $('btnBackRoom').addEventListener('click', exitCatHouse);
     $('btnRotate').addEventListener('click', rotateCurrent);
+    $('btnTurnLeft').addEventListener('click', () => {
+      if (PDM.room3d && PDM.room3d.rotateRoom) PDM.room3d.rotateRoom(-Math.PI / 2);
+    });
+    $('btnTurnRight').addEventListener('click', () => {
+      if (PDM.room3d && PDM.room3d.rotateRoom) PDM.room3d.rotateRoom(Math.PI / 2);
+    });
     document.addEventListener('keydown', e => {
       if (e.key !== 'r' && e.key !== 'R') return;
       const tag = (e.target && e.target.tagName) || '';
