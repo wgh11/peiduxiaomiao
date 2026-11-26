@@ -104,7 +104,8 @@ window.PDM = window.PDM || {};
         t: ts / 1000,
         catState: app.cat.state,
         outfit: core.state().outfit,
-        level: core.levelInfo().level
+        level: core.levelInfo().level,
+        focus: !!app.session
       });
       return;
     }
