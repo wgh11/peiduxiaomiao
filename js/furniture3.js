@@ -232,6 +232,33 @@ window.PDM = window.PDM || {};
     rr(ctx, -3, -15, 6, 9, 3); ctx.fill();
   };
 
+  ITEMS.d_foodbox = function (ctx, t) {
+    ctx.fillStyle = 'rgba(120, 88, 62, .10)'; ell(ctx, 0, 2, 28, 6); ctx.fill();
+    ctx.fillStyle = '#F3C58D'; rr(ctx, -25, -22, 50, 20, 5); ctx.fill();
+    ctx.fillStyle = '#E8947B'; rr(ctx, -27, -26, 54, 6, 3); ctx.fill();
+    ctx.fillStyle = '#FFF4E6'; ell(ctx, 0, -19, 12, 4.4); ctx.fill();
+    ctx.fillStyle = '#EFB27A'; ell(ctx, -5, -20, 3.5, 2.2); ctx.fill();
+    ctx.fillStyle = '#D97B5A'; ell(ctx, 4, -19, 3.2, 2.1); ctx.fill();
+    ctx.fillStyle = '#FFF8EE'; rr(ctx, -7, -11, 14, 5, 2); ctx.fill();
+  };
+
+  ITEMS.o_fishbowl = function (ctx, t) {
+    ctx.fillStyle = 'rgba(120, 88, 62, .10)'; ell(ctx, 0, 2, 22, 5); ctx.fill();
+    ctx.fillStyle = 'rgba(191, 224, 232, .75)'; ell(ctx, 0, -22, 22, 25); ctx.fill();
+    ctx.strokeStyle = '#D9B894'; ctx.lineWidth = 2; ell(ctx, 0, -22, 22, 25); ctx.stroke();
+    const x = Math.sin(t * 1.8) * 6 - 4;
+    ctx.fillStyle = '#F09A63'; ell(ctx, x, -20, 8, 4); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(x + 7, -20); ctx.lineTo(x + 13, -25); ctx.lineTo(x + 13, -15); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#C99B72'; rr(ctx, -15, 0, 30, 5, 2); ctx.fill();
+  };
+
+  ITEMS.o_starprojector = function (ctx, t) {
+    ctx.fillStyle = 'rgba(120, 88, 62, .10)'; ell(ctx, 0, 2, 22, 5); ctx.fill();
+    ctx.fillStyle = '#6879B8'; rr(ctx, -18, -12, 36, 13, 6); ctx.fill();
+    ctx.fillStyle = '#9CB7FF'; ell(ctx, 0, -16, 15, 12); ctx.fill();
+    [[-7, -18, 3], [4, -22, 2.3], [8, -13, 2]].forEach(([x, y, r], i) => star(ctx, x + Math.sin(t * 1.5 + i), y, r, '#FFE7A8', .95));
+  };
+
   /* ---------------- icon config ---------------- */
   const ICON = PDM.furniture.ICON;
   ICON.w_neon = { s: 0.62, dy: -6 };
@@ -240,4 +267,7 @@ window.PDM = window.PDM || {};
   ICON.d_books = { s: 0.95, dy: 0 };
   ICON.fl_pouf = { s: 0.85, dy: -4 };
   ICON.o_vase = { s: 1.0, dy: 0 };
+  ICON.d_foodbox = { s: 0.95, dy: -2 };
+  ICON.o_fishbowl = { s: 1.0, dy: 0 };
+  ICON.o_starprojector = { s: 1.0, dy: 0 };
 })(window.PDM);
