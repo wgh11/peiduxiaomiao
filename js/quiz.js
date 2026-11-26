@@ -246,6 +246,13 @@ const DOMAINS = [
   function defQ(){ return { done:{}, wrong:[], coinDay:{date:'',earned:0} }; }
   let Q = defQ();
   try { const raw = JSON.parse(localStorage.getItem(QKEY)); if (raw) Q = Object.assign(defQ(), raw); } catch (e) {}
+  // 兼容旧版 "lessonId-qIdx" 字符串，同时保留题目快照，避免每日论文换日后错题失效
+  Q.wrong = (Array.isArray(Q.wrong) ? Q.wrong : []).map(item => {
+    if (item && typeof item === 'object') return item;
+    const key = String(item || '');
+    const cut = key.lastIndexOf('-');
+    return { lessonId: cut > 0 ? key.slice(0, cut) : key, qIdx: cut > 0 ? Number(key.slice(cut + 1)) : 0 };
+  }).filter(item => item && item.lessonId && Number.isFinite(Number(item.qIdx)));
   function saveQ(){ try { localStorage.setItem(QKEY, JSON.stringify(Q)); } catch (e) {} }
 
   const st = { mode:'map', domain:'ai', lessonId:null, card:0, q:0, answers:[], res:null };
@@ -373,13 +380,17 @@ const DOMAINS = [
 
   function openWrong(){
     if (!Q.wrong.length) { ui.openSheet('错题本', '<p class="tiny" style="line-height:1.8">还没有错题。去刷两关，答错的题会自动收进这里。</p>'); return; }
-    const html = Q.wrong.map(k => {
-      const parts = k.split('-'); const L = findLesson(parts[0]); if (!L) return '';
-      const q = L.quiz[+parts[1]];
-      return '<div class="qz-wcard"><div class="wtag">' + L.domainName + ' · ' + L.title + '</div>' +
-        '<div class="wq">' + q.q + '</div>' +
-        '<div class="wa">正确答案：' + 'ABCD'[q.a] + '. ' + q.opts[q.a] + '</div>' +
-        '<div class="we">' + q.exp + '</div></div>';
+    const html = Q.wrong.map(item => {
+      const L = findLesson(item.lessonId);
+      const q = L && L.quiz[Number(item.qIdx)];
+      const title = (L && L.title) || item.title || '每日论文';
+      const domainName = (L && L.domainName) || item.domainName || '论文精读';
+      const data = q || item;
+      if (!data || !data.q) return '';
+      return '<div class="qz-wcard"><div class="wtag">' + domainName + ' · ' + title + '</div>' +
+        '<div class="wq">' + data.q + '</div>' +
+        '<div class="wa">正确答案：' + 'ABCD'[data.a] + '. ' + data.opts[data.a] + '</div>' +
+        '<div class="we">' + data.exp + '</div></div>';
     }).join('');
     ui.openSheet('错题本', html);
   }
@@ -401,8 +412,16 @@ const DOMAINS = [
       const i = +el.dataset.i; st.answers[st.q] = i;
       const L = findLesson(st.lessonId);
       if (i !== L.quiz[st.q].a) {
-        const key = L.id + '-' + st.q;
-        if (Q.wrong.indexOf(key) < 0) { Q.wrong.push(key); saveQ(); }
+        const q = L.quiz[st.q];
+        const exists = Q.wrong.some(item => item.lessonId === L.id && Number(item.qIdx) === st.q);
+        if (!exists) {
+          Q.wrong.push({ lessonId: L.id, qIdx: st.q, title: L.title, domainName: L.domainName, q: q.q, opts: q.opts, a: q.a, exp: q.exp });
+          saveQ();
+        }
+      } else {
+        const before = Q.wrong.length;
+        Q.wrong = Q.wrong.filter(item => !(item.lessonId === L.id && Number(item.qIdx) === st.q));
+        if (Q.wrong.length !== before) saveQ();
       }
       render();
     }
@@ -437,7 +456,11 @@ const DOMAINS = [
     state: st,
     data: DOMAINS,
     all: ALL,
-    addLesson: function (l) { ALL.push(l); },
+    addLesson: function (l) {
+      const i = ALL.findIndex(x => x.id === l.id);
+      if (i >= 0) ALL[i] = l; else ALL.push(l);
+    },
+    reset: function () { Q = defQ(); saveQ(); st.mode = 'map'; st.lessonId = null; st.answers = []; st.res = null; render(); },
     open: function (id) { st.lessonId = id; st.card = 0; st.q = 0; st.answers = []; st.mode = 'card'; render(); }
   };
 
