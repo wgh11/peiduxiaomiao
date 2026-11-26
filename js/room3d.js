@@ -891,6 +891,8 @@ window.PDM = window.PDM || {};
   let camTarget = baseTarget.clone();
   let camGoal = baseTarget.clone();
   let camZoom = 1.06, camZoomGoal = 1.06;
+  let camHGoal = CAM_H;
+  let blueprint = false;
   let camAz = AZ_DEFAULT, camAzGoal = AZ_DEFAULT;
   let orbit = null;
   let houseRot = .34;
@@ -1372,14 +1374,25 @@ window.PDM = window.PDM || {};
 
   function resetCamera() {
     houseFocus = false;
+    blueprint = false;
     camGoal.copy(baseTarget);
     camZoomGoal = 1.06;
+    camHGoal = CAM_H;
     camAzGoal = AZ_DEFAULT;
     try { localStorage.setItem('pdm.camAz', String(AZ_DEFAULT)); } catch (e) {}
   }
 
   function isFocused() {
     return houseFocus;
+  }
+
+  function toggleBlueprint() {
+    blueprint = !blueprint;
+    houseFocus = false;
+    camGoal.copy(baseTarget);
+    camHGoal = blueprint ? 7.2 : CAM_H;
+    camZoomGoal = blueprint ? 1.18 : 1.06;
+    return blueprint;
   }
 
   function beginOrbit(clientX, clientY) {
@@ -1665,7 +1678,7 @@ window.PDM = window.PDM || {};
     const panX = (camAz - AZ_DEFAULT) * .55;
     camera.position.set(
       camTarget.x + ox + panX + ptrS.x * .22,
-      camTarget.y + CAM_H - ptrS.y * .14,
+      camTarget.y + camHGoal - ptrS.y * .14,
       camTarget.z + oz + ptrS.x * .1
     );
     camera.lookAt(camTarget.x + panX + ptrS.x * .14, camTarget.y - ptrS.y * .1, camTarget.z);
@@ -1862,6 +1875,8 @@ window.PDM = window.PDM || {};
     focusCatHouse: focusCatHouse,
     resetCamera: resetCamera,
     isFocused: isFocused,
+    toggleBlueprint: toggleBlueprint,
+    isBlueprint: () => blueprint,
     beginOrbit: beginOrbit,
     moveOrbit: moveOrbit,
     endOrbit: endOrbit,
