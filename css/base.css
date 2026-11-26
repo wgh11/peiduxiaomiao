@@ -1,24 +1,24 @@
 /* ============ 陪读小喵 · base tokens & shell ============ */
 :root {
-  --bg: #F3F4F1;
-  --bg-deep: #E7EAE6;
-  --card: #FCFCF9;
-  --card-soft: #F1F3EF;
-  --ink: #26343A;
-  --ink-soft: #637078;
-  --ink-faint: #89949A;
-  --line: #D8DEDA;
-  --coral: #C97963;
-  --coral-deep: #A95749;
-  --coral-soft: #F3E2DC;
-  --honey: #B68B4B;
-  --honey-soft: #F2EBDD;
-  --sage: #789889;
-  --sage-deep: #527766;
-  --sage-soft: #E2ECE6;
-  --sky: #A7BBC0;
-  --shadow: 0 10px 28px rgba(39, 54, 60, .09);
-  --shadow-soft: 0 2px 8px rgba(39, 54, 60, .06);
+  --bg: #F6F2EA;
+  --bg-deep: #EDE6DA;
+  --card: #FFFDF8;
+  --card-soft: #F7F2E9;
+  --ink: #38403D;
+  --ink-soft: #77766B;
+  --ink-faint: #9A9588;
+  --line: #E5DCCE;
+  --coral: #C9826D;
+  --coral-deep: #AA604F;
+  --coral-soft: #F5E3DB;
+  --honey: #C39A5B;
+  --honey-soft: #F4EBD9;
+  --sage: #879F8E;
+  --sage-deep: #64806D;
+  --sage-soft: #E7EEE8;
+  --sky: #C1C8C2;
+  --shadow: 0 10px 28px rgba(104, 74, 50, .10);
+  --shadow-soft: 0 2px 8px rgba(104, 74, 50, .07);
   --r-lg: 16px;
   --r-md: 12px;
   --r-sm: 8px;
@@ -34,10 +34,10 @@ body {
   margin: 0;
   font-family: "PingFang SC", "HarmonyOS Sans SC", "MiSans", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
   color: var(--ink);
-  background: #DDE2E0;
+  background: #E8E1D6;
   background-image:
     radial-gradient(circle at 50% -10%, rgba(255, 255, 255, .72), transparent 46%),
-    radial-gradient(circle at 50% 110%, rgba(117, 137, 137, .18), transparent 52%);
+    radial-gradient(circle at 50% 110%, rgba(184, 148, 108, .18), transparent 52%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -79,7 +79,7 @@ svg { display: block; }
   #phone {
     height: min(920px, calc(100dvh - 44px));
     border-radius: 24px;
-    box-shadow: 0 24px 64px rgba(39, 54, 60, .22), 0 0 0 1px rgba(255, 255, 255, .65) inset;
+    box-shadow: 0 24px 64px rgba(104, 74, 50, .22), 0 0 0 1px rgba(255, 255, 255, .65) inset;
   }
 }
 
