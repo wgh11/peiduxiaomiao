@@ -21,23 +21,25 @@
   #app{
     height:100%;display:flex;flex-direction:column;
     max-width:520px;margin:0 auto;position:relative;
+    padding:0;
     padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
   }
   .top{
     display:flex;align-items:center;justify-content:space-between;
     padding:14px 18px 6px;flex:0 0 auto;
   }
-  .brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:16px;letter-spacing:.5px}
-  .brand i{width:22px;height:22px;border-radius:50%;background:var(--accent2);display:inline-block;position:relative}
-  .brand i::after{content:"";position:absolute;inset:6px;border-radius:50%;background:var(--accent)}
-  .stats{display:flex;gap:14px;font-size:13px;color:var(--sub)}
-  .stat{display:flex;align-items:center;gap:4px}
-  .stat b{color:var(--ink);font-size:14px}
+  .brand{display:flex;align-items:center;font-weight:700;font-size:16px;letter-spacing:.5px}
+  .brand i{width:22px;height:22px;border-radius:50%;background:var(--accent2);display:inline-block;position:relative;margin-right:8px}
+  .brand i::after{content:"";position:absolute;top:6px;right:6px;bottom:6px;left:6px;border-radius:50%;background:var(--accent)}
+  .stats{display:flex;font-size:13px;color:var(--sub)}
+  .stat{display:flex;align-items:center}
+  .stat + .stat{margin-left:14px}
+  .stat b{color:var(--ink);font-size:14px;margin-left:4px}
   .stat svg{width:15px;height:15px;fill:var(--gold)}
 
   main{flex:1 1 auto;position:relative;overflow:hidden}
   .screen{
-    position:absolute;inset:0;display:flex;flex-direction:column;
+    position:absolute;top:0;right:0;bottom:0;left:0;display:flex;flex-direction:column;
     opacity:0;pointer-events:none;transform:translateY(8px);
     transition:opacity .25s ease,transform .25s ease;
   }
@@ -54,7 +56,7 @@
     filter:blur(2px);
   }
   .cat{
-    position:relative;width:min(64vw,268px);height:auto;
+    position:relative;width:268px;max-width:64vw;height:auto;
     animation:breathe 4.6s ease-in-out infinite;
     user-select:none;-webkit-user-drag:none;
   }
@@ -78,14 +80,16 @@
   .time.dim{color:#C7B6A8}
   .bar{height:6px;background:#F3E7D8;border-radius:99px;overflow:hidden}
   .bar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .3s linear}
-  .chips{display:flex;gap:8px;margin:12px 0 0}
+  .chips{display:flex;margin:12px 0 0}
+  .chips button + button{margin-left:8px}
   .chips button{
     flex:1;padding:9px 0;border-radius:14px;border:1px solid var(--line);
     background:#FFF9F0;color:var(--sub);font-size:13px;font-family:inherit;
   }
   .chips button.on{background:#FFEEE2;border-color:#F6CDB5;color:#C4705A;font-weight:600}
   .chips.locked button{opacity:.55}
-  .actions{display:flex;gap:8px;margin-top:12px}
+  .actions{display:flex;margin-top:12px}
+  .actions .btn + .btn{margin-left:8px}
   .btn{
     border:0;border-radius:15px;padding:13px 14px;font-size:15px;font-family:inherit;
     font-weight:600;flex:1;cursor:pointer;transition:transform .12s ease,opacity .2s;
@@ -106,16 +110,52 @@
     padding:7px 12px;border-radius:99px;white-space:nowrap;max-width:92%;
     box-shadow:0 4px 12px rgba(120,100,80,.1);
   }
-  .casts{position:absolute;left:14px;bottom:12px;display:flex;gap:6px}
+  .casts{position:absolute;left:14px;bottom:12px;display:flex}
+  .casts i + i{margin-left:6px}
   .casts i{width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.65);border:1px solid rgba(255,255,255,.9)}
   .casts i.on{background:#EF9B80;border-color:#EF9B80}
-  .pond-actions{display:flex;gap:10px;padding:12px 16px 4px;flex:0 0 auto}
+  .pond-actions{display:flex;padding:12px 16px 4px;flex:0 0 auto}
+  .pond-actions .btn + .btn{margin-left:10px}
   .pond-note{text-align:center;font-size:12px;color:#BCA797;padding:0 16px 12px}
+
+  /* ---------- 商店 / 图鉴 ---------- */
+  .pad-title{display:flex;align-items:baseline;justify-content:space-between;padding:10px 18px 2px}
+  .pad-title h2{margin:0;font-size:16px}
+  .pad-title small{font-size:12px;color:#BCA797}
+  .pad-title small b{color:var(--gold);font-size:13px}
+  .grid{
+    flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    padding:8px 14px 6px;display:flex;flex-wrap:wrap;align-content:flex-start;
+  }
+  .card{
+    width:calc(50% - 6px);margin:0 12px 12px 0;background:var(--card);
+    border:1px solid var(--line);border-radius:18px;padding:10px 10px 12px;text-align:center;
+  }
+  .card:nth-child(2n){margin-right:0}
+  .card img{width:86px;height:86px;object-fit:contain;display:block;margin:2px auto 6px}
+  .card .nm{font-size:14px;font-weight:600}
+  .card .rb{font-size:11.5px;color:var(--sub);margin-top:3px;line-height:1.5}
+  .card .cta{
+    margin-top:9px;width:100%;border-radius:12px;padding:8px 0;font-size:12.5px;
+    font-family:inherit;background:#FFF6EC;color:#8A7365;border:1px solid var(--line);
+  }
+  .card .cta.on{background:#FFEEE2;border-color:#F6CDB5;color:#C4705A;font-weight:600}
+  .card.locked img{filter:grayscale(1);opacity:.32}
+  .card.locked .nm{color:#B7A698}
+  .seg{display:flex;padding:8px 16px 0}
+  .seg button{
+    flex:1;padding:9px 0;border-radius:14px;border:1px solid var(--line);
+    background:#FFFDF8;color:var(--sub);font-size:13px;font-family:inherit;
+  }
+  .seg button + button{margin-left:8px}
+  .seg button.on{background:#FFF1E4;border-color:#F4CDB6;color:#C4705A;font-weight:600}
+  .list-note{text-align:center;font-size:12px;color:#BCA797;padding:2px 18px 8px}
 
   /* ---------- 底部 ---------- */
   .tabs{
-    flex:0 0 auto;display:flex;gap:10px;padding:8px 16px 12px;
+    flex:0 0 auto;display:flex;padding:8px 16px 12px;
   }
+  .tab + .tab{margin-left:10px}
   .tab{
     flex:1;padding:11px 0;border-radius:16px;border:1px solid var(--line);
     background:#FFFDF8;color:var(--sub);font-size:14px;font-family:inherit;
@@ -130,7 +170,7 @@
   }
   .toast.show{opacity:1;transform:translate(-50%,0)}
   .modal{
-    position:fixed;inset:0;background:rgba(60,46,38,.42);z-index:50;
+    position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(60,46,38,.42);z-index:50;
     display:flex;align-items:center;justify-content:center;padding:22px;
   }
   .modal.hidden{display:none}
@@ -143,7 +183,8 @@
   .rows{border-top:1px dashed var(--line);border-bottom:1px dashed var(--line);padding:10px 0;margin-bottom:14px}
   .row{display:flex;justify-content:space-between;font-size:13.5px;padding:5px 0;color:#7A6659}
   .row b{color:var(--ink)}
-  .modal-actions{display:flex;gap:8px}
+  .modal-actions{display:flex}
+  .modal-actions .btn + .btn{margin-left:8px}
   .share-box textarea{display:none}
   #shareCanvas{width:100%;border-radius:16px;display:block;background:#FBF3E9}
   .share-hint{font-size:12px;color:var(--sub);text-align:center;margin:8px 0 12px}
@@ -199,11 +240,28 @@
       </div>
       <div class="pond-note">钓鱼不花鱼干，钓上来的鱼按稀有度直接换小鱼干</div>
     </section>
+
+    <section id="screen-shop" class="screen">
+      <div class="pad-title"><h2>小商店</h2><small>小鱼干 <b id="shopFish">0</b></small></div>
+      <div class="grid" id="shopGrid"></div>
+      <div class="list-note">买到的衣服会立刻穿在小猫身上</div>
+    </section>
+
+    <section id="screen-dex" class="screen">
+      <div class="seg" id="dexSeg">
+        <button class="on" data-dex="fish">鱼类图鉴</button>
+        <button data-dex="cloth">衣服图鉴</button>
+      </div>
+      <div class="grid" id="dexGrid"></div>
+      <div class="list-note" id="dexNote"></div>
+    </section>
   </main>
 
   <nav class="tabs">
     <button class="tab on" data-screen="focus">专注</button>
     <button class="tab" data-screen="fish">鱼塘</button>
+    <button class="tab" data-screen="shop">商店</button>
+    <button class="tab" data-screen="dex">图鉴</button>
   </nav>
 </div>
 

@@ -5,3 +5,5 @@ node_modules/
 # 抖音小游戏：由 douyin-game/tools/build.js 从 js/、assets/ 同步生成
 douyin-game/engine/
 douyin-game/assets/
+
+dist/

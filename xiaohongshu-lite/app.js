@@ -1,27 +1,38 @@
 /* 陪读小喵 · 小红书轻量版
-   单页、离线、无网络请求；存储不可用时自动退化为内存状态。 */
+   单页、离线、无网络请求；存档走容器 Storage（window.xhs），不可用时只保留内存态。 */
 (function () {
   'use strict';
 
   /* ---------------- 存储 ---------------- */
-  const store = (function () {
-    try {
-      const k = '__pdm_probe__';
-      window.localStorage.setItem(k, '1');
-      window.localStorage.removeItem(k);
-      return window.localStorage;
-    } catch (e) {
-      const mem = {};
-      return {
-        getItem: function (k) { return k in mem ? mem[k] : null; },
-        setItem: function (k, v) { mem[k] = String(v); },
-        removeItem: function (k) { delete mem[k]; }
-      };
-    }
-  })();
-
   const KEY = 'pdm.lite.v1';
   const $ = function (id) { return document.getElementById(id); };
+
+  const storage = {
+    load: function (cb) {
+      const xhs = window.xhs;
+      if (!xhs || typeof xhs.getStorage !== 'function') { cb(''); return; }
+      let done = false;
+      const finish = function (v) { if (!done) { done = true; cb(v || ''); } };
+      try {
+        const p = xhs.getStorage({
+          key: KEY,
+          success: function (res) { finish(res && res.data); },
+          fail: function () { finish(''); }
+        });
+        if (p && typeof p.then === 'function') {
+          p.then(function (res) { finish(res && res.data); })['catch'](function () { finish(''); });
+        }
+      } catch (e) { finish(''); }
+    },
+    save: function (text) {
+      const xhs = window.xhs;
+      if (!xhs || typeof xhs.setStorage !== 'function') return;
+      try {
+        const p = xhs.setStorage({ key: KEY, data: text });
+        if (p && typeof p['catch'] === 'function') p['catch'](function () {});
+      } catch (e) {}
+    }
+  };
 
   function dateKey(ts) {
     const d = ts ? new Date(ts) : new Date();
@@ -29,19 +40,26 @@
   }
 
   function defState() {
-    return { fish: 0, minutes: 0, day: dateKey(), todayMinutes: 0, days: [] };
+    return {
+      fish: 0, minutes: 0, day: dateKey(), todayMinutes: 0, days: [],
+      outfit: 'default', owned: ['default'], fishCounts: {}, bait: false
+    };
   }
 
-  const S = (function () {
-    try {
-      const raw = store.getItem(KEY);
-      if (raw) return Object.assign(defState(), JSON.parse(raw));
-    } catch (e) {}
-    return defState();
-  })();
+  function normalizeState() {
+    if (!S.owned || !Array.isArray(S.owned)) S.owned = ['default'];
+    if (S.owned.indexOf('default') < 0) S.owned.unshift('default');
+    if (!S.outfit) S.outfit = 'default';
+    if (!S.fishCounts || typeof S.fishCounts !== 'object') S.fishCounts = {};
+    S.bait = !!S.bait;
+  }
+
+  let S = defState();
+  let ready = false;
 
   function save() {
-    try { store.setItem(KEY, JSON.stringify(S)); } catch (e) {}
+    if (!ready) return;
+    storage.save(JSON.stringify(S));
   }
 
   function rolloverDay() {
@@ -93,6 +111,8 @@
       s.classList.toggle('active', s.id === 'screen-' + name);
     });
     if (name === 'fish') { layoutPond(); syncCastBtn(); }
+    if (name === 'shop') { normalizeState(); renderShop(); }
+    if (name === 'dex') { normalizeState(); renderDex(); }
   }
 
   function refreshHeader() {
@@ -112,7 +132,13 @@
     pat: 'assets/cat/cat_pat.png',
     fish: 'assets/cat/cat_fish.png',
     yawn: 'assets/cat/cat_yawn.png',
-    curious: 'assets/cat/cat_curious.png'
+    curious: 'assets/cat/cat_curious.png',
+    blink: 'assets/cat/cat_blink.png',
+    pj: 'assets/cat/cat_pj.png',
+    academy: 'assets/cat/cat_academy.png',
+    festival: 'assets/cat/cat_festival.png',
+    rain: 'assets/cat/cat_rain.png',
+    scarf: 'assets/cat/cat_scarf.png'
   };
   const preload = {};
   Object.keys(CATS).forEach(function (k) {
@@ -127,15 +153,35 @@
     if (!s) return 'idle';
     return s.pausedAt ? 'sleep' : 'read';
   }
+  const BASE_MOODS = { idle: 1, read: 1, sleep: 1, curious: 1, blink: 1 };
   function setCat(mood) {
     const img = $('cat');
-    img.src = CATS[mood] || CATS.idle;
+    let key = mood;
+    if (S.outfit !== 'default' && BASE_MOODS[mood] && CATS[S.outfit]) key = S.outfit;
+    img.src = CATS[key] || CATS.idle;
     img.classList.toggle('sleep', mood === 'sleep');
   }
   function flashCat(mood, ms) {
     setCat(mood);
     clearTimeout(catTimer);
     catTimer = setTimeout(function () { setCat(baseMood()); }, ms || 2000);
+  }
+
+  let blinkTimer = 0;
+  function scheduleBlink() {
+    clearTimeout(blinkTimer);
+    blinkTimer = setTimeout(function () {
+      const src = $('cat').src;
+      let back = '';
+      if (src.indexOf('cat_idle') >= 0) back = 'idle';
+      else if (src.indexOf('cat_read') >= 0) back = 'read';
+      else if (src.indexOf('cat_curious') >= 0) back = 'curious';
+      if (back) {
+        setCat('blink');
+        setTimeout(function () { setCat(back); }, 140);
+      }
+      scheduleBlink();
+    }, 2600 + Math.random() * 3200);
   }
 
   /* ---------------- 专注计时 ---------------- */
@@ -266,9 +312,11 @@
   }
 
   /* ---------------- 分享卡 ---------------- */
-  function openShare() {
+  let shareKind = 'report';
+  function openShare(kind) {
+    shareKind = kind === 'fish' ? 'fish' : 'report';
     openModal(
-      '<h2>今日战报</h2>' +
+      '<h2>' + (shareKind === 'fish' ? '今天的鱼篓' : '今日战报') + '</h2>' +
       '<p class="sub">截图保存，写笔记时可以直接用</p>' +
       '<div class="share-box"><canvas id="shareCanvas"></canvas></div>' +
       '<div class="share-hint">长按图片或直接截图保存</div>' +
@@ -293,20 +341,30 @@
     c.textAlign = 'center';
     c.fillStyle = '#5B4A42';
     c.font = '700 30px "PingFang SC", sans-serif';
-    c.fillText('陪读小喵 · 今日战报', W / 2, 84);
+    c.fillText(shareKind === 'fish' ? '陪读小喵 · 今日鱼获' : '陪读小喵 · 今日战报', W / 2, 84);
 
-    const img = preload.idle;
+    const img = shareKind === 'fish' ? preload.fish : preload.idle;
     if (img && img.complete && img.naturalWidth) {
       c.drawImage(img, W / 2 - 150, 128, 300, 300);
     }
 
-    c.fillStyle = '#5B4A42';
-    c.font = '700 62px "PingFang SC", sans-serif';
-    c.fillText(S.todayMinutes + ' 分钟', W / 2, 520);
-
-    c.fillStyle = '#9C8A7E';
-    c.font = '400 24px "PingFang SC", sans-serif';
-    c.fillText('累计 ' + S.minutes + ' 分钟 · 连续 ' + streakOf() + ' 天 · 小鱼干 ' + S.fish, W / 2, 568);
+    if (shareKind === 'fish') {
+      c.fillStyle = '#5B4A42';
+      c.font = '700 62px "PingFang SC", sans-serif';
+      c.fillText(P.caught.length + ' 条鱼', W / 2, 520);
+      c.fillStyle = '#9C8A7E';
+      c.font = '400 24px "PingFang SC", sans-serif';
+      const names = P.caught.slice(0, 4).map(function (sp) { return sp.name; }).join(' · ');
+      c.fillText(names || '这次空军，小猫下次再努力', W / 2, 566);
+      c.fillText('换到 ' + P.total + ' 小鱼干 · 累计 ' + S.fish, W / 2, 606);
+    } else {
+      c.fillStyle = '#5B4A42';
+      c.font = '700 62px "PingFang SC", sans-serif';
+      c.fillText(S.todayMinutes + ' 分钟', W / 2, 520);
+      c.fillStyle = '#9C8A7E';
+      c.font = '400 24px "PingFang SC", sans-serif';
+      c.fillText('累计 ' + S.minutes + ' 分钟 · 连续 ' + streakOf() + ' 天 · 小鱼干 ' + S.fish, W / 2, 568);
+    }
 
     c.fillStyle = '#C4705A';
     c.font = '500 22px "PingFang SC", sans-serif';
@@ -314,13 +372,33 @@
   }
 
   /* ---------------- 鱼塘 ---------------- */
+  const RARITY = { common: '普通', rare: '稀有', epic: '史诗', legend: '传说' };
+
   const SPECIES = [
-    { name: '小鲫鱼', value: 1, w: 40 },
-    { name: '胖头鱼', value: 2, w: 26 },
-    { name: '锦鲤', value: 3, w: 16 },
-    { name: '河豚', value: 5, w: 10 },
-    { name: '金龙鱼', value: 8, w: 4 }
+    { id: 'crucian', name: '小鲫鱼', value: 1, w: 26, rarity: 'common' },
+    { id: 'loach', name: '小泥鳅', value: 1, w: 20, rarity: 'common' },
+    { id: 'bighead', name: '胖头鱼', value: 2, w: 16, rarity: 'common' },
+    { id: 'koi', name: '锦鲤', value: 3, w: 12, rarity: 'rare' },
+    { id: 'mandarin', name: '鳜鱼', value: 4, w: 8, rarity: 'rare' },
+    { id: 'silver', name: '银鲴鱼', value: 4, w: 7, rarity: 'rare' },
+    { id: 'puffer', name: '河豚', value: 5, w: 5, rarity: 'epic' },
+    { id: 'lantern', name: '灯笼鱼', value: 6, w: 4, rarity: 'epic' },
+    { id: 'butterfly', name: '蝴蝶鱼', value: 6, w: 3, rarity: 'epic' },
+    { id: 'arowana', name: '金龙鱼', value: 8, w: 2, rarity: 'legend' },
+    { id: 'sturgeon', name: '中华鲟', value: 10, w: 1.2, rarity: 'legend' },
+    { id: 'moon', name: '月光鱼', value: 12, w: 0.8, rarity: 'legend' }
   ];
+
+  const OUTFITS = [
+    { id: 'default', name: '素色', price: 0, desc: '原本的样子' },
+    { id: 'pj', name: '睡衣', price: 30, desc: '准备睡觉的柔软' },
+    { id: 'academy', name: '学院服', price: 60, desc: '认真学习的小猫' },
+    { id: 'festival', name: '节日装', price: 90, desc: '过节才舍得穿' },
+    { id: 'rain', name: '小雨衣', price: 120, desc: '下雨也陪你出门' },
+    { id: 'scarf', name: '蓝围巾', price: 150, desc: '冬天也不怕冷' }
+  ];
+
+  const BAIT = { id: 'bait', name: '高级鱼饵', price: 200, desc: '永久提高稀有鱼出现概率' };
 
   const P = { phase: 'idle', casts: 3, biteAt: 0, biteUntil: 0, nextAt: 0, caught: [], total: 0 };
 
@@ -381,11 +459,16 @@
 
   function rollSpecies() {
     let total = 0;
-    SPECIES.forEach(function (s) { total += s.w; });
+    SPECIES.forEach(function (s) {
+      const boost = S.bait && (s.rarity === 'epic' || s.rarity === 'legend') ? 2 : 1;
+      total += s.w * boost;
+    });
     let x = Math.random() * total;
     for (let i = 0; i < SPECIES.length; i++) {
-      x -= SPECIES[i].w;
-      if (x <= 0) return SPECIES[i];
+      const sp = SPECIES[i];
+      const boost = S.bait && (sp.rarity === 'epic' || sp.rarity === 'legend') ? 2 : 1;
+      x -= sp.w * boost;
+      if (x <= 0) return sp;
     }
     return SPECIES[SPECIES.length - 1];
   }
@@ -406,6 +489,7 @@
     P.caught.push(sp);
     P.total += sp.value;
     S.fish += sp.value;
+    S.fishCounts[sp.id] = (S.fishCounts[sp.id] | 0) + 1;
     save();
     refreshHeader();
     toast('钓到' + sp.name + ' +' + sp.value + ' 鱼干');
@@ -433,6 +517,9 @@
       '<div class="modal-actions">' +
       '<button class="btn primary" data-act="fishAgain">再钓一轮</button>' +
       '<button class="btn ghost" data-act="fishHome">回小屋</button>' +
+      '</div>' +
+      '<div class="modal-actions" style="margin-top:8px">' +
+      '<button class="btn ghost" data-act="shareFish">生成分享卡</button>' +
       '</div>'
     );
   }
@@ -533,6 +620,100 @@
     drawPond(now);
   }
 
+  /* ---------------- 商店 & 图鉴 ---------------- */
+  let dexKind = 'fish';
+
+  function renderShop() {
+    const grid = $('shopGrid');
+    if (!grid) return;
+    const sf = $('shopFish');
+    if (sf) sf.textContent = S.fish;
+    let html = '';
+    OUTFITS.forEach(function (o) {
+      if (o.id === 'default') return;
+      const owned = S.owned.indexOf(o.id) >= 0;
+      const on = S.outfit === o.id;
+      html += '<div class="card">' +
+        '<img src="' + CATS[o.id] + '" alt="' + o.name + '">' +
+        '<div class="nm">' + o.name + '</div>' +
+        '<div class="rb">' + o.desc + '</div>' +
+        '<button class="cta' + (on ? ' on' : '') + '" data-buy="' + o.id + '">' +
+        (on ? '正在穿' : (owned ? '换上' : '购买 · ' + o.price)) + '</button></div>';
+    });
+    html += '<div class="card">' +
+      '<div class="nm" style="margin-top:44px">' + BAIT.name + '</div>' +
+      '<div class="rb">' + BAIT.desc + '</div>' +
+      '<button class="cta' + (S.bait ? ' on' : '') + '" data-buy="bait">' +
+      (S.bait ? '已拥有' : '购买 · ' + BAIT.price) + '</button></div>';
+    grid.innerHTML = html;
+  }
+
+  function renderDex() {
+    const grid = $('dexGrid');
+    if (!grid) return;
+    const note = $('dexNote');
+    let html = '';
+    if (dexKind === 'fish') {
+      let got = 0;
+      SPECIES.forEach(function (sp) {
+        const n = S.fishCounts[sp.id] | 0;
+        const locked = n <= 0;
+        if (!locked) got++;
+        html += '<div class="card' + (locked ? ' locked' : '') + '">' +
+          '<div class="nm" style="margin-top:40px">' + (locked ? '未发现' : sp.name) + '</div>' +
+          '<div class="rb">' + RARITY[sp.rarity] + ' · ' + sp.value + ' 鱼干</div>' +
+          '<div class="rb">' + (locked ? '继续抛竿试试' : '已钓到 ' + n + ' 条') + '</div></div>';
+      });
+      if (note) note.textContent = '已点亮 ' + got + ' / ' + SPECIES.length + ' 种鱼';
+    } else {
+      OUTFITS.forEach(function (o) {
+        const owned = S.owned.indexOf(o.id) >= 0;
+        html += '<div class="card' + (owned ? '' : ' locked') + '">' +
+          '<img src="' + CATS[o.id] + '" alt="' + o.name + '">' +
+          '<div class="nm">' + o.name + '</div>' +
+          '<div class="rb">' + (owned ? (S.outfit === o.id ? '正在穿' : '已拥有') : '未解锁 · ' + o.price + ' 鱼干') + '</div></div>';
+      });
+      if (note) note.textContent = '已收集 ' + S.owned.length + ' / ' + OUTFITS.length + ' 套衣服';
+    }
+    grid.innerHTML = html;
+  }
+
+  function buyOrWear(id) {
+    if (id === 'bait') {
+      if (S.bait) { toast('高级鱼饵已经在用了'); return; }
+      if (S.fish < BAIT.price) { toast('还差 ' + (BAIT.price - S.fish) + ' 条小鱼干'); return; }
+      S.fish -= BAIT.price;
+      S.bait = true;
+      save();
+      refreshHeader();
+      renderShop();
+      toast('买到高级鱼饵，稀有鱼更好钓了');
+      return;
+    }
+    let o = null;
+    for (let i = 0; i < OUTFITS.length; i++) if (OUTFITS[i].id === id) o = OUTFITS[i];
+    if (!o) return;
+    if (S.owned.indexOf(id) >= 0) {
+      S.outfit = id;
+      save();
+      setCat(baseMood());
+      renderShop();
+      renderDex();
+      toast('换上了' + o.name);
+      return;
+    }
+    if (S.fish < o.price) { toast('还差 ' + (o.price - S.fish) + ' 条小鱼干'); return; }
+    S.fish -= o.price;
+    S.owned.push(id);
+    S.outfit = id;
+    save();
+    refreshHeader();
+    setCat(baseMood());
+    renderShop();
+    renderDex();
+    toast('买下了' + o.name);
+  }
+
   /* ---------------- 事件 ---------------- */
   $('cat').addEventListener('click', function () {
     flashCat('pat', 1800);
@@ -585,15 +766,34 @@
     b.addEventListener('click', function () { switchScreen(b.dataset.screen); });
   });
 
+  $('dexSeg').addEventListener('click', function (e) {
+    const b = e.target.closest('button');
+    if (!b) return;
+    dexKind = b.dataset.dex === 'cloth' ? 'cloth' : 'fish';
+    document.querySelectorAll('#dexSeg button').forEach(function (x) {
+      x.classList.toggle('on', x === b);
+    });
+    renderDex();
+  });
+
+  document.addEventListener('click', function (e) {
+    const b = e.target.closest('[data-buy]');
+    if (b) buyOrWear(b.dataset.buy);
+  });
+
   document.addEventListener('click', function (e) {
     const el = e.target.closest('[data-act]');
     if (!el) return;
     const act = el.dataset.act;
-    if (act === 'close') closeModal();
+    if (act === 'close') {
+      closeModal();
+      if (shareKind === 'fish' && P.casts <= 0) showPondResult();
+    }
     else if (act === 'stopYes') { closeModal(); finish(false); }
     else if (act === 'again') { closeModal(); startSession(); }
     else if (act === 'fish') { closeModal(); switchScreen('fish'); }
-    else if (act === 'share') openShare();
+    else if (act === 'share') openShare('report');
+    else if (act === 'shareFish') openShare('fish');
     else if (act === 'fishAgain') { closeModal(); resetPond(); }
     else if (act === 'fishHome') {
       closeModal();
@@ -611,12 +811,26 @@
   window.addEventListener('resize', layoutPond);
 
   /* ---------------- 启动 ---------------- */
-  rolloverDay();
-  refreshHeader();
-  renderTimer();
+  normalizeState();
   setCat('idle');
-  syncCasts();
-  syncCastBtn();
   layoutPond();
   requestAnimationFrame(pondLoop);
+  scheduleBlink();
+  storage.load(function (raw) {
+    if (raw && typeof raw === 'object') {
+      S = Object.assign(defState(), raw);
+    } else if (typeof raw === 'string' && raw) {
+      try { S = Object.assign(defState(), JSON.parse(raw)); } catch (e) {}
+    }
+    normalizeState();
+    ready = true;
+    rolloverDay();
+    refreshHeader();
+    renderTimer();
+    syncCasts();
+    syncCastBtn();
+    setCat(baseMood());
+    renderShop();
+    renderDex();
+  });
 })();
