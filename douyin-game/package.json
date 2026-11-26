@@ -1,0 +1,7 @@
+{
+  "name": "peiduxiaomiao-douyin-game",
+  "private": true,
+  "scripts": {
+    "build": "node tools/build.js"
+  }
+}
