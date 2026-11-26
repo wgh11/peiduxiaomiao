@@ -1013,3 +1013,18 @@
   .fish-gear { display: none; }
   .fish-tip { margin-top: 6px; }
 }
+.food-card .item-foot { align-items: center; }
+.food-art {
+  display: grid;
+  place-items: center;
+  width: 74px;
+  height: 74px;
+  margin: 8px auto 12px;
+  border-radius: 22px;
+  font-size: 38px;
+  background: radial-gradient(circle at 35% 25%, #fff8e9, #f3d3b1 72%);
+  box-shadow: inset 0 -8px 18px rgba(177, 119, 75, .12), 0 8px 16px rgba(120, 82, 54, .1);
+}
+.food-milk { background: radial-gradient(circle at 35% 25%, #fff, #d8edf1 72%); }
+.food-cookie { background: radial-gradient(circle at 35% 25%, #fff8e1, #e8b889 72%); }
+.shop-note { margin: 0 4px 10px; line-height: 1.7; }
