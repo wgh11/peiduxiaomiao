@@ -94,6 +94,18 @@ window.PDM = window.PDM || {};
     { id: 'cookie', name: '奶油小饼干', price: 15, amount: 2, desc: '学习告一段落时的甜甜奖励' }
   ];
 
+  // 猫咪陪伴图鉴：把“看到猫做什么”本身变成可回看的收藏内容
+  const ACTIVITIES = [
+    { id: 'pet', icon: '♡', name: '蹭蹭手心', desc: '点击小喵摸摸它，短暂进入呼噜状态。' },
+    { id: 'feed', icon: '◌', name: '开饭时间', desc: '用猫粮投喂，小喵会走到餐盒边慢慢吃。' },
+    { id: 'play', icon: '✦', name: '追毛线球', desc: '点击毛线球，让小喵跑过去玩一会儿。' },
+    { id: 'focus', icon: '▤', name: '安静陪读', desc: '开始专注后，小喵会靠近书桌陪你学习。' },
+    { id: 'nap', icon: '☾', name: '午后打盹', desc: '离开一会儿，小喵会在猫窝里睡着。' },
+    { id: 'fish', icon: '≈', name: '鱼塘收杆', desc: '专注结束后去鱼塘，收集不同稀有度的鱼。' },
+    { id: 'dress', icon: '◇', name: '今日换装', desc: '在衣橱里换上不同服装，陪读状态也会改变。' },
+    { id: 'room', icon: '□', name: '布置小屋', desc: '调整家具位置，给小喵留一块舒服的活动空间。' }
+  ];
+
   const COMICS = [
     {
       id: 'c1', title: '第一次见面', sub: '它从纸箱里探出头', req: 0, color: '#F3C9A8', prop: 'box',
@@ -946,6 +958,7 @@ window.PDM = window.PDM || {};
     FURNITURE: FURNITURE,
     OUTFITS: OUTFITS,
     FOODS: FOODS,
+    ACTIVITIES: ACTIVITIES,
     COMICS: COMICS,
     LEVELS: LEVELS,
     ACHIEVEMENTS: ACHIEVEMENTS,
