@@ -109,6 +109,8 @@ window.PDM = window.PDM || {};
       '<div class="switch ' + (st.settings.speed > 1 ? 'on' : '') + '" data-action="toggleSpeed"></div></div>' +
       '<div class="set-row"><div><div class="lab">休息提醒</div><div class="desc">每连续专注 25 分钟，提醒你起来活动一下</div></div>' +
       '<div class="switch ' + (st.settings.breakRemind !== false ? 'on' : '') + '" data-action="toggleBreak"></div></div>' +
+      '<div class="set-row"><div><div class="lab">环境白噪音</div><div class="desc">雨声底噪，专注时自动播放，帮助进入状态</div></div>' +
+      '<div class="switch ' + (st.settings.ambient ? 'on' : '') + '" data-action="toggleAmbient"></div></div>' +
       '<div class="set-row"><div><div class="lab">导出存档</div><div class="desc">把小鱼干、家具、记录和刷题进度导出成 JSON 备份</div></div>' +
       '<button class="btn ghost small" data-action="exportSave">导出</button></div>' +
       '<div class="set-row"><div><div class="lab">导入存档</div><div class="desc">粘贴备份 JSON 恢复进度，会覆盖当前存档</div></div>' +

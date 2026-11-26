@@ -31,7 +31,8 @@ window.PDM = window.PDM || {};
     tipTimer: 0,
     decorMode: false,
     drag: null,
-    lastTouched: null
+    lastTouched: null,
+    lastActivityAt: 0
   };
 
   const CAT_LABEL = {
@@ -93,7 +94,9 @@ window.PDM = window.PDM || {};
 
   function loop(ts) {
     requestAnimationFrame(loop);
-    if (ts - app.lastFrame < 33) return;
+    // 10 秒没有操作就降到约 12fps，减少长时间亮屏的发热与耗电
+    const idle = performance.now() - app.lastActivityAt > 10000;
+    if (ts - app.lastFrame < (idle ? 80 : 33)) return;
     app.lastFrame = ts;
     const screen = document.getElementById('screen-home');
     if (!screen || !screen.classList.contains('active')) return;
@@ -437,6 +440,8 @@ window.PDM = window.PDM || {};
     ui.toast(app.session.mode === 'strict'
       ? '严格专注开始 · 切到其他页面也会继续计时'
       : '自由学习开始 · 切到其他页面会自动暂停', 2400);
+    requestWakeLock();
+    if (core.state().settings.ambient) startAmbient();
   }
 
   function finishSession(completed) {
@@ -450,6 +455,7 @@ window.PDM = window.PDM || {};
 
     app.session = null;
     clearSessionStore();
+    releaseWakeLock();
     $('screen-home').classList.remove('focusing');
     $('btnStart').disabled = false;
     $('btnStart').textContent = '开始陪读';
@@ -534,6 +540,7 @@ window.PDM = window.PDM || {};
       '<div class="reward-note">' + note + '</div>' +
       '<div class="reward-actions">' +
       (sum.total > 0 ? '<button class="btn primary" data-action="adDouble">看广告 · 奖励翻倍 +' + sum.total + '</button>' : '') +
+      (sum.completed ? '<button class="btn primary" data-action="nextRound">再来一轮</button>' : '') +
       '<button class="btn ghost" data-action="closeReward">收下小鱼干</button>' +
       '<button class="btn ghost" data-action="goFishing">休息一下 · 去鱼塘</button>' +
       '</div>';
@@ -902,6 +909,19 @@ window.PDM = window.PDM || {};
         core.save();
         ui.openSettings();
         ui.toast(st.settings.breakRemind ? '每专注 25 分钟会提醒你休息一下' : '已关闭休息提醒', 2200);
+        break;
+      }
+      case 'toggleAmbient': {
+        toggleAmbient();
+        break;
+      }
+      case 'nextRound': {
+        const min = app.reward && app.reward.minutes ? app.reward.minutes : app.selMin;
+        closeReward();
+        if (!app.session) {
+          selectDuration(Math.max(1, Math.min(180, min)));
+          startSession();
+        }
         break;
       }
       case 'exportSave': {
@@ -1371,7 +1391,7 @@ window.PDM = window.PDM || {};
       const el = e.target.closest('[data-action]');
       if (!el) return;
       const action = el.dataset.action;
-      if (action === 'closeModal' || action === 'confirmReset' || action === 'confirmStop' || action === 'adDouble' || action.startsWith('ad') || action.startsWith('buy') || action.startsWith('decor') || action === 'openDecor' || action === 'comic' || action === 'makeup' || action === 'toggleSpeed' || action === 'toggleBreak' || action === 'exportSave' || action === 'importSave' || action === 'confirmImport' || action === 'confirmCustomMin' || action === 'share' || action === 'analytics' || action === 'resetData' || action === 'closeReward' || action === 'goShop' || action === 'wearOutfit' || action === 'closeWelcome' || action === 'goStart' || action === 'goFishing') {
+      if (action === 'closeModal' || action === 'confirmReset' || action === 'confirmStop' || action === 'adDouble' || action.startsWith('ad') || action.startsWith('buy') || action.startsWith('decor') || action === 'openDecor' || action === 'comic' || action === 'makeup' || action === 'toggleSpeed' || action === 'toggleBreak' || action === 'exportSave' || action === 'importSave' || action === 'confirmImport' || action === 'toggleAmbient' || action === 'nextRound' || action === 'confirmCustomMin' || action === 'share' || action === 'analytics' || action === 'resetData' || action === 'closeReward' || action === 'goShop' || action === 'wearOutfit' || action === 'closeWelcome' || action === 'goStart' || action === 'goFishing') {
         if (el.tagName === 'BUTTON' || el.classList.contains('switch') || el.dataset.action === 'openDecor') e.preventDefault();
         handleAction(action, el);
       }
@@ -1386,6 +1406,7 @@ window.PDM = window.PDM || {};
       } else if (app.session.hiddenAt) {
         const away = Date.now() - app.session.hiddenAt;
         app.session.hiddenAt = 0;
+        requestWakeLock();
         if (away > 900) {
           app.session.left = true;
           if (app.session.mode !== 'strict') app.session.awayMs += away;
@@ -1401,6 +1422,92 @@ window.PDM = window.PDM || {};
     });
   }
 
+  /* ---------------- 环境音 / 屏幕常亮 ---------------- */
+  let wakeLock = null;
+  const amb = { ctx: null, gain: null, src: null, on: false };
+
+  function requestWakeLock() {
+    try {
+      if (!navigator.wakeLock || wakeLock) return;
+      navigator.wakeLock.request('screen').then(l => {
+        wakeLock = l;
+        l.addEventListener('release', () => { wakeLock = null; });
+      }).catch(() => {});
+    } catch (e) {}
+  }
+
+  function releaseWakeLock() {
+    try {
+      if (wakeLock) { wakeLock.release(); wakeLock = null; }
+    } catch (e) {}
+  }
+
+  // 用布朗噪声合成雨声底噪，不依赖任何音频资源
+  function makeRainBuffer(ctx) {
+    const len = Math.floor(ctx.sampleRate * 2);
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < len; i++) {
+      const white = Math.random() * 2 - 1;
+      last = (last + 0.02 * white) / 1.02;
+      d[i] = last * 3.2;
+    }
+    return buf;
+  }
+
+  function startAmbient() {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return false;
+      if (!amb.ctx) amb.ctx = new AC();
+      const ctx = amb.ctx;
+      if (ctx.state === 'suspended') ctx.resume();
+      if (!amb.src) {
+        const src = ctx.createBufferSource();
+        src.buffer = makeRainBuffer(ctx);
+        src.loop = true;
+        const lp = ctx.createBiquadFilter();
+        lp.type = 'lowpass';
+        lp.frequency.value = 1500;
+        const g = ctx.createGain();
+        g.gain.value = 0;
+        src.connect(lp); lp.connect(g); g.connect(ctx.destination);
+        src.start();
+        amb.src = src;
+        amb.gain = g;
+      }
+      amb.gain.gain.cancelScheduledValues(ctx.currentTime);
+      amb.gain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + 0.8);
+      amb.on = true;
+      return true;
+    } catch (e) { return false; }
+  }
+
+  function stopAmbient() {
+    try {
+      if (amb.gain && amb.ctx) {
+        amb.gain.gain.cancelScheduledValues(amb.ctx.currentTime);
+        amb.gain.gain.linearRampToValueAtTime(0, amb.ctx.currentTime + 0.5);
+      }
+    } catch (e) {}
+    amb.on = false;
+  }
+
+  function toggleAmbient() {
+    const st = core.state();
+    st.settings.ambient = !st.settings.ambient;
+    core.save();
+    if (st.settings.ambient) {
+      if (!startAmbient()) ui.toast('当前浏览器不支持环境音，换个浏览器试试', 2400);
+      else ui.toast('雨声白噪音已开启，陪着小喵一起专注', 2400);
+    } else {
+      stopAmbient();
+      ui.toast('环境音已关闭', 1800);
+    }
+    ui.openSettings();
+  }
+
   /* ---------------- boot ---------------- */
   function boot() {
     core.load();
@@ -1413,8 +1520,16 @@ window.PDM = window.PDM || {};
       if (chip) chip.classList.add('hidden');
     }
     ui.init();
+    app.lastActivityAt = performance.now();
     setupCanvas();
     bindStatic();
+    ['pointerdown', 'keydown', 'touchstart'].forEach(t => {
+      document.addEventListener(t, () => { app.lastActivityAt = performance.now(); }, { passive: true });
+    });
+    // 浏览器要求用户手势后才能出声，首次点击时补开白噪音
+    document.addEventListener('pointerdown', () => {
+      if (core.state().settings.ambient && !amb.on) startAmbient();
+    }, { once: true });
     updateSpeedChip();
     updateModeUI();
     updatePetBar();
