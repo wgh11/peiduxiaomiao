@@ -63,6 +63,7 @@ window.PDM = window.PDM || {};
     { id: 'd_cocoa', name: '热可可', slot: 'desk', price: 45, desc: '冬天必备，现在还有点烫' },
     { id: 'd_mug', name: '猫咪马克杯', slot: 'desk', price: 22, desc: '杯壁上有一只同款小喵' },
     { id: 'd_books', name: '一摞书', slot: 'desk', price: 48, desc: '最近在读的都堆在这里' },
+    { id: 'd_foodbox', name: '小喵餐盒', slot: 'desk', price: 55, desc: '每天开饭前都会自己发出叮的一声' },
     { id: 'fl_rug', name: '甜甜圈地毯', slot: 'floor', price: 30, desc: '踩上去软软的，像甜甜圈' },
     { id: 'fl_bed', name: '云朵猫窝', slot: 'floor', price: 70, desc: '小喵累了就窝在这里打盹' },
     { id: 'fl_shelf', name: '小书架', slot: 'floor', price: 110, desc: '攒了很多书，最上层还空着' },
@@ -72,14 +73,25 @@ window.PDM = window.PDM || {};
     { id: 'o_maneki', name: '招财喵', slot: 'ornament', price: 0, ad: true, fishCost: { jinlong: 1 }, desc: '举着小爪子，祝你顺利上岸' },
     { id: 'o_globe', name: '星空地球仪', slot: 'ornament', price: 0, ad: true, fishCost: { hetun: 1, jinli: 1 }, desc: '晚上会亮起细碎的星座' },
     { id: 'o_yarn', name: '毛线球', slot: 'ornament', price: 20, desc: '滚到桌脚就再也找不到了' },
-    { id: 'o_vase', name: '小陶瓶花', slot: 'ornament', price: 38, desc: '插着两朵不知名的小花' }
+    { id: 'o_vase', name: '小陶瓶花', slot: 'ornament', price: 38, desc: '插着两朵不知名的小花' },
+    { id: 'o_fishbowl', name: '会游泳的鱼缸', slot: 'ornament', price: 95, desc: '里面的小鱼会跟着小喵一起打瞌睡' },
+    { id: 'o_starprojector', name: '星星投影仪', slot: 'ornament', price: 130, desc: '夜里把整面墙变成一小片星空' }
   ];
 
   const OUTFITS = [
     { id: 'default', name: '奶油小喵', price: 0, desc: '米白色的毛，配珊瑚色小项圈' },
     { id: 'pj', name: '云朵睡衣', price: 80, desc: '浅蓝条纹睡衣，还带一顶睡帽' },
     { id: 'academy', name: '学院风', price: 120, desc: '藏青外套配红色领结，今天很认真' },
-    { id: 'festival', name: '节日限定', price: 0, ad: true, desc: '红围巾和毛球帽，冬季限定' }
+    { id: 'festival', name: '节日限定', price: 0, ad: true, desc: '红围巾和毛球帽，冬季限定' },
+    { id: 'raincoat', name: '雨天小雨衣', price: 100, desc: '下雨也要去窗边看云' },
+    { id: 'chef', name: '小厨师', price: 140, desc: '今天的猫粮由主厨亲自监督' },
+    { id: 'wizard', name: '星星魔法师', price: 180, desc: '把困意变成会发光的小星星' }
+  ];
+
+  const FOODS = [
+    { id: 'fish', name: '小鱼干', price: 8, amount: 1, desc: '最经典的陪读奖励，小喵一闻就跑过来' },
+    { id: 'milk', name: '暖暖牛奶', price: 12, amount: 2, desc: '适合夜晚，喝完会舒服地眯起眼睛' },
+    { id: 'cookie', name: '奶油小饼干', price: 15, amount: 2, desc: '学习告一段落时的甜甜奖励' }
   ];
 
   const COMICS = [
@@ -185,7 +197,7 @@ window.PDM = window.PDM || {};
     { id: 'outfit3', name: '衣橱初开', desc: '拥有 3 套服装', goal: 3, val: s => s.ownedOutfits.length },
     { id: 'comic1', name: '故事读者', desc: '读完 1 篇番外', goal: 1, val: s => s.comicsRead.length },
     { id: 'comic6', name: '故事收藏家', desc: '读完 6 篇番外', goal: 6, val: s => s.comicsRead.length },
-    { id: 'allcat', name: '满屋都是故事', desc: '集齐全部 30 件收藏', goal: 30, val: s => s.owned.length + s.ownedOutfits.length + s.comics.length }
+    { id: 'allcat', name: '满屋都是故事', desc: '集齐全部 42 件收藏', goal: 42, val: s => s.owned.length + s.ownedOutfits.length + s.comics.length }
   ];
 
   /* ---------- state ---------- */
@@ -208,6 +220,7 @@ window.PDM = window.PDM || {};
       v: 1,
       fish: 40,
       snacks: 0,
+      foods: { fish: 0, milk: 0, cookie: 0 },
       growth: 0,
       checkins: [],
       sessions: [],
@@ -244,6 +257,7 @@ window.PDM = window.PDM || {};
         if (!state.settings.speedSet) state.settings.speed = 1;
         if (!state.settings.studyMode) state.settings.studyMode = 'free';
         if (typeof state.snacks !== 'number' || state.snacks < 0) state.snacks = 0;
+        state.foods = Object.assign({ fish: 0, milk: 0, cookie: 0 }, parsed.foods || {});
         state.equipped = Object.assign({ wall: null, window: null, desk: null, floor: null, ornament: null }, parsed.equipped || {});
         state.layout = (parsed.layout && typeof parsed.layout === 'object' && !Array.isArray(parsed.layout)) ? parsed.layout : {};
         // 钓鱼存档迁移
@@ -662,6 +676,27 @@ window.PDM = window.PDM || {};
     return true;
   }
 
+  function buyFood(id) {
+    const food = FOODS.find(x => x.id === id);
+    if (!food) return { ok: false, reason: 'none' };
+    if (state.fish < food.price) return { ok: false, reason: 'fish' };
+    state.fish -= food.price;
+    state.snacks = Math.max(0, (state.snacks || 0) + food.amount);
+    state.foods[id] = Math.max(0, (state.foods[id] || 0) + food.amount);
+    logEvent('buy_food', { id: id, amount: food.amount, price: food.price });
+    save();
+    return { ok: true, food: food };
+  }
+
+  function useFood() {
+    const id = FOODS.find(x => (state.foods[x.id] || 0) > 0)?.id;
+    if (!id) return useSnack();
+    state.foods[id] -= 1;
+    state.snacks = Math.max(0, (state.snacks || 0) - 1);
+    save();
+    return id;
+  }
+
   /* ---------- fishing ---------- */
   function fishDaily() {
     const f = state.fishing;
@@ -910,6 +945,7 @@ window.PDM = window.PDM || {};
     SLOTS: SLOTS,
     FURNITURE: FURNITURE,
     OUTFITS: OUTFITS,
+    FOODS: FOODS,
     COMICS: COMICS,
     LEVELS: LEVELS,
     ACHIEVEMENTS: ACHIEVEMENTS,
@@ -961,6 +997,8 @@ window.PDM = window.PDM || {};
     addBonusFish: addBonusFish,
     addSnack: addSnack,
     useSnack: useSnack,
+    buyFood: buyFood,
+    useFood: useFood,
     logEvent: logEvent,
     eventStats: eventStats,
     logSummary: logSummary,
