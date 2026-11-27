@@ -36,8 +36,8 @@ window.PDM = window.PDM || {};
       const pct = Math.round(a.cur / a.def.goal * 100);
       return '<div class="ach-row">' +
         '<div class="ach-medal ' + (a.done ? 'on' : '') + '">' + icon('star') + '</div>' +
-        '<div class="ach-info"><div class="t"><span>' + a.def.name + '</span><em>' + a.cur + '/' + a.def.goal + '</em></div>' +
-        '<div class="d">' + a.def.desc + '</div>' +
+        '<div class="ach-info"><div class="t"><span>' + a.def.name + '</span><em>' + (a.awarded ? '已领取' : a.cur + '/' + a.def.goal) + '</em></div>' +
+        '<div class="d">' + a.def.desc + ((a.def.reward || 0) > 0 ? ' · 奖励 +' + a.def.reward + ' 鱼干' : ' · 徽章') + '</div>' +
         '<div class="ach-bar"><i style="width:' + pct + '%"></i></div></div></div>';
     }).join('');
 
@@ -128,7 +128,7 @@ window.PDM = window.PDM || {};
       open: '打开应用', focus_start: '开始专注', focus_complete: '完成专注', focus_partial: '提前结束',
       ad_click: '打开广告', ad_complete: '看完广告', buy: '购买物品', equip: '布置家具', outfit: '换装',
       share: '生成分享卡', comic_read: '阅读番外', makeup: '补签', comic_unlock: '解锁番外',
-      achievement: '达成成就', unlock_item: '解锁家具', unlock_outfit: '解锁服装', bonus_fish: '奖励翻倍',
+      achievement: '达成成就', unlock_item: '解锁家具', unlock_outfit: '解锁服装', bonus_fish: '额外奖励',
       buy_outfit: '购买服装'
     };
     const recent = s.recent.map(e => {

@@ -89,9 +89,9 @@ window.PDM = window.PDM || {};
   ];
 
   const FOODS = [
-    { id: 'fish', name: '小鱼干', price: 8, amount: 1, desc: '最经典的陪读奖励，小喵一闻就跑过来' },
-    { id: 'milk', name: '暖暖牛奶', price: 12, amount: 2, desc: '适合夜晚，喝完会舒服地眯起眼睛' },
-    { id: 'cookie', name: '奶油小饼干', price: 15, amount: 2, desc: '学习告一段落时的甜甜奖励' }
+    { id: 'fish', name: '猫鱼条', price: 8, amount: 1, desc: '45 分钟内下一轮专注 +10% 小鱼干' },
+    { id: 'milk', name: '暖暖牛奶', price: 12, amount: 2, desc: '今天结束时心情不衰减' },
+    { id: 'cookie', name: '奶油饼干', price: 15, amount: 2, desc: '亲密度 +1，当天钓鱼多 1 杆' }
   ];
 
   // 猫咪陪伴图鉴：把“看到猫做什么”本身变成可回看的收藏内容
@@ -158,23 +158,23 @@ window.PDM = window.PDM || {};
   ];
 
   const LEVELS = [
-    { name: '初识', min: 0 },
-    { name: '熟悉', min: 30 },
-    { name: '黏人', min: 90 },
-    { name: '默契', min: 180 },
-    { name: '守护', min: 300 },
-    { name: '家人', min: 480 },
-    { name: '心有灵犀', min: 720 },
-    { name: '永远陪读', min: 1000 }
+    { name: '初识', min: 0, unlockId: 'base', unlock: '纸箱猫屋与默认服装' },
+    { name: '熟悉', min: 30, unlockId: 'mood', unlock: '心情与亲密度面板' },
+    { name: '黏人', min: 90, unlockId: 'cat_house_wood', unlock: '猫屋升级资格：原木双层' },
+    { name: '默契', min: 180, unlockId: 'room_theme', unlock: '房间主题购买资格' },
+    { name: '守护', min: 300, unlockId: 'cat_house_green', unlock: '阳光花房升级资格' },
+    { name: '家人', min: 480, unlockId: 'aquarium', unlock: '鱼缸展览资格' },
+    { name: '心有灵犀', min: 720, unlockId: 'title_frame', unlock: '限定称号框与窗边星光' },
+    { name: '永远陪读', min: 1000, unlockId: 'final', unlock: '终局纪念装饰与永远的书桌' }
   ];
 
   /* ---------- fishing ---------- */
   const FISHING = {
     castsPerBreak: 3,
-    dailySnackCap: 10,
+    dailySnackCap: 8,
     gear: [
-      { id: 'rod', name: '结实钓竿', price: 60, desc: '普通鱼会再给一次机会，更容易碰上稀有鱼' },
-      { id: 'lamp', name: '暖光夜灯', price: 120, desc: '挂在船头，稀有和传说鱼更容易靠近' }
+      { id: 'rod', name: '结实钓竿', price: 50, desc: '每轮休息多 1 杆（共 4 杆）' },
+      { id: 'lamp', name: '暖光夜灯', price: 80, desc: '稀有鱼更容易靠近，传说保底更快' }
     ]
   };
 
@@ -187,29 +187,29 @@ window.PDM = window.PDM || {};
 
   const FISH = [
     { id: 'baitiao', name: '白条', rarity: 'common', snacks: 1, weight: 26, color: '#B9CBD4', desc: '最常见的小银鱼' },
-    { id: 'jiyu', name: '鲫鱼', rarity: 'common', snacks: 2, weight: 24, color: '#A8B79B', desc: '稳稳当当的一条' },
+    { id: 'jiyu', name: '鲫鱼', rarity: 'common', snacks: 1, weight: 24, color: '#A8B79B', desc: '稳稳当当的一条' },
     { id: 'liyu', name: '鲤鱼', rarity: 'common', snacks: 2, weight: 18, color: '#E2A56B', desc: '尾巴很有力气' },
     { id: 'xiaolongxia', name: '小龙虾', rarity: 'common', snacks: 2, weight: 12, color: '#D97B5A', desc: '举着钳子不肯松手' },
     { id: 'guiyu', name: '鳜鱼', rarity: 'rare', snacks: 3, weight: 9, color: '#8FA98B', desc: '花纹漂亮的贵客' },
     { id: 'luyu', name: '鲈鱼', rarity: 'rare', snacks: 3, weight: 5, color: '#93B7BE', desc: '月光下闪着银光' },
-    { id: 'jinli', name: '锦鲤', rarity: 'rare', snacks: 4, weight: 3, color: '#F09A63', desc: '据说会带来好运' },
-    { id: 'hetun', name: '河豚', rarity: 'epic', snacks: 5, weight: 1.8, color: '#E8C56B', desc: '气鼓鼓的圆球' },
-    { id: 'jinlong', name: '金龙鱼', rarity: 'legend', snacks: 10, weight: 0.7, color: '#F4C04F', desc: '鱼塘里的传说' }
+    { id: 'jinli', name: '锦鲤', rarity: 'rare', snacks: 3, weight: 3, color: '#F09A63', desc: '据说会带来好运' },
+    { id: 'hetun', name: '河豚', rarity: 'epic', snacks: 4, weight: 1.8, color: '#E8C56B', desc: '气鼓鼓的圆球' },
+    { id: 'jinlong', name: '金龙鱼', rarity: 'legend', snacks: 8, weight: 0.7, color: '#F4C04F', desc: '鱼塘里的传说' }
   ];
 
   const ACHIEVEMENTS = [
-    { id: 'first', name: '第一次陪读', desc: '完成 1 次专注', goal: 1, val: s => s.sessions.length },
-    { id: 'hour1', name: '一小时的陪伴', desc: '累计专注 60 分钟', goal: 60, val: s => s.growth },
-    { id: 'hour5', name: '一下午的专注', desc: '累计专注 300 分钟', goal: 300, val: s => s.growth },
-    { id: 'streak3', name: '三日之约', desc: '连续打卡 3 天', goal: 3, val: s => s.bestStreak || 0 },
-    { id: 'streak7', name: '七日默契', desc: '连续打卡 7 天', goal: 7, val: s => s.bestStreak || 0 },
-    { id: 'furn5', name: '小有所成', desc: '拥有 5 件家具', goal: 5, val: s => s.owned.length },
-    { id: 'furn12', name: '温馨小屋', desc: '拥有 12 件家具', goal: 12, val: s => s.owned.length },
-    { id: 'furn20', name: '满屋都是你', desc: '集齐 20 件家具', goal: 20, val: s => s.owned.length },
-    { id: 'outfit3', name: '衣橱初开', desc: '拥有 3 套服装', goal: 3, val: s => s.ownedOutfits.length },
-    { id: 'comic1', name: '故事读者', desc: '读完 1 篇番外', goal: 1, val: s => s.comicsRead.length },
-    { id: 'comic6', name: '故事收藏家', desc: '读完 6 篇番外', goal: 6, val: s => s.comicsRead.length },
-    { id: 'allcat', name: '满屋都是故事', desc: '集齐全部 42 件收藏', goal: 42, val: s => s.owned.length + s.ownedOutfits.length + s.comics.length }
+    { id: 'first', name: '第一次陪读', desc: '完成 1 次专注', goal: 1, reward: 8, val: s => s.sessions.length },
+    { id: 'hour1', name: '一小时的陪伴', desc: '累计专注 60 分钟', goal: 60, reward: 15, val: s => s.growth },
+    { id: 'hour5', name: '一下午的专注', desc: '累计专注 300 分钟', goal: 300, reward: 25, val: s => s.growth },
+    { id: 'streak3', name: '三日之约', desc: '连续打卡 3 天', goal: 3, reward: 0, val: s => s.bestStreak || 0 },
+    { id: 'streak7', name: '七日默契', desc: '连续打卡 7 天', goal: 7, reward: 10, val: s => s.bestStreak || 0 },
+    { id: 'furn5', name: '小有所成', desc: '拥有 5 件家具', goal: 5, reward: 10, val: s => s.owned.length },
+    { id: 'furn12', name: '温馨小屋', desc: '拥有 12 件家具', goal: 12, reward: 15, val: s => s.owned.length },
+    { id: 'furn20', name: '满屋都是你', desc: '集齐 20 件家具', goal: 20, reward: 25, val: s => s.owned.length },
+    { id: 'outfit3', name: '衣橱初开', desc: '拥有 3 套服装', goal: 3, reward: 10, val: s => s.ownedOutfits.length },
+    { id: 'comic1', name: '故事读者', desc: '读完 1 篇番外', goal: 1, reward: 8, val: s => s.comicsRead.length },
+    { id: 'comic6', name: '故事收藏家', desc: '读完 6 篇番外', goal: 6, reward: 0, val: s => s.comicsRead.length },
+    { id: 'allcat', name: '满屋都是故事', desc: '集齐全部 42 件收藏', goal: 42, reward: 20, val: s => s.owned.length + s.ownedOutfits.length + s.comics.length }
   ];
 
   /* ---------- state ---------- */
@@ -223,7 +223,10 @@ window.PDM = window.PDM || {};
       exchanged: 0,        // 今天已兑换的小鱼干
       gear: { rod: false, lamp: false },
       totalFish: 0,
-      totalSnacks: 0
+      totalSnacks: 0,
+      bonusCasts: 0,       // 饼干等来源的额外杆数，下次休息生效
+      missFree: true,      // 每轮第一次空杆不耗次数
+      pity: { nonRare: 0, legendMiss: 0 }
     };
   }
 
@@ -233,6 +236,13 @@ window.PDM = window.PDM || {};
       fish: 40,
       snacks: 0,
       foods: { fish: 0, milk: 0, cookie: 0 },
+      mood: 70,
+      intimacy: 0,
+      moodDate: dateKey(),
+      levelUnlocks: [],
+      buffs: { focusBoostUntil: 0, milkDate: '', cookieDate: '' },
+      daily: { date: dateKey(), interact: 0 },
+      adDoubleDate: '',
       growth: 0,
       checkins: [],
       sessions: [],
@@ -270,8 +280,31 @@ window.PDM = window.PDM || {};
         if (!state.settings.studyMode) state.settings.studyMode = 'free';
         if (typeof state.snacks !== 'number' || state.snacks < 0) state.snacks = 0;
         state.foods = Object.assign({ fish: 0, milk: 0, cookie: 0 }, parsed.foods || {});
+        // 旧存档里的免费零食没有口味，归到基础猫鱼条
+        const foodTotal = (state.foods.fish || 0) + (state.foods.milk || 0) + (state.foods.cookie || 0);
+        if ((state.snacks || 0) > foodTotal) state.foods.fish = (state.foods.fish || 0) + (state.snacks - foodTotal);
         state.equipped = Object.assign({ wall: null, window: null, desk: null, floor: null, ornament: null }, parsed.equipped || {});
         state.layout = (parsed.layout && typeof parsed.layout === 'object' && !Array.isArray(parsed.layout)) ? parsed.layout : {};
+        // 心情 / 亲密度 / 等级解锁
+        const clamp100 = v => Math.max(0, Math.min(100, Number(v) || 0));
+        state.mood = clamp100(parsed.mood == null ? 70 : parsed.mood);
+        state.intimacy = clamp100(parsed.intimacy == null ? 0 : parsed.intimacy);
+        state.moodDate = typeof parsed.moodDate === 'string' ? parsed.moodDate : dateKey();
+        state.levelUnlocks = Array.isArray(parsed.levelUnlocks) ? parsed.levelUnlocks.filter(x => typeof x === 'string') : [];
+        state.buffs = Object.assign({ focusBoostUntil: 0, milkDate: '', cookieDate: '' }, (parsed.buffs && typeof parsed.buffs === 'object') ? parsed.buffs : {});
+        state.daily = Object.assign({ date: dateKey(), interact: 0 }, (parsed.daily && typeof parsed.daily === 'object') ? parsed.daily : {});
+        state.adDoubleDate = typeof parsed.adDoubleDate === 'string' ? parsed.adDoubleDate : '';
+        const today0 = dateKey();
+        if (state.daily.date !== today0) state.daily = { date: today0, interact: 0 };
+        if (state.moodDate !== today0) {
+          // 昨天喝过牛奶，今天结算时不掉心情（只保护紧邻的一天）
+          const milkProtected = state.buffs.milkDate === state.moodDate && addDays(state.moodDate, 1) === today0;
+          if (!milkProtected) state.mood = clamp100(state.mood - 10);
+          if (state.checkins.indexOf(addDays(today0, -1)) < 0 && state.checkins.indexOf(today0) < 0) {
+            state.intimacy = clamp100(state.intimacy - 2);
+          }
+          state.moodDate = today0;
+        }
         // 钓鱼存档迁移
         const f = (parsed.fishing && typeof parsed.fishing === 'object' && !Array.isArray(parsed.fishing)) ? parsed.fishing : {};
         state.fishing = Object.assign(defaultFishing(), f);
@@ -292,12 +325,17 @@ window.PDM = window.PDM || {};
         if (legacyRaw > 0) {
           state.fishing.bag.baitiao = (state.fishing.bag.baitiao || 0) + legacyRaw;
         }
-        state.fishing.castsLeft = safeInt(state.fishing.castsLeft, 0, FISHING.castsPerBreak);
+        state.fishing.castsLeft = safeInt(state.fishing.castsLeft, 0, 9);
         state.fishing.exchanged = safeInt(state.fishing.exchanged, 0, FISHING.dailySnackCap);
         state.fishing.totalFish = safeInt(state.fishing.totalFish, 0);
         state.fishing.totalSnacks = safeInt(state.fishing.totalSnacks, 0);
+        state.fishing.bonusCasts = safeInt(state.fishing.bonusCasts, 0, 9);
         state.fishing.breakReady = !!state.fishing.breakReady;
         state.fishing.granted = !!state.fishing.granted;
+        state.fishing.missFree = f.missFree !== false;
+        state.fishing.pity = Object.assign({ nonRare: 0, legendMiss: 0 }, (f.pity && typeof f.pity === 'object') ? f.pity : {});
+        state.fishing.pity.nonRare = safeInt(state.fishing.pity.nonRare, 0, 8);
+        state.fishing.pity.legendMiss = safeInt(state.fishing.pity.legendMiss, 0, 40);
         state.fishing.gear.rod = !!state.fishing.gear.rod;
         state.fishing.gear.lamp = !!state.fishing.gear.lamp;
         const today = dateKey();
@@ -310,6 +348,7 @@ window.PDM = window.PDM || {};
       memory = memory || state;
     }
     syncComicUnlocks(false);
+    save();
     return state;
   }
 
@@ -341,6 +380,8 @@ window.PDM = window.PDM || {};
       min: cur.min,
       next: next ? next.min : null,
       nextName: next ? next.name : null,
+      unlockId: cur.unlockId || '',
+      unlock: cur.unlock || '',
       progress: next ? (g - cur.min) / (next.min - cur.min) : 1
     };
   }
@@ -431,8 +472,9 @@ window.PDM = window.PDM || {};
     // auto equip if the slot is empty
     if (!state.equipped[item.slot]) state.equipped[item.slot] = id;
     logEvent('buy', { id: id, price: item.price });
+    const achievements = checkAchievements();
     save();
-    return { ok: true, item: item, autoEquipped: state.equipped[item.slot] === id };
+    return { ok: true, item: item, autoEquipped: state.equipped[item.slot] === id, achievements: achievements };
   }
 
   function grantItem(id, via) {
@@ -442,6 +484,7 @@ window.PDM = window.PDM || {};
     const item = itemById(id);
     if (item && !state.equipped[item.slot]) state.equipped[item.slot] = id;
     logEvent('unlock_item', { id: id, via: via });
+    checkAchievements();
     save();
     return true;
   }
@@ -454,14 +497,16 @@ window.PDM = window.PDM || {};
     state.fish -= o.price;
     state.ownedOutfits.push(id);
     logEvent('buy_outfit', { id: id, price: o.price });
+    const achievements = checkAchievements();
     save();
-    return { ok: true, outfit: o };
+    return { ok: true, outfit: o, achievements: achievements };
   }
 
   function grantOutfit(id, via) {
     if (state.ownedOutfits.indexOf(id) >= 0) return false;
     state.ownedOutfits.push(id);
     logEvent('unlock_outfit', { id: id, via: via || 'ad' });
+    checkAchievements();
     save();
     return true;
   }
@@ -550,6 +595,7 @@ window.PDM = window.PDM || {};
     });
     if (added.length) {
       added.forEach(c => logEvent('comic_unlock', { id: c.id }));
+      checkAchievements();
       save();
     }
     return announce ? added : [];
@@ -559,6 +605,7 @@ window.PDM = window.PDM || {};
     if (state.comics.indexOf(id) >= 0) return false;
     state.comics.push(id);
     logEvent('comic_unlock', { id: id, via: via || 'ad' });
+    checkAchievements();
     save();
     return true;
   }
@@ -571,6 +618,7 @@ window.PDM = window.PDM || {};
     if (state.comicsRead.indexOf(id) < 0) {
       state.comicsRead.push(id);
       logEvent('comic_read', { id: id });
+      checkAchievements();
       save();
     }
   }
@@ -581,12 +629,22 @@ window.PDM = window.PDM || {};
       const cur = Math.min(a.goal, a.val(state) || 0);
       if (cur >= a.goal && state.achievements.indexOf(a.id) < 0) {
         state.achievements.push(a.id);
-        done.push(a);
+        let reward = a.reward || 0;
+        // 与连续打卡里程碑同一天达成时，只发徽章不发双份鱼干
+        if (a.id === 'streak3') reward = 0;
+        if (a.id === 'streak7' && state.streakAwards.indexOf(7) >= 0) reward = 0;
+        if (a.id === 'comic6') reward = 0;
+        state.fish += reward;
+        const item = Object.assign({}, a, { reward: reward });
+        done.push(item);
+        logEvent('achievement', { id: a.id, reward: reward });
       }
     });
     if (done.length) {
-      done.forEach(a => logEvent('achievement', { id: a.id }));
       save();
+      try {
+        if (PDM.core && typeof PDM.core._onAchievements === 'function') PDM.core._onAchievements(done);
+      } catch (e) {}
     }
     return done;
   }
@@ -606,10 +664,23 @@ window.PDM = window.PDM || {};
     const beforeLevel = levelInfo();
     const hadToday = state.checkins.indexOf(today) >= 0;
     const streakBefore = computeStreak(state);
-    const firstToday = !hadToday;
+    const eligible = minutes >= 10;
+    const firstToday = eligible && !hadToday;
+    const clamp100 = v => Math.max(0, Math.min(100, Number(v) || 0));
 
-    const base = minutes;
-    let first = 0, s3 = 0, s7 = 0;
+    // 主循环：2 鱼干/分钟；完整做完一轮再 +25%
+    const baseRaw = minutes * 2;
+    const completeBonus = opts.completed ? Math.round(baseRaw * 0.25) : 0;
+    let foodBonus = 0;
+    if (state.buffs && state.buffs.focusBoostUntil > Date.now()) {
+      foodBonus = Math.round((baseRaw + completeBonus) * 0.10);
+      state.buffs.focusBoostUntil = 0;
+    }
+    const mood = clamp100(state.mood);
+    const moodBonus = Math.round((baseRaw + completeBonus) * (mood / 100 * 0.05));
+    const base = baseRaw + completeBonus + foodBonus + moodBonus;
+
+    let first = 0, s3 = 0, s7 = 0, s14 = 0, s30 = 0;
 
     state.sessions.push({
       date: today,
@@ -620,29 +691,49 @@ window.PDM = window.PDM || {};
       completed: !!opts.completed
     });
 
-    if (minutes > 0) {
-      if (!hadToday) state.checkins.push(today);
-      // streak award bookkeeping: reset milestones if streak broke
-      if (hadToday) {
-        // same-day extra session: keep awards
-      } else {
+    if (eligible) {
+      if (!hadToday) {
+        state.checkins.push(today);
         const prev = streakBefore > 0 && state.checkins.indexOf(addDays(today, -1)) >= 0;
         if (!prev) state.streakAwards = [];
       }
-      if (firstToday) first = 5;
     }
 
     const streak = computeStreak(state);
-    if (streak >= 3 && state.streakAwards.indexOf(3) < 0) { s3 = 10; state.streakAwards.push(3); }
-    const milestones = state.streakAwards.slice();
-    if (streak >= 7 && milestones.indexOf(7) < 0) { s7 = 20; state.streakAwards.push(7); }
+    if (eligible) {
+      const award = (days, amount) => {
+        if (streak >= days && state.streakAwards.indexOf(days) < 0) {
+          state.streakAwards.push(days);
+          if (days === 3) s3 = amount;
+          else if (days === 7) s7 = amount;
+          else if (days === 14) s14 = amount;
+          else if (days === 30) s30 = amount;
+        }
+      };
+      award(3, 10); award(7, 20); award(14, 35); award(30, 60);
+    }
+    if (firstToday) first = 8;
 
-    const total = base + first + s3 + s7;
+    const total = base + first + s3 + s7 + s14 + s30;
     state.fish += total;
     state.growth += minutes;
+    if (minutes > 0) {
+      state.mood = clamp100(mood + (opts.completed ? 15 : 5));
+      state.intimacy = clamp100((state.intimacy || 0) + Math.floor(minutes / 10));
+    }
     if (streak > state.bestStreak) state.bestStreak = streak;
 
     const levelAfter = levelInfo();
+    const unlocks = [];
+    if (levelAfter.level > beforeLevel.level) {
+      for (let lv = beforeLevel.level + 1; lv <= levelAfter.level; lv++) {
+        const def = LEVELS[lv - 1];
+        if (def && def.unlockId && state.levelUnlocks.indexOf(def.unlockId) < 0) {
+          state.levelUnlocks.push(def.unlockId);
+          unlocks.push({ level: lv, name: def.name, unlock: def.unlock });
+        }
+      }
+    }
     const newComics = syncComicUnlocks(false);
     const newAch = checkAchievements();
 
@@ -654,16 +745,24 @@ window.PDM = window.PDM || {};
     return {
       minutes: minutes,
       base: base,
+      baseRaw: baseRaw,
+      completeBonus: completeBonus,
+      foodBonus: foodBonus,
+      moodBonus: moodBonus,
       first: first,
       s3: s3,
       s7: s7,
+      s14: s14,
+      s30: s30,
       total: total,
       awaySec: awaySec,
       streak: streak,
       firstToday: firstToday,
+      eligible: eligible,
       levelBefore: beforeLevel,
       levelAfter: levelAfter,
       levelUp: levelAfter.level > beforeLevel.level,
+      unlocks: unlocks,
       newComics: newComics,
       achievements: newAch
     };
@@ -676,7 +775,10 @@ window.PDM = window.PDM || {};
   }
 
   function addSnack(n) {
-    state.snacks = Math.max(0, (state.snacks || 0) + (n == null ? 1 : n));
+    const add = n == null ? 1 : n;
+    state.snacks = Math.max(0, (state.snacks || 0) + add);
+    // 免费零食视为基础「猫鱼条」，可直接在投喂面板里看到并选择
+    if (add > 0) state.foods.fish = Math.max(0, (state.foods.fish || 0) + add);
     save();
     return state.snacks;
   }
@@ -684,8 +786,9 @@ window.PDM = window.PDM || {};
   function useSnack() {
     if (!state.snacks || state.snacks <= 0) return false;
     state.snacks -= 1;
+    if (state.foods.fish > 0) state.foods.fish -= 1;
     save();
-    return true;
+    return 'fish';
   }
 
   function buyFood(id) {
@@ -700,13 +803,57 @@ window.PDM = window.PDM || {};
     return { ok: true, food: food };
   }
 
-  function useFood() {
-    const id = FOODS.find(x => (state.foods[x.id] || 0) > 0)?.id;
-    if (!id) return useSnack();
-    state.foods[id] -= 1;
-    state.snacks = Math.max(0, (state.snacks || 0) - 1);
+  function clamp100(v) {
+    return Math.max(0, Math.min(100, Number(v) || 0));
+  }
+
+  function registerInteraction(skipSave) {
+    const today = dateKey();
+    if (!state.daily || state.daily.date !== today) state.daily = { date: today, interact: 0 };
+    let gained = 0;
+    if (state.daily.interact < 6) {
+      state.daily.interact += 1;
+      state.intimacy = clamp100((state.intimacy || 0) + 1);
+      gained = 1;
+    }
+    if (!skipSave) save();
+    return gained;
+  }
+
+  function interact(kind) {
+    const gain = kind === 'pet' ? 8 : kind === 'play' ? 10 : 12;
+    state.mood = clamp100((state.mood || 0) + gain);
+    registerInteraction(true);
+    logEvent('interact', { kind: kind });
     save();
-    return id;
+    return { mood: state.mood, intimacy: state.intimacy };
+  }
+
+  function useFood(id) {
+    let fid = id;
+    if (!fid) fid = FOODS.find(x => (state.foods[x.id] || 0) > 0)?.id;
+    if (!fid || !(state.foods[fid] > 0)) return null;
+    const today = dateKey();
+    state.foods[fid] -= 1;
+    state.snacks = Math.max(0, (state.snacks || 0) - 1);
+    state.mood = clamp100((state.mood || 0) + 12);
+    state.buffs = state.buffs || {};
+    if (fid === 'fish') {
+      state.buffs.focusBoostUntil = Date.now() + 45 * 60 * 1000;
+    } else if (fid === 'milk') {
+      state.buffs.milkDate = today;
+    } else if (fid === 'cookie') {
+      if (state.buffs.cookieDate !== today) {
+        state.buffs.cookieDate = today;
+        if (state.fishing.breakReady) state.fishing.castsLeft = Math.max(0, (state.fishing.castsLeft || 0) + 1);
+        else state.fishing.bonusCasts = Math.max(0, (state.fishing.bonusCasts || 0) + 1);
+      }
+      state.intimacy = clamp100((state.intimacy || 0) + 1);
+    }
+    registerInteraction(true);
+    logEvent('feed', { id: fid });
+    save();
+    return fid;
   }
 
   /* ---------- fishing ---------- */
@@ -731,7 +878,9 @@ window.PDM = window.PDM || {};
     if (f.granted) return false;
     f.granted = true;
     f.breakReady = true;
-    f.castsLeft = FISHING.castsPerBreak;
+    f.castsLeft = FISHING.castsPerBreak + (f.gear.rod ? 1 : 0) + (f.bonusCasts || 0);
+    f.bonusCasts = 0;
+    f.missFree = true;
     logEvent('rest_start', { casts: f.castsLeft });
     save();
     return true;
@@ -743,6 +892,7 @@ window.PDM = window.PDM || {};
     if (!f.breakReady && !f.castsLeft) return false;
     f.breakReady = false;
     f.castsLeft = 0;
+    f.missFree = true;
     save();
     return true;
   }
@@ -753,6 +903,7 @@ window.PDM = window.PDM || {};
     f.breakReady = false;
     f.granted = false;
     f.castsLeft = 0;
+    f.missFree = true;
     save();
   }
 
@@ -764,12 +915,16 @@ window.PDM = window.PDM || {};
     return FISH.find(x => x.id === id) || null;
   }
 
-  function rollFish(rng) {
+  function rollFish(rng, forceRare) {
     const r = typeof rng === 'function' ? rng : Math.random;
     const lamp = state.fishing.gear.lamp;
-    const list = FISH.map(sp => ({
+    const legendThreshold = lamp ? 30 : 40;
+    const legendBoost = state.fishing.pity.legendMiss >= legendThreshold ? 12 : 1;
+    const list = FISH.filter(sp => !forceRare || sp.rarity !== 'common').map(sp => ({
       sp: sp,
-      w: sp.weight * (lamp && sp.rarity !== 'common' ? 2.2 : 1)
+      w: sp.weight
+        * (lamp && sp.rarity !== 'common' ? 2.2 : 1)
+        * (sp.rarity === 'legend' ? legendBoost : 1)
     }));
     const total = list.reduce((a, b) => a + b.w, 0);
     let x = r() * total;
@@ -780,29 +935,36 @@ window.PDM = window.PDM || {};
     return list[list.length - 1].sp;
   }
 
-  // hit=false 表示收竿失败，同样消耗一杆；成功后鱼篓里多一条具体鱼种
+  // hit=false 表示收竿失败；每轮第一次空杆不耗次数
   function fishCast(hit, rng) {
     const f = state.fishing;
     if (!f.breakReady) return { ok: false, reason: 'rest' };
     if (f.castsLeft <= 0) return { ok: false, reason: 'no_cast' };
-    f.castsLeft -= 1;
     if (!hit) {
+      if (f.missFree) {
+        f.missFree = false;
+        logEvent('fish_miss', { left: f.castsLeft, free: true });
+        save();
+        return { ok: true, hit: false, free: true, fish: null, left: f.castsLeft };
+      }
+      f.castsLeft -= 1;
       logEvent('fish_miss', { left: f.castsLeft });
       save();
-      return { ok: true, hit: false, fish: null, left: f.castsLeft };
+      return { ok: true, hit: false, free: false, fish: null, left: f.castsLeft };
     }
+    f.castsLeft -= 1;
     const r = typeof rng === 'function' ? rng : Math.random;
-    let sp = rollFish(r);
-    // 好竿：普通鱼有一次重钓机会，取更好的结果
-    if (f.gear.rod && sp.rarity === 'common' && r() < 0.55) {
-      const sp2 = rollFish(r);
-      if (RARITY[sp2.rarity].level > RARITY[sp.rarity].level) sp = sp2;
-    }
+    const forceRare = (f.pity.nonRare || 0) >= 8;
+    const sp = rollFish(r, forceRare);
     f.bag[sp.id] = (f.bag[sp.id] || 0) + 1;
     f.totalFish += 1;
+    if (sp.rarity === 'legend') f.pity.legendMiss = 0;
+    else f.pity.legendMiss = Math.min(40, (f.pity.legendMiss || 0) + 1);
+    if (sp.rarity === 'common') f.pity.nonRare = Math.min(8, (f.pity.nonRare || 0) + 1);
+    else f.pity.nonRare = 0;
     logEvent('fish_catch', { species: sp.id, rarity: sp.rarity, left: f.castsLeft });
     save();
-    return { ok: true, hit: true, fish: sp, left: f.castsLeft };
+    return { ok: true, hit: true, free: false, fish: sp, left: f.castsLeft };
   }
 
   function bagCount() {
@@ -1012,6 +1174,8 @@ window.PDM = window.PDM || {};
     useSnack: useSnack,
     buyFood: buyFood,
     useFood: useFood,
+    interact: interact,
+    registerInteraction: registerInteraction,
     logEvent: logEvent,
     eventStats: eventStats,
     logSummary: logSummary,

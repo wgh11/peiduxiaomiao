@@ -242,8 +242,8 @@ const DOMAINS = [
   const domainOf = id => DOMAINS.find(d => d.id === id);
 
   const QKEY = 'peiduxiaomiao.quiz.v1';
-  const CAP = 60;
-  function defQ(){ return { done:{}, wrong:[], coinDay:{date:'',earned:0} }; }
+  const CAP = 20;
+  function defQ(){ return { done:{}, wrong:[], coinDay:{date:'',earned:0}, paperDay:{date:'',earned:0} }; }
   let Q = defQ();
   try { const raw = JSON.parse(localStorage.getItem(QKEY)); if (raw) Q = Object.assign(defQ(), raw); } catch (e) {}
   // 兼容旧版 "lessonId-qIdx" 字符串，同时保留题目快照，避免每日论文换日后错题失效
@@ -282,7 +282,7 @@ const DOMAINS = [
       return '<button class="qz-item ' + cls + '" ' + (unlocked ? 'data-act="open" data-id="' + L.id + '"' : '') + '>' +
         '<span class="qz-idx">' + (done ? '✓' : i + 1) + '</span>' +
         '<span class="qz-body"><b>' + L.title + '</b><i>' + L.tag + ' · 3 卡 · 3 题</i></span>' +
-        '<span class="qz-tag">' + (done ? Q.done[L.id] + ' 分' : (unlocked ? '最多 +20 🐟' : '🔒')) + '</span>' +
+        '<span class="qz-tag">' + (done ? Q.done[L.id] + ' 分' : (unlocked ? '最多 +11 🐟' : '🔒')) + '</span>' +
       '</button>';
     }).join('');
     const earned = Q.coinDay.date === core.dateKey() ? Q.coinDay.earned : 0;
@@ -339,9 +339,10 @@ const DOMAINS = [
       '<div class="qz-score" style="--p:' + r.score + '"><span>' + r.score + '<i>分</i></span></div>' +
       '<h2>' + (pass ? '通关成功' : '再试一次') + '</h2>' +
       '<p class="qz-sub">答对 ' + r.correct + ' / ' + r.total + ' 题</p>' +
-      (pass ? '<div class="qz-win">+' + r.give + ' 🐟</div>' : '<p class="qz-note">得分未达 67，本关未通过，下一关暂未解锁</p>') +
+      (pass ? (r.give > 0 ? '<div class="qz-win">+' + r.give + ' 🐟</div>' : '<div class="qz-win">复习完成</div>') : '<p class="qz-note">得分未达 67，本关未通过，下一关暂未解锁</p>') +
       (pass && r.give < r.want ? '<p class="qz-note">今日小鱼干已达上限，超出部分未发放</p>' : '') +
-      (r.first ? '' : '<p class="qz-note">复习模式：只发少量小鱼干</p>') +
+      (r.isPaper && pass && r.want === 0 ? '<p class="qz-note">今天的论文奖励已经领过了</p>' : '') +
+      (!r.first && !r.isPaper ? '<p class="qz-note">复习模式：不再发放小鱼干，答错仍会进错题本</p>' : '') +
       '<div class="qz-foot col">' +
         '<button class="btn primary" data-act="map">继续刷题</button>' +
         '<button class="btn ghost" data-act="shop">去小铺花掉</button>' +
@@ -364,11 +365,24 @@ const DOMAINS = [
     const score = Math.round(correct / L.quiz.length * 100);
     const first = Q.done[L.id] === undefined;
     const pass = score >= 67;
-    const want = pass ? (first ? Math.min(20, 8 + correct * 4) : 1) : 0;
+    const isPaper = !!L.isPaper;
+    let want = 0;
+    if (pass) {
+      if (isPaper) {
+        const today = core.dateKey();
+        if (!Q.paperDay || Q.paperDay.date !== today) {
+          want = 8;
+          Q.paperDay = { date: today, earned: 0 };
+        }
+      } else if (first) {
+        want = Math.min(11, 5 + correct * 2);
+      }
+    }
     const give = want > 0 ? award(want) : 0;
+    if (isPaper && want > 0) Q.paperDay.earned += give;
     if (pass && (first || score > Q.done[L.id])) Q.done[L.id] = score;
     saveQ();
-    st.res = { score: score, correct: correct, total: L.quiz.length, give: give, want: want, first: first };
+    st.res = { score: score, correct: correct, total: L.quiz.length, give: give, want: want, first: first, isPaper: isPaper };
     st.mode = 'result';
     ui.refreshHeader();
     render();
@@ -461,7 +475,8 @@ const DOMAINS = [
       if (i >= 0) ALL[i] = l; else ALL.push(l);
     },
     reset: function () { Q = defQ(); saveQ(); st.mode = 'map'; st.lessonId = null; st.answers = []; st.res = null; render(); },
-    open: function (id) { st.lessonId = id; st.card = 0; st.q = 0; st.answers = []; st.mode = 'card'; render(); }
+    open: function (id) { st.lessonId = id; st.card = 0; st.q = 0; st.answers = []; st.mode = 'card'; render(); },
+    paperClaimed: function () { return !!(Q.paperDay && Q.paperDay.date === core.dateKey()); }
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

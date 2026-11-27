@@ -90,8 +90,7 @@ window.PDM = window.PDM || {};
     if (tr) tr.classList.toggle('hidden', !app.use3d);
     const bp = $('btnBlueprint');
     if (bp) bp.classList.toggle('hidden', !app.use3d);
-    const pb = $('petBar');
-    if (pb) pb.classList.toggle('hidden', !app.use3d);
+    // 2D 回退也保留互动栏，方便喂食和摸摸
     window.addEventListener('resize', resize);
     if (window.ResizeObserver) {
       new ResizeObserver(resize).observe(wrap);
@@ -226,7 +225,7 @@ window.PDM = window.PDM || {};
     const hint = $('modeHint');
     if (hint) {
       hint.textContent = mode === 'strict'
-        ? '严格专注：切到其他页面也继续计时'
+        ? '严格专注：离开仍计时，但离开时间不计奖励'
         : '自由学习：切到其他页面时，计时自动暂停';
     }
     const box = $('studyModes');
@@ -239,16 +238,25 @@ window.PDM = window.PDM || {};
     st.settings.studyMode = mode === 'strict' ? 'strict' : 'free';
     core.save();
     updateModeUI();
-    ui.toast(mode === 'strict' ? '严格专注：离开页面也会计时' : '自由学习：离开页面自动暂停', 2200);
+    ui.toast(mode === 'strict' ? '严格专注：离开仍计时，但不计入奖励' : '自由学习：离开页面自动暂停', 2200);
   }
 
-  function activeElapsedMs(s, now) {
+  function presenceElapsedMs(s, now) {
     const t = now || Date.now();
     const end = s.pausedAt ? s.pausedAt : t;
     const paused = s.pausedMs || 0;
-    if (s.mode === 'strict') return Math.max(0, end - s.startedAt - paused);
     const hiddenNow = (s.hiddenAt && !s.pausedAt) ? Math.max(0, end - s.hiddenAt) : 0;
     return Math.max(0, end - s.startedAt - paused - (s.awayMs || 0) - hiddenNow);
+  }
+
+  function activeElapsedMs(s, now) {
+    // 严格模式计时不暂停；自由模式只统计在场时间
+    if (s.mode === 'strict') {
+      const t = now || Date.now();
+      const end = s.pausedAt ? s.pausedAt : t;
+      return Math.max(0, end - s.startedAt - (s.pausedMs || 0));
+    }
+    return presenceElapsedMs(s, now);
   }
 
   function persistSession() {
@@ -300,9 +308,8 @@ window.PDM = window.PDM || {};
     s.tag = s.tag || '';
     s.breakShown = s.breakShown || 0;
     if (!s.pausedAt) {
-      if (s.mode !== 'strict') {
-        s.awayMs = (s.awayMs || 0) + Math.max(0, Date.now() - savedAt);
-      }
+      // 严格模式也记录离开时长，只用于结算时扣除奖励
+      s.awayMs = (s.awayMs || 0) + Math.max(0, Date.now() - savedAt);
       s.hiddenAt = document.hidden ? Date.now() : 0;
     } else {
       s.hiddenAt = 0;
@@ -389,11 +396,12 @@ window.PDM = window.PDM || {};
     const tagTxt = s.tag ? ' · ' + s.tag : '';
     if (s.awayMs > 3000) {
       subEl.textContent = s.mode === 'strict'
-        ? '严格专注 · 离开的时间也在计时'
+        ? '严格专注 · 离开时间继续计时，但不计入奖励'
         : '小猫打了会儿盹 · 离开时间已自动暂停';
     } else {
-      subEl.textContent = '小猫在认真陪读 · 完成可得 ' + Math.round(s.durationSec / 60) + ' 条小鱼干' +
-        tagTxt + (s.mode === 'strict' ? ' · 离开也计时' : '');
+      const est = Math.round(s.durationSec / 60 * 2 * 1.25);
+      subEl.textContent = '小猫在认真陪读 · 完成可得约 ' + est + ' 条小鱼干' +
+        tagTxt + (s.mode === 'strict' ? ' · 离开时间不计奖励' : '');
     }
     bar.style.width = pct + '%';
     document.title = core.fmtClock(remain) + ' · 陪读小喵';
@@ -444,18 +452,20 @@ window.PDM = window.PDM || {};
     showStageTip('小猫坐好了，开始陪读吧', 2600);
     updateTimerUI();
     ui.toast(app.session.mode === 'strict'
-      ? '严格专注开始 · 切到其他页面也会继续计时'
+      ? '严格专注开始 · 离开继续计时，但不计入奖励'
       : '自由学习开始 · 切到其他页面会自动暂停', 2400);
   }
 
   function finishSession(completed) {
     if (!app.session) return;
     const s = app.session;
-    const activeSec = activeElapsedMs(s) / 1000 * app.speed;
+    // 奖励只按在场时间计算：严格模式离开仍然计时，但离开时长不发鱼干
+    const presenceSec = presenceElapsedMs(s) / 1000 * app.speed;
     let minutes = completed
-      ? Math.round(s.durationSec / 60)
-      : Math.floor(activeSec / 60 + 0.0001);
+      ? Math.round(Math.min(presenceSec, s.durationSec) / 60)
+      : Math.floor(presenceSec / 60 + 0.0001);
     minutes = Math.max(0, Math.min(minutes, s.durationSec / 60));
+    const awaySec = Math.min(Math.round(s.durationSec), Math.round((s.awayMs + (s.hiddenAt && !s.pausedAt ? Math.max(0, Date.now() - s.hiddenAt) : 0)) / 1000 * app.speed));
 
     app.session = null;
     clearSessionStore();
@@ -471,10 +481,10 @@ window.PDM = window.PDM || {};
     app.catNextAt = performance.now() + 7500;
 
     if (minutes < 1) {
-      core.logEvent('focus_partial', { minutes: 0, away: Math.round(s.awayMs / 1000) });
+      core.logEvent('focus_partial', { minutes: 0, away: awaySec });
       core.save();
       updateTimerUI();
-      ui.toast('这次只坐了一小会儿，小猫下次还等你', 2400);
+      ui.toast(awaySec > 60 ? '离开太久，这轮没有计入奖励' : '这次只坐了一小会儿，小猫下次还等你', 2400);
       return;
     }
 
@@ -483,7 +493,7 @@ window.PDM = window.PDM || {};
 
     const summary = core.commitSession({
       minutes: minutes,
-      awaySec: Math.round(s.awayMs / 1000 * app.speed),
+      awaySec: awaySec,
       tag: s.tag || '',
       completed: completed
     });
@@ -502,36 +512,38 @@ window.PDM = window.PDM || {};
     refreshAll();
     showReward(summary);
 
-    if (summary.levelUp) {
-      setTimeout(() => ui.toast('小屋升温到 Lv.' + summary.levelAfter.level + ' ' + summary.levelAfter.name + '，小猫更黏你了', 2800), 900);
-    }
-    (summary.achievements || []).forEach((a, i) => {
-      setTimeout(() => ui.toast('成就达成 · ' + a.name, 2400), 1400 + i * 900);
-    });
     (summary.newComics || []).forEach((c, i) => {
       setTimeout(() => ui.toast('解锁番外《' + c.title + '》，去图鉴看看', 2600), 2200 + i * 900);
     });
   }
 
   function showReward(sum) {
+    const st = core.state();
+    const canDouble = sum.total > 0 && st.adDoubleDate !== core.dateKey();
+    const doubleAmt = Math.round(sum.total * 0.5);
     const lines = [];
-    lines.push('<div class="reward-line"><span>专注 ' + sum.minutes + ' 分钟</span><b>+' + sum.base + '</b></div>');
-    if (sum.snacks > 0) lines.push('<div class="reward-line bonus"><span>小猫零食</span><b>+' + sum.snacks + '</b></div>');
+    lines.push('<div class="reward-line"><span>专注 ' + sum.minutes + ' 分钟</span><b>+' + sum.baseRaw + '</b></div>');
+    if (sum.completeBonus > 0) lines.push('<div class="reward-line bonus"><span>完整完成本轮 +25%</span><b>+' + sum.completeBonus + '</b></div>');
+    if (sum.foodBonus > 0) lines.push('<div class="reward-line bonus"><span>猫鱼条加成</span><b>+' + sum.foodBonus + '</b></div>');
+    if (sum.moodBonus > 0) lines.push('<div class="reward-line bonus"><span>心情加成</span><b>+' + sum.moodBonus + '</b></div>');
+    if (sum.snacks > 0) lines.push('<div class="reward-line bonus"><span>猫鱼条</span><b>+' + sum.snacks + '</b></div>');
     if (sum.first > 0) lines.push('<div class="reward-line bonus"><span>今天第一次专注</span><b>+' + sum.first + '</b></div>');
     if (sum.s3 > 0) lines.push('<div class="reward-line bonus"><span>连续打卡 3 天</span><b>+' + sum.s3 + '</b></div>');
     if (sum.s7 > 0) lines.push('<div class="reward-line bonus"><span>连续打卡 7 天</span><b>+' + sum.s7 + '</b></div>');
+    if (sum.s14 > 0) lines.push('<div class="reward-line bonus"><span>连续打卡 14 天</span><b>+' + sum.s14 + '</b></div>');
+    if (sum.s30 > 0) lines.push('<div class="reward-line bonus"><span>连续打卡 30 天</span><b>+' + sum.s30 + '</b></div>');
     if (sum.awaySec > 30) {
-      lines.push('<div class="reward-line dim"><span>' + (sum.mode === 'strict'
-        ? '严格模式：离开 ' + Math.round(sum.awaySec / 60) + ' 分钟也计入'
-        : '离开 ' + Math.round(sum.awaySec / 60) + ' 分钟，小猫打了个盹') + '</span><b>' +
-        (sum.mode === 'strict' ? '已计入' : '不计奖励') + '</b></div>');
+      lines.push('<div class="reward-line dim"><span>离开 ' + Math.round(sum.awaySec / 60) + ' 分钟</span><b>不计奖励</b></div>');
     }
     if (sum.levelUp) {
       lines.push('<div class="reward-line bonus"><span>小屋升级</span><b>Lv.' + sum.levelAfter.level + ' ' + sum.levelAfter.name + '</b></div>');
+      (sum.unlocks || []).forEach(u => {
+        lines.push('<div class="reward-line bonus"><span>Lv.' + u.level + ' 新解锁</span><b>' + u.unlock + '</b></div>');
+      });
     }
     const note = sum.awaySec > 30
-      ? '中途离开的时间小猫在睡觉，所以这部分没有算小鱼干；下次坐久一点就好。'
-      : '看一段模拟激励视频，本次奖励直接翻倍。';
+      ? '离开的时间只计时，没有计入奖励；小猫会一直等你回来。'
+      : (canDouble ? '看一次广告，本次奖励额外 +50%，每天一次。' : '今天的小鱼干收好啦，明天再来陪小喵。');
 
     $('rewardBody').innerHTML =
       '<div class="reward-art" style="display:flex;justify-content:center;margin-bottom:2px"><canvas id="rewardCat" style="width:104px;height:104px"></canvas></div>' +
@@ -541,8 +553,8 @@ window.PDM = window.PDM || {};
       '<div class="reward-lines">' + lines.join('') + '</div>' +
       '<div class="reward-note">' + note + '</div>' +
       '<div class="reward-actions">' +
-      (sum.total > 0 ? '<button class="btn primary" data-action="adDouble">看广告 · 奖励翻倍 +' + sum.total + '</button>' : '') +
-      '<button class="btn ghost" data-action="closeReward">收下小鱼干</button>' +
+      '<button class="btn primary" data-action="closeReward">收下小鱼干</button>' +
+      (canDouble ? '<button class="btn ghost" data-action="adDouble">看广告 · 额外 +' + doubleAmt + '（+50%）</button>' : '') +
       '<button class="btn ghost" data-action="goFishing">休息一下 · 去鱼塘</button>' +
       '</div>';
     $('rewardWrap').classList.add('show');
@@ -670,6 +682,7 @@ window.PDM = window.PDM || {};
       const lv = core.levelInfo();
       chip.innerHTML = '<span class="level-dot"></span><span id="levelText">Lv.' + lv.level + ' ' + lv.name + '</span>';
     }
+    updatePetBar();
   }
 
   /* ---------------- welcome ---------------- */
@@ -1013,14 +1026,27 @@ window.PDM = window.PDM || {};
       }
       case 'adDouble': {
         if (!app.reward || app.rewarded) return;
-        const extra = app.reward.total;
-        openAd('看完这段模拟广告，本次奖励再翻一倍', () => {
+        const st = core.state();
+        const today = core.dateKey();
+        if (st.adDoubleDate === today) {
+          ui.toast('今天的广告加成已经用过了', 2000);
+          return;
+        }
+        const extra = Math.round(app.reward.total * 0.5);
+        openAd('看完这段模拟广告，本次奖励额外 +50%（每天一次）', () => {
+          st.adDoubleDate = today;
           core.addBonusFish(extra, 'double');
+          core.save();
           app.rewarded = true;
           closeReward();
           refreshAll();
-          ui.toast('奖励翻倍，额外 +' + extra + ' 条小鱼干', 2600);
+          ui.toast('额外 +' + extra + ' 条小鱼干', 2600);
         });
+        break;
+      }
+      case 'feedFood': {
+        ui.closeSheet();
+        feedCat(el.dataset.id);
         break;
       }
       case 'confirmStop': {
@@ -1064,28 +1090,69 @@ window.PDM = window.PDM || {};
   }
 
   function updatePetBar() {
+    const st = core.state();
     const el = $('snackCount');
-    if (el) el.textContent = String(core.state().snacks || 0);
+    if (el) el.textContent = String(st.snacks || 0);
+    const stats = $('petStats');
+    if (stats) {
+      const lv = core.levelInfo().level;
+      stats.classList.toggle('hidden', lv < 2);
+      stats.textContent = '心情 ' + Math.round(st.mood || 0) + ' · 亲密 ' + Math.round(st.intimacy || 0);
+    }
+  }
+
+  function foodToast(id) {
+    if (id === 'fish') return '小喵吃掉猫鱼条，下一轮专注 +10% 小鱼干';
+    if (id === 'milk') return '小喵喝下牛奶，今天心情不会掉了';
+    if (id === 'cookie') return '小喵咬了口饼干，今天钓鱼多 1 杆';
+    return '小喵吃得很开心';
+  }
+
+  function openFeedSheet() {
+    const st = core.state();
+    const rows = core.FOODS.map(f => {
+      const n = st.foods[f.id] || 0;
+      return '<div class="kv-row"><div><b>' + f.name + '</b><div class="tiny">' + f.desc + '</div></div>' +
+        '<button class="btn ' + (n > 0 ? 'primary' : 'ghost') + '" data-action="feedFood" data-id="' + f.id + '"' +
+        (n > 0 ? '' : ' disabled') + '>' + (n > 0 ? '喂 · 剩 ' + n : '没有') + '</button></div>';
+    }).join('');
+    ui.openSheet('投喂小喵', '<div class="kv-list">' + rows + '</div>' +
+      '<p class="tiny" style="margin-top:10px;line-height:1.7">完成一次专注会得到免费猫鱼条；牛奶和饼干可以在商店补充。</p>');
   }
 
   function petCat() {
-    if (!app.use3d) { ui.toast('摸摸需要在 3D 小屋里进行'); return; }
-    if (PDM.room3d) PDM.room3d.stopCat();
+    if (PDM.room3d && app.use3d) PDM.room3d.stopCat();
     app.petUntil = performance.now() + 2600;
     setCatState('pet');
+    core.interact('pet');
+    updatePetBar();
     showStageTip('呼噜呼噜…小喵把头蹭过来', 1900);
   }
 
-  function feedCat() {
-    if (!app.use3d) return;
+  function feedCat(id) {
     if (app.eatPending) return;
-    const n = core.state().snacks || 0;
-    if (n <= 0) {
-      ui.toast('完成一次专注，就能拿到小猫零食', 2400);
+    const st = core.state();
+    if ((st.snacks || 0) <= 0) {
+      ui.toast('完成一次专注，就能拿到免费猫鱼条', 2400);
       return;
     }
-    if (!core.useFood()) return;
+    if (!id) {
+      openFeedSheet();
+      return;
+    }
+    const fed = core.useFood(id);
+    if (!fed) {
+      ui.toast('这份零食已经吃完了', 2000);
+      return;
+    }
     updatePetBar();
+    ui.toast(foodToast(fed), 2600);
+    if (!app.use3d || !PDM.room3d) {
+      app.eatUntil = performance.now() + 2200;
+      setCatState('eat');
+      showStageTip('小喵吃得很满足', 1600);
+      return;
+    }
     app.eatPending = true;
     app.eatUntil = 0;
     PDM.room3d.feedSnack(-.12, .36);
@@ -1093,21 +1160,26 @@ window.PDM = window.PDM || {};
       app.eatUntil = performance.now() + 2600;
       setCatState('eat');
       PDM.room3d.clearSnack();
-      ui.toast('小喵吃得津津有味', 2200);
       setTimeout(() => { app.eatPending = false; }, 2800);
     });
     showStageTip('小喵闻到香味，正走过去', 1800);
   }
 
   function playCat() {
-    if (!app.use3d) return;
+    core.interact('play');
+    updatePetBar();
+    if (!app.use3d || !PDM.room3d) {
+      app.playUntil = performance.now() + 2200;
+      setCatState('play');
+      showStageTip('毛线球滚起来了', 1600);
+      return;
+    }
     PDM.room3d.playToy();
     PDM.room3d.moveCatTo(.24, .44, () => {
       app.playUntil = performance.now() + 2600;
       setCatState('play');
-      ui.toast('小喵扑向毛线球', 2000);
+      showStageTip('毛线球滚起来了', 1600);
     });
-    showStageTip('毛线球滚起来了', 1600);
   }
 
   function rotateCurrent() {
@@ -1315,7 +1387,7 @@ window.PDM = window.PDM || {};
       ui.openModal(
         '<h2 style="font-size:17px;margin-bottom:6px">要提前结束吗？</h2>' +
         '<p class="tiny" style="line-height:1.7;margin-bottom:14px">已经专注的 ' + doneMin + ' 分钟会计入记录，' +
-        (app.session.mode === 'strict' ? '严格模式下离开的时间也计入专注。' : '离开的时间不算奖励。') +
+        '只统计在场时间，离开的部分不计奖励。' +
         '小猫不会生气。</p>' +
         '<div class="reward-actions"><button class="btn primary" data-action="confirmStop">结束这次陪读</button>' +
         '<button class="btn ghost" data-action="closeModal">继续专注</button></div>');
@@ -1370,7 +1442,7 @@ window.PDM = window.PDM || {};
       const b = e.target.closest('button');
       if (!b) return;
       if (b.dataset.pet === 'pet') petCat();
-      else if (b.dataset.pet === 'feed') feedCat();
+      else if (b.dataset.pet === 'feed') openFeedSheet();
       else if (b.dataset.pet === 'play') playCat();
     });
     window.addEventListener('pagehide', persistSession);
@@ -1411,11 +1483,11 @@ window.PDM = window.PDM || {};
         app.session.hiddenAt = 0;
         if (away > 900) {
           app.session.left = true;
-          if (app.session.mode !== 'strict') app.session.awayMs += away;
+          app.session.awayMs += away;
           app.awaySleepUntil = performance.now() + 2600;
           setCatState('sleep');
           ui.toast(app.session.mode === 'strict'
-            ? '严格模式：离开的 ' + Math.round(away / 1000) + ' 秒仍在计时'
+            ? '严格模式：离开的 ' + Math.round(away / 1000) + ' 秒继续计时，但不计入奖励'
             : '小猫见你离开，先睡了一小会儿', 2400);
           updateTimerUI();
         }
@@ -1431,6 +1503,12 @@ window.PDM = window.PDM || {};
     app.speed = core.state().settings.speed || 1;
     if (app.speed <= 1) app.speed = 1;
     ui.init();
+    core._onAchievements = list => {
+      if (!list || !list.length) return;
+      const names = list.map(a => a.name).join('、');
+      const fish = list.reduce((s, a) => s + (a.reward || 0), 0);
+      ui.toast('成就达成 · ' + names + (fish > 0 ? ' · +' + fish + ' 鱼干' : ''), 3200);
+    };
     setupCanvas();
     bindStatic();
     updateSpeedChip();

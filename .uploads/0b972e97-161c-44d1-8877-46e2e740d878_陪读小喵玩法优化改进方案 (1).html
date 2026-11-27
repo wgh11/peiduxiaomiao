@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>陪读小喵：玩法优化与重构方案</title>
+<style>
+  :root {
+    --bg: #F8F1E6;
+    --bg-2: #FFF8F0;
+    --paper: #FFFCF7;
+    --ink: #3A2F28;
+    --ink-soft: #6A5A50;
+    --line: #EAD9C8;
+    --coral: #E07A62;
+    --coral-deep: #C45D48;
+    --gold: #D7A04B;
+    --sage: #6F8F78;
+    --blue: #5E7F9A;
+    --chip-p0: #C45D48;
+    --chip-p1: #C4893C;
+    --chip-p2: #5E7F9A;
+    --shadow: 0 18px 50px rgba(90, 58, 40, .08);
+    --radius: 18px;
+    --font: "Source Han Sans SC", "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    --mono: "SFMono-Regular", "Cascadia Code", "Sarasa Mono SC", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    color: var(--ink);
+    font-family: var(--font);
+    background:
+      radial-gradient(1200px 500px at 10% -10%, #FFE7D2 0%, transparent 55%),
+      radial-gradient(900px 420px at 100% 0%, #F3E4C9 0%, transparent 50%),
+      var(--bg);
+    line-height: 1.75;
+    font-size: 16.5px;
+  }
+  .page {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 40px 28px 80px;
+  }
+  header.hero {
+    background: linear-gradient(180deg, #FFFDF9 0%, #FFF4E8 100%);
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    padding: 42px 44px 34px;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+  header.hero::after {
+    content: "";
+    position: absolute;
+    right: -40px; top: -40px;
+    width: 220px; height: 220px;
+    background: radial-gradient(circle, rgba(224,122,98,.18), transparent 68%);
+    pointer-events: none;
+  }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--coral-deep);
+    font-weight: 600;
+    letter-spacing: .12em;
+    font-size: 12px;
+    text-transform: uppercase;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 18px; height: 2px;
+    background: var(--coral);
+    border-radius: 2px;
+  }
+  header.hero h1 {
+    font-size: 34px;
+    line-height: 1.25;
+    margin: 12px 0 10px;
+    letter-spacing: .02em;
+  }
+  header.hero .lede {
+    color: var(--ink-soft);
+    max-width: 46em;
+    margin: 0 0 22px;
+  }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .pill {
+    background: #fff;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 12.5px;
+  }
+  nav.toc {
+    margin: 28px 0 8px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px 28px 10px;
+  }
+  nav.toc .toctitle, #toc + p { display: none; }
+  .toc {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 8px 28px 16px;
+    margin: 28px 0 32px;
+  }
+  .toc ul { padding-left: 1.1em; }
+  .toc > ul { list-style: none; padding-left: 0; columns: 2; gap: 0 32px; }
+  .toc > ul > li { break-inside: avoid; margin: 8px 0 10px; font-weight: 650; }
+  .toc ul ul { list-style: none; padding-left: 0; font-weight: 400; color: var(--ink-soft); }
+  .toc a { color: inherit; text-decoration: none; }
+  .toc a:hover { color: var(--coral-deep); }
+  @media (max-width: 800px) {
+    .toc > ul { columns: 1; }
+    header.hero, .page { padding-left: 18px; padding-right: 18px; }
+    header.hero { padding: 28px 22px 22px; }
+    header.hero h1 { font-size: 26px; }
+  }
+  h2 {
+    font-size: 24px;
+    margin: 2.4em 0 .8em;
+    padding-bottom: .35em;
+    border-bottom: 2px solid #F0D8C4;
+    letter-spacing: .02em;
+  }
+  h3 {
+    font-size: 19px;
+    margin: 1.8em 0 .6em;
+    color: #4A382F;
+  }
+  h4 { margin: 1.4em 0 .4em; }
+  p { margin: .8em 0; }
+  a { color: var(--coral-deep); }
+  blockquote {
+    margin: 1.2em 0;
+    padding: 14px 20px;
+    background: #FFF4EA;
+    border-left: 4px solid var(--coral);
+    border-radius: 0 14px 14px 0;
+    color: #4E3C34;
+  }
+  blockquote p { margin: .3em 0; }
+  hr {
+    border: 0;
+    border-top: 1px dashed var(--line);
+    margin: 2.4em 0;
+  }
+  ul, ol { padding-left: 1.3em; }
+  li { margin: .28em 0; }
+  strong { color: #2F2621; }
+  code {
+    font-family: var(--mono);
+    font-size: .86em;
+    background: #F4E7DA;
+    padding: .1em .35em;
+    border-radius: 5px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+    margin: 1em 0 1.4em;
+    font-size: 14.5px;
+    box-shadow: 0 8px 24px rgba(90, 58, 40, .04);
+  }
+  th, td {
+    border-bottom: 1px solid var(--line);
+    padding: 10px 12px;
+    vertical-align: top;
+    text-align: left;
+  }
+  th {
+    background: #F6E8D8;
+    font-weight: 650;
+    color: #4A382F;
+    white-space: nowrap;
+  }
+  tr:last-child td { border-bottom: 0; }
+  tr:nth-child(even) td { background: #FFFCF8; }
+  tbody tr:hover td { background: #FFF3E8; }
+  .content > ul:first-of-type {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 16px 22px 16px 38px;
+    box-shadow: var(--shadow);
+  }
+  footer {
+    margin-top: 48px;
+    color: var(--ink-soft);
+    font-size: 13px;
+    text-align: center;
+  }
+  /* visual income bars after section 3.2 / 3.3 if we inject */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 16px 0 24px;
+  }
+  @media (max-width: 800px) { .compare { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 16px 18px 14px;
+  }
+  .card h4 { margin: 0 0 10px; }
+  .bar-row { display: grid; grid-template-columns: 108px 1fr 52px; gap: 8px; align-items: center; margin: 7px 0; font-size: 13px; }
+  .bar-track { height: 10px; background: #F0E2D4; border-radius: 99px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 99px; background: var(--coral); }
+  .bar-fill.side { background: var(--gold); }
+  .bar-fill.ok { background: var(--sage); }
+</style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="eyebrow">Gameplay Design Review</div>
+      <h1>陪读小喵：玩法优化与重构方案</h1>
+      <p class="lede">基于开源仓库实码核查的玩法收束、经济重构、猫屋陪伴与移植前必改清单。先把主循环立住，再搬到 Cocos。</p>
+      <div class="meta">
+        <span class="pill">仓库 HEAD 082da3b</span>
+        <span class="pill">核查日期 2026-11-27 · 上海时区</span>
+        <span class="pill">面向网页版 / TapTap / 微信单机小游戏</span>
+      </div>
+    </header>
+    <div class="content">
+      <h1 id="_1">陪读小喵：玩法优化与重构方案</h1>
+<ul>
+<li><strong>对象仓库</strong>：<a href="https://github.com/wgh11/peiduxiaomiao.git">wgh11/peiduxiaomiao</a>（浅克隆核查，HEAD <code>082da3b</code>，2026-11-27）</li>
+<li><strong>产品形态</strong>：治愈系动漫风竖屏桌宠《陪读小喵》，先做网页版，后续上 TapTap 与微信单机小游戏，计划移植 Cocos</li>
+<li><strong>本文目的</strong>：不只复述缺陷，而是给出可落地的定位收束、经济数值、成长陪伴、留存消耗与移植前改动清单</li>
+<li><strong>原则</strong>：所有结论均来自实际读取的 <code>js/core.js</code>、<code>js/app.js</code>、<code>js/quiz.js</code>、<code>js/paper.js</code>、<code>js/fishing.js</code>、<code>js/ui.js</code>、<code>js/ui2.js</code>、<code>js/extras.js</code>、<code>js/room3d.js</code>、<code>index.html</code>、<code>papers/daily.json</code>，不编造不存在的文件、行号或数值</li>
+</ul>
+<hr />
+<h2 id="_2">一、代码核查结论</h2>
+<p>当前最大的问题，不是「内容少」或「3D 做得不够精致」，而是四件事叠在一起：</p>
+<ol>
+<li><strong>主玩法（专注陪读）单位时间收益最低</strong>，支线（刷题、每日论文、钓鱼）可以更快赚到同一货币「小鱼干」；</li>
+<li><strong>成长线（等级、成就、番外、猫屋）没有足够的正反馈和消耗口</strong>，大约 20 天故事见底，买完家具后鱼干无处可花；</li>
+<li><strong>产品定位被三个并列系统拉散</strong>：「陪读桌宠」是壳，「AI 刷题 / 每日论文」和「钓鱼小游戏」在抢注意力和收益；</li>
+<li><strong>情感陪伴仍停留在动画层</strong>：仓库里已经有摸摸、投喂、毛线球、角落猫屋和分享卡，但没有心情、亲密度、猫屋升级，也没有「小猫会回自己小屋」的行为闭环。</li>
+</ol>
+<p>这些都是设计层问题。原样搬到 Cocos，只会把同一套循环复制过去，不会自动变好。建议先在现版本把规则和数值定稿，再移植。</p>
+<h3 id="11">1.1 先前缺陷清单核实</h3>
+<p>下表对照另一份「玩法缺陷分析」与本仓库实码。总体判断：<strong>主循环和经济结论成立</strong>，但有几处需要修正或补充。</p>
+<table>
+<thead>
+<tr>
+<th>先前判断</th>
+<th>核查结果</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>专注 <code>1 鱼干/分钟</code>，无完成整轮加成</td>
+<td><strong>属实</strong></td>
+<td><code>commitSession</code> 中 <code>const base = minutes</code>（<code>js/core.js</code> 第 611 行）；完成 ≥15 分钟只额外 <code>addSnack(1)</code>（<code>js/app.js</code> 第 494–496 行），零食不能当货币用</td>
+</tr>
+<tr>
+<td>刷题首通 <code>16–20</code>，重刷及格 <code>+1</code>，日上限 60，无单关日限</td>
+<td><strong>属实</strong></td>
+<td><code>want = pass ? (first ? Math.min(20, 8 + correct * 4) : 1) : 0</code>，<code>CAP = 60</code>（<code>js/quiz.js</code> 第 245、367 行）</td>
+</tr>
+<tr>
+<td>每日论文约 <code>20/天</code>，5 篇按 <code>dayIndex % 5</code> 循环</td>
+<td><strong>部分不准确</strong></td>
+<td>内置论文是 <strong>4 篇</strong>（RT-2、Open X-Embodiment、Diffusion Policy、π0），<code>dayIndex() % PAPERS.length</code>（<code>js/paper.js</code> 第 111 行）。更关键的是：加载后会 <code>fetch('papers/daily.json')</code> 并直接 <code>update</code> 覆盖（第 134–142 行）。仓库里的 <code>daily.json</code> 是固定一篇「混合专家 MoE」，<strong>只要该文件存在，用户几乎每天都在刷同一篇论文拿首通奖励</strong></td>
+</tr>
+<tr>
+<td>钓鱼 3 杆/次，单杆期望 ≈2.05，日兑换上限 10</td>
+<td><strong>属实</strong></td>
+<td><code>castsPerBreak: 3</code>、<code>dailySnackCap: 10</code>（<code>js/core.js</code> 第 173–174 行）；按 9 种鱼权重计算，无夜灯时期望为 <code>204 / 99.5 ≈ 2.05</code> 鱼干/杆，3 杆约 6.15</td>
+</tr>
+<tr>
+<td>夜灯 120 鱼只把期望提到 2.34（+14%），回本 6–12 天</td>
+<td><strong>期望属实，回本被低估</strong></td>
+<td>有夜灯时期望 <code>288 / 122.9 ≈ 2.34</code>。但轻度玩家每天通常只有 1 次休息（3 杆），夜灯一天只多约 <strong>0.88 鱼干</strong>，120 鱼干回本约 <strong>136 天</strong>；若一天多次休息，又会撞上日兑换上限 10，<strong>货币收益可能为 0</strong>，只剩图鉴价值</td>
+</tr>
+<tr>
+<td>严格模式离开时间也计入奖励；1 分钟即可续打卡</td>
+<td><strong>属实</strong></td>
+<td>严格模式离开不加到 <code>awayMs</code>，计时不暂停（<code>js/app.js</code> 第 1410–1418 行）；结算时 <code>minutes &gt; 0</code> 就写入 <code>checkins</code> 并发首日 +5（<code>js/core.js</code> 第 623–632 行）；自定义时长允许 1–180 分钟</td>
+</tr>
+<tr>
+<td>8 级与 12 个成就没有任何奖励</td>
+<td><strong>属实</strong></td>
+<td>升级只弹 toast（<code>js/app.js</code> 第 505–507 行）；<code>checkAchievements</code> 只把 id 推入数组并打日志（<code>js/core.js</code> 第 578–591、200–212 行）</td>
+</tr>
+<tr>
+<td>成就只在专注结算时检查</td>
+<td><strong>属实</strong></td>
+<td>全仓库只有 <code>commitSession</code> 调用 <code>checkAchievements</code>（第 647 行）。购买家具/服装、阅读番外、合成稀有装饰都不会立刻跳成就</td>
+</tr>
+<tr>
+<td>全部定价收藏总价 2138（家具 1338 + 服装 620 + 钓具 180）</td>
+<td><strong>属实，但新号实际待付 2048</strong></td>
+<td>26 件可买家具合计 1338，5 件可买服装 620，钓具 60+120=180。新号开局已拥有地毯、台灯、海报（合计定价 90）和默认服装，<strong>还需 2048 鱼干</strong>才能买齐付费收藏。另有 3 件家具和 1 套节日服装走广告/钓鱼</td>
+</tr>
+<tr>
+<td>猫粮与货币都叫「小鱼干」，喂食无机制作用</td>
+<td><strong>属实</strong></td>
+<td>食物 id <code>fish</code> 的 <code>name</code> 就是「小鱼干」，定价 8（<code>js/core.js</code> 第 91–95 行）；<code>feedCat</code> 只播动画和 toast（<code>js/app.js</code> 第 1079–1100 行）</td>
+</tr>
+<tr>
+<td>3D 不可用时 <code>petBar</code> 被隐藏，喂食/撸猫不可用</td>
+<td><strong>属实，且范围更大</strong></td>
+<td><code>petBar</code>、<code>btnCatHouse</code>、左右旋转、俯视平面图都在 <code>!app.use3d</code> 时隐藏（<code>js/app.js</code> 第 83–94 行）；<code>feedCat</code> 在非 3D 下直接 <code>return</code>（第 1080 行）</td>
+</tr>
+<tr>
+<td>广告翻倍压缩经济；广告可解锁钓鱼稀有装饰</td>
+<td><strong>属实</strong></td>
+<td>完成页主按钮是「看广告 · 奖励翻倍」（<code>js/app.js</code> 第 544、1014–1025 行），每次结算都可把 <code>total</code> 再加一份。蘑菇咕咕钟、招财喵、星空地球仪在商店「限定」里可看广告解锁，也可在鱼塘用锦鲤/金龙鱼/河豚合成（<code>js/core.js</code> 第 54、73–74 行；<code>js/ui.js</code> 限定页）</td>
+</tr>
+<tr>
+<td>番外 0/60/150/240/360/500 分钟解锁，约 20 天见底</td>
+<td><strong>属实</strong></td>
+<td>6 篇、每篇 3 页（<code>js/core.js</code> 第 109–157 行）。按每天 25 分钟，第 20 天看完；Lv.8 却要 1000 分钟，后 500 分钟没有新剧情</td>
+</tr>
+<tr>
+<td>传说鱼 0.7% 无保底</td>
+<td><strong>属实</strong></td>
+<td>金龙鱼 <code>weight: 0.7</code>，总权重 99.5，基础概率约 0.70%；有夜灯约 1.25%。按每天 3 杆、全中计算，期望约 47 天（无灯）或 27 天（有灯）才出一条。咬钩窗口 1.15 秒，空杆同样消耗次数（<code>js/fishing.js</code> 第 102、137、124–130 行；<code>js/core.js</code> 第 785–791 行）</td>
+</tr>
+<tr>
+<td>题库 16 关、48 题，4 个领域各 4 关</td>
+<td><strong>关数属实，结构不均</strong></td>
+<td>确实 16 关 48 题，但分布是 <strong>AI 科技 7 关、考公常识 3 关、职场理财 3 关、艺术人文 3 关</strong>，不是均匀的 4×4</td>
+</tr>
+<tr>
+<td>错题本无复习闭环、无每日/周目标、分享无奖励</td>
+<td><strong>属实</strong></td>
+<td>错题本只是列表，答对后移除，无间隔复习、无奖励（<code>js/quiz.js</code> 第 382–424 行）。分享只 <code>logEvent('share')</code>（<code>js/app.js</code> 第 607–610 行）。记录页有日历和成就进度，但没有每日任务</td>
+</tr>
+</tbody>
+</table>
+<h3 id="12">1.2 仓库里多出来的、更深层的问题</h3>
+<p>这些是先前清单着墨不够、但对产品和移植更关键的问题。</p>
+<p><strong>（1）定位分裂：三个系统在抢同一个心流。</strong><br />
+底部 Tab 把「小屋 / 刷题 / 商店 / 图鉴 / 记录」并列，刷题一进门就能玩，不需要先完成专注。刷题和每日论文的内容高度偏向具身智能、RAG、VLA、RT-2、Open X、Diffusion Policy、π0、MoE——这更像开发者自己的科技公众号附录，而不是「考研 / 考公 / 上班族自习桌宠」的主菜。钓鱼又是一套完整的计时小游戏（等待 1–2.4 秒 + 1.15 秒收竿窗口 + 鱼篓 + 装备 + 合成）。三个系统产出的都是同一货币「小鱼干」，玩家的最优策略会自然变成：<strong>少专注、多刷题、顺便钓鱼</strong>。治愈陪伴的主心流被架空。</p>
+<p><strong>（2）「独立小猫小屋」目前只有布景，没有玩法。</strong><br />
+<code>js/room3d.js</code> 的 <code>buildCatHouse</code>（第 821–856 行）是一个固定在 <code>(-1.68, 0, -1.02)</code> 的纸箱模型；<code>focusCatHouse</code> 只做镜头推进，<code>rotateHouse</code> 只改朝向并写入 <code>pdm.catHouseRot</code>。仓库里<strong>没有</strong>纸箱 → 原木 → 花房的升级，没有猫屋内部布置，没有独立布局存档，小猫休息、离线或专注结束后也<strong>不会走进猫屋</strong>。这正是产品口头上最想做、代码里却最薄的一条情感线。</p>
+<p><strong>（3）陪伴互动没有状态机。</strong><br />
+已有摸摸、投喂、追毛线球和 8 项「陪伴图鉴」（<code>js/core.js</code> 第 98–107 行），但图鉴是<strong>全部常驻展示</strong>，做与不做无区别（<code>js/ui.js</code> 第 293–297 行）。没有心情、亲密度、饱食度，投喂三种食物没有不同效果（开发进度 <code>PROGRESS.md</code> 自己也把「猫粮口味独立反馈」列为下一步）。服装和家具都是纯外观。玩家很难感觉「我和这只猫的关系在变深」。</p>
+<p><strong>（4）每日论文运营方式会把轮换作废。</strong><br />
+4 篇内置论文本可按年积日轮换，但 <code>papers/daily.json</code> 无日期字段、每次加载都覆盖。若不改代码或每日更新该文件，轻知识日更会退化成「同一篇 MoE，每天再拿一轮首通鱼干」。</p>
+<p><strong>（5）结算文案与严格模式规则打架。</strong><br />
+<code>showReward</code> 在 <code>awaySec &gt; 30</code> 时，备注永远写「中途离开的时间小猫在睡觉，所以这部分没有算小鱼干」（<code>js/app.js</code> 第 532–534 行）。但严格模式离开时间已经被计入分钟和鱼干。玩家会觉得规则说不清楚。</p>
+<p><strong>（6）任务标签几乎是摆设。</strong><br />
+专注前可选「阅读 / 刷题 / 写作 / 复习 / 其他」，只写入 session 并在最近记录里显示，没有分类统计、没有按标签的目标或奖励。</p>
+<p><strong>（7）传播点在门口停住。</strong><br />
+已有手绘风格分享卡（<code>js/extras.js</code> 的 <code>drawShareCard</code>），可保存或系统分享，但没有每日首次分享奖励，也没有「连续 7 天海报」「今日陪读成绩单」这类强钩子。单机小游戏尤其需要这种低成本复访与传播。</p>
+<hr />
+<h2 id="_3">二、定位收束与模块协同</h2>
+<p>建议把产品一句话重新收束为：</p>
+<blockquote>
+<p><strong>一只会陪你坐下来的小猫，加上一间会慢慢变温的小屋。</strong><br />
+专注是主业，钓鱼是课间休息，轻知识是学完后的五分钟复盘，猫屋和收藏是你们一起过日子的证据。</p>
+</blockquote>
+<p>不要再让「刷题赚鱼干」和「钓鱼赚鱼干」与主循环抢同一个目标。四个模块的分工如下。</p>
+<h3 id="21">2.1 主循环：专注陪读（唯一主要收入 + 成长经验）</h3>
+<ul>
+<li><strong>玩家要做的事</strong>：选定任务标签和时长，坐下，让小猫陪读。</li>
+<li><strong>只从这里产出</strong>：大部分小鱼干、全部成长值（已是 <code>growth += minutes</code>，应保持）、打卡、等级进度、亲密度的主要来源、番外与猫屋升级的资格。</li>
+<li><strong>心流</strong>：开始陪读 → 小猫走到书桌旁看书 → 完成整轮 → 结算奖励与升级/成就 → 小猫去休息（钻进自己的小屋）→ 可选「休息一下，去鱼塘」。</li>
+<li><strong>原则</strong>：单位时间收益必须明显高于刷题和钓鱼；完整做完一轮，应比中途放弃明显更划算。</li>
+</ul>
+<h3 id="22">2.2 休息微循环：钓鱼（休闲 + 图鉴 + 专属装饰）</h3>
+<ul>
+<li><strong>何时出现</strong>：一轮专注结束后（已有 <code>startBreak</code>，一轮只发一次，这个结构很好，应保留）。</li>
+<li><strong>主要产出</strong>：鱼种图鉴、稀有装饰合成材料、少量鱼干（有日上限）。</li>
+<li><strong>不要再承担</strong>：成为高效金币场；不要让广告直接发同一批「钓鱼专属」装饰，否则鱼塘收集目标会被绕过。</li>
+<li><strong>心流</strong>：收竿玩法保持现在的等待-咬钩手感，加上保底，避免三杆全空；钓具要有清晰、可感知的好处（例如 +1 杆），而不是只加 14% 期望。</li>
+</ul>
+<h3 id="23">2.3 轻知识微循环：刷题 / 每日论文（复习与世界感，不是金币场）</h3>
+<ul>
+<li><strong>定位</strong>：陪读结束后的 5–10 分钟「今日一张卡片」，强化「这是一个爱学习的世界」，而不是第二条升级通道。</li>
+<li><strong>建议入口</strong>：首通 10 分钟专注后解锁刷题 Tab（或至少弱化未解锁态的收益），避免新用户一进门就开始刷金币。</li>
+<li><strong>产出</strong>：少量鱼干（首通 + 每日一篇 + 错题复习），严格日上限；知识本身、错题本、轻成就。</li>
+<li><strong>内容重心</strong>：逐步把关卡从「AI 论文精读」微调到更贴近自习人群的常识/方法/心态，AI 领域可以保留，但不宜继续占 16 关里的 7 关，也不宜让每日论文每天都是同一篇 MoE。</li>
+</ul>
+<h3 id="24">2.4 长期目标：小屋、猫屋、图鉴、主题</h3>
+<ul>
+<li><strong>货币出口</strong>：家具、服装、钓具、猫屋升级与内装、鱼缸展览、季节主题、称号。</li>
+<li><strong>情感出口</strong>：亲密度档位、番外、小猫回到自己小屋的行为、成就即时反馈。</li>
+<li><strong>这些系统不再直接发大量鱼干</strong>，只消耗鱼干、或发不可刷的限定外观。</li>
+</ul>
+<p>一句话协同规则：<strong>专注赚钱和升级，钓鱼收集，刷题复习，小屋和猫屋过日子。</strong> 谁越界，就砍谁的货币，而不是再叠一个系统。</p>
+<hr />
+<h2 id="_4">三、新版经济与数值重构</h2>
+<p>设计目标有三条：</p>
+<ol>
+<li><strong>轻度玩家（每天 1 次 25 分钟完整专注）走正规循环，大约 3 周集齐商店家具与服装，5 周左右完成猫屋升级、鱼缸和一套主题。</strong></li>
+<li><strong>中度玩家（每天约 60 分钟，例如两轮 25 分钟）可以更快布置小屋，但不会在一周内把所有长期目标清空。</strong></li>
+<li><strong>只刷题、挂机或 1 分钟续签，不能再成为最优解。</strong></li>
+</ol>
+<p>开局 40 鱼干、三件初始家具和默认服装建议保留，前十分钟的获得感是对的。</p>
+<h3 id="31-vs">3.1 改前 vs 改后对照表</h3>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>改前（仓库现状）</th>
+<th>改后建议</th>
+<th>目的</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>专注基础产出</td>
+<td>1 鱼干 / 分钟</td>
+<td><strong>2 鱼干 / 分钟</strong></td>
+<td>让主循环成为主要收入</td>
+</tr>
+<tr>
+<td>完整专注加成</td>
+<td>无；≥15 分钟只 +1 零食</td>
+<td><strong>完成整轮再 +25% 基础产出</strong>（25 分钟即 +13）</td>
+<td>抑制「差 1 分钟也无所谓」和提前退出</td>
+</tr>
+<tr>
+<td>今日首次专注</td>
+<td>+5</td>
+<td><strong>+8</strong></td>
+<td>强化每天回来的第一轮</td>
+</tr>
+<tr>
+<td>打卡与首次奖励门槛</td>
+<td><code>minutes &gt; 0</code>（1 分钟即可）</td>
+<td><strong>单次有效专注 ≥ 10 分钟</strong> 才记打卡、发首次奖励</td>
+<td>让连续天数重新有习惯意义</td>
+</tr>
+<tr>
+<td>连续打卡里程碑</td>
+<td>3 天 +10、7 天 +20，之后无</td>
+<td><strong>3 天 +10、7 天 +20、14 天 +35、30 天 +60</strong>；断签后可再得</td>
+<td>补 2–4 周留存目标</td>
+</tr>
+<tr>
+<td>严格模式离开</td>
+<td>离开时间全额计入分钟和鱼干</td>
+<td><strong>奖励只按在场分钟计算</strong>；可增加一次「小猫呼唤」宽限（例如挽回 2 分钟）</td>
+<td>堵挂机，同时不完全惩罚去倒杯水</td>
+</tr>
+<tr>
+<td>自由模式离开</td>
+<td>计时暂停，离开不计奖励</td>
+<td><strong>保持</strong></td>
+<td>已经合理</td>
+</tr>
+<tr>
+<td>刷题首通</td>
+<td><code>8 + 4×答对</code>，最高 20</td>
+<td><strong><code>5 + 2×答对</code>，最高 11</strong></td>
+<td>降到「一杯茶的零花钱」</td>
+</tr>
+<tr>
+<td>刷题重刷</td>
+<td>及格 +1，无单关日限</td>
+<td><strong>0 鱼干</strong></td>
+<td>杜绝同一关刷日上限</td>
+</tr>
+<tr>
+<td>错题复习</td>
+<td>只存列表，无奖励</td>
+<td><strong>当日首次复习答对 +2，最多 6 题（+12）</strong></td>
+<td>把刷金币改成复习闭环</td>
+</tr>
+<tr>
+<td>每日论文</td>
+<td>新日期 id 视为首通，约 16–20；且可能每天都是同一篇 MoE</td>
+<td><strong>每日仅 1 次 +8</strong>；内容按 4 篇轮换，<code>daily.json</code> 必须带日期才允许覆盖当天</td>
+<td>防刷 + 修运营覆盖 bug</td>
+</tr>
+<tr>
+<td>刷题日上限</td>
+<td>60</td>
+<td><strong>20</strong>（含论文与错题复习）</td>
+<td>再肝也无法超过半轮 25 分钟专注</td>
+</tr>
+<tr>
+<td>钓鱼期望</td>
+<td>2.05 / 杆（无灯），3 杆 ≈ 6.15</td>
+<td>手感保持；兑换价值略收到约 <strong>1.7 / 杆</strong>，3 杆约 5</td>
+<td>休息彩头，不抢主循环</td>
+</tr>
+<tr>
+<td>钓鱼日兑换上限</td>
+<td>10</td>
+<td><strong>8</strong></td>
+<td>与新期望匹配，一天 1–2 次休息刚好</td>
+</tr>
+<tr>
+<td>钓具价值</td>
+<td>竿 60：普通鱼 55% 重钓；灯 120：非普通权重 ×2.2</td>
+<td><strong>竿 50：本轮 +1 杆（4 杆）</strong>；<strong>灯 80：稀有权重提升 + 保底加速</strong></td>
+<td>让玩家买得明白、回本可感知</td>
+</tr>
+<tr>
+<td>钓鱼保底</td>
+<td>无</td>
+<td><strong>连续 8 次非稀有，下一条至少稀有；40 杆未见传说则大幅提高传说权重</strong></td>
+<td>降低全空和传说遥遥无期</td>
+</tr>
+<tr>
+<td>空杆惩罚</td>
+<td>空杆也耗 1 杆</td>
+<td><strong>每轮第一次空杆不耗杆</strong>，之后仍耗杆</td>
+<td>降低「三杆全空」挫败</td>
+</tr>
+<tr>
+<td>稀有装饰</td>
+<td>广告与钓鱼双通道</td>
+<td><strong>钓鱼/合成独占</strong>；广告改为同款季节涂装或其它外观</td>
+<td>保护鱼塘长期目标</td>
+</tr>
+<tr>
+<td>猫粮命名</td>
+<td>货币和食物都叫「小鱼干」（8 买 1）</td>
+<td>货币仍叫小鱼干；食物改为 <strong>「猫鱼条 / 暖暖牛奶 / 奶油饼干」</strong></td>
+<td>消除命名冲突</td>
+</tr>
+<tr>
+<td>猫粮作用</td>
+<td>仅动画；完成专注还免费送，商店几乎没人买</td>
+<td><strong>猫鱼条</strong>：45 分钟内下轮专注 +10%；<strong>牛奶</strong>：当日心情不衰减；<strong>饼干</strong>：亲密度 +1，且当日钓鱼 +1 杆（每日限 1 次）</td>
+<td>给终局一个日常消耗口</td>
+</tr>
+<tr>
+<td>免费零食</td>
+<td>完成 ≥15 分钟 +1</td>
+<td><strong>保留 1 份基础「猫鱼条」</strong>，用于喂一次看到反馈；进阶口味仍需购买</td>
+<td>保留正反馈，但商店不再是死内容</td>
+</tr>
+<tr>
+<td>广告翻倍</td>
+<td>每次结算主按钮，100% 翻倍，无日限</td>
+<td><strong>改为 +50%，每天限 1 次</strong>；按钮改为次要，主按钮改回「收下小鱼干」</td>
+<td>保留变现，但不把经济寿命腰斩</td>
+</tr>
+<tr>
+<td>分享</td>
+<td>可生成卡片，无奖励</td>
+<td><strong>每日首次成功分享 +5</strong>，不可叠加刷</td>
+<td>补传播钩子，控制在零花钱规模</td>
+</tr>
+</tbody>
+</table>
+<h3 id="32">3.2 改前单位时间收益（为何会被支线架空）</h3>
+<p>按「认真玩、不是挂机」估算：</p>
+<table>
+<thead>
+<tr>
+<th>行为</th>
+<th>大约耗时</th>
+<th>鱼干</th>
+<th>约合每分钟</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>完整 25 分钟专注（含今日首次 +5）</td>
+<td>25 分钟</td>
+<td>30</td>
+<td><strong>1.2</strong></td>
+</tr>
+<tr>
+<td>再多坐一轮 25 分钟（无首次）</td>
+<td>25 分钟</td>
+<td>25</td>
+<td><strong>1.0</strong></td>
+</tr>
+<tr>
+<td>刷题首通 1 关（3 张卡片 + 3 题）</td>
+<td>约 2–3 分钟</td>
+<td>16–20</td>
+<td><strong>6–10</strong></td>
+</tr>
+<tr>
+<td>每日论文（3 段 + 3 题）</td>
+<td>约 3 分钟</td>
+<td>16–20</td>
+<td><strong>5–7</strong></td>
+</tr>
+<tr>
+<td>记住答案后重刷同一关到日上限 60</td>
+<td>约 10–15 分钟</td>
+<td>60</td>
+<td><strong>4–6</strong></td>
+</tr>
+<tr>
+<td>钓鱼 3 杆全中</td>
+<td>约 1 分钟</td>
+<td>≈6</td>
+<td><strong>约 6</strong></td>
+</tr>
+</tbody>
+</table>
+<p>25 分钟专注大约 25–30 鱼干；把同一段时间拿去刷题，轻松可以碰到日上限 60。这就是「玩家最优解是不专注」。</p>
+<h3 id="33">3.3 改后典型日收入（建议值）</h3>
+<p>假设玩家按设计意图玩，不刻意钻空子；连续打卡奖励按 30 天摊销约每天 +4。</p>
+<p><strong>轻度：每天 1 次完整 25 分钟专注</strong></p>
+<table>
+<thead>
+<tr>
+<th>来源</th>
+<th>鱼干</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>专注基础 25×2</td>
+<td>50</td>
+<td>主收入</td>
+</tr>
+<tr>
+<td>完整轮次 +25%</td>
+<td>13</td>
+<td>鼓励坐完</td>
+</tr>
+<tr>
+<td>今日首次</td>
+<td>8</td>
+<td>仅第一轮</td>
+</tr>
+<tr>
+<td>连续打卡摊销</td>
+<td>≈4</td>
+<td>含 14/30 天里程碑</td>
+</tr>
+<tr>
+<td>每日轻目标</td>
+<td>10</td>
+<td>见第四节</td>
+</tr>
+<tr>
+<td>每日论文</td>
+<td>8</td>
+<td>计入刷题日上限 20</td>
+</tr>
+<tr>
+<td>钓鱼兑换</td>
+<td>≈5</td>
+<td>3 杆，接近但不顶满上限 8</td>
+</tr>
+<tr>
+<td><strong>合计（不含广告）</strong></td>
+<td><strong>约 98</strong></td>
+<td>专注约占七成</td>
+</tr>
+<tr>
+<td>若看 1 次 +50% 广告（按本轮 71 的 50%）</td>
+<td>+36</td>
+<td>每天限 1 次，日合计约 134</td>
+</tr>
+</tbody>
+</table>
+<p><strong>中度：每天两轮完整 25 分钟（共 60 分钟里的有效专注按 50 分钟完整轮次计，或 25+25）</strong></p>
+<table>
+<thead>
+<tr>
+<th>来源</th>
+<th>鱼干</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>第一轮 50+13+8</td>
+<td>71</td>
+</tr>
+<tr>
+<td>第二轮 50+13</td>
+<td>63</td>
+</tr>
+<tr>
+<td>连续打卡摊销</td>
+<td>≈4</td>
+</tr>
+<tr>
+<td>每日轻目标</td>
+<td>10</td>
+</tr>
+<tr>
+<td>每日论文</td>
+<td>8</td>
+</tr>
+<tr>
+<td>钓鱼（第二次休息可能顶到上限）</td>
+<td>8</td>
+</tr>
+<tr>
+<td><strong>合计（不含广告）</strong></td>
+<td><strong>约 164</strong></td>
+</tr>
+<tr>
+<td>含每日一次 +50% 广告</td>
+<td>约 200</td>
+</tr>
+</tbody>
+</table>
+<p>改后若有人只刷题：论文 8 + 错题复习最高 12 = 20，再无法可刷，明显低于一轮 25 分钟专注（约 71）。钓鱼一天最多 8。挂机和 1 分钟续签不再成立。最优解回到「好好坐下来，再顺手做完每日目标」。</p>
+<h3 id="34">3.4 完整收藏与消耗周期</h3>
+<p><strong>现有付费收藏（改后价格可先不动）：</strong></p>
+<table>
+<thead>
+<tr>
+<th>类别</th>
+<th>数量与金额</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>可买家具</td>
+<td>26 件，合计 1338；新号已有 3 件（90），待付 <strong>1248</strong></td>
+</tr>
+<tr>
+<td>可买服装</td>
+<td>5 套，合计 <strong>620</strong></td>
+</tr>
+<tr>
+<td>钓具</td>
+<td>改后建议 50+80=<strong>130</strong>（现为 180）</td>
+</tr>
+<tr>
+<td>新号买齐现有商店项</td>
+<td><strong>约 1998–2048</strong>（视钓具定价）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>建议新增的低成本消耗口（个人开发者可做、适合单机小游戏）：</strong></p>
+<table>
+<thead>
+<tr>
+<th>消耗口</th>
+<th>建议价格</th>
+<th>解锁条件（示意）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>猫屋升级：纸箱 → 原木双层</td>
+<td>180</td>
+<td>亲密度 ≥30 或达到 Lv.3「黏人」</td>
+</tr>
+<tr>
+<td>猫屋升级：原木 → 阳光花房</td>
+<td>360</td>
+<td>连续 7 天且亲密度 ≥70，或达到 Lv.5「守护」</td>
+</tr>
+<tr>
+<td>猫屋内装 6 件（猫床、抓板、小鱼干罐、窗垫等）</td>
+<td>合计约 300</td>
+<td>进入猫屋内部后购买</td>
+</tr>
+<tr>
+<td>鱼缸展览两档（把钓到的鱼「养」起来）</td>
+<td>120 + 180</td>
+<td>与钓鱼图鉴绑定，广告不可跳过</td>
+</tr>
+<tr>
+<td>一套房间主题（例如「考试季暖灯」或「春日窗台」）</td>
+<td>240</td>
+<td>Lv.4 或连续 14 天</td>
+</tr>
+<tr>
+<td><strong>新增消耗小计</strong></td>
+<td><strong>约 1380</strong></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>中期目标总盘（含现有商店）</strong></td>
+<td><strong>约 3400</strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>周期核算（按 3.3 的日收入，取整）：</strong></p>
+<table>
+<thead>
+<tr>
+<th>玩家类型</th>
+<th>日收入（无广告）</th>
+<th>买齐现有商店</th>
+<th>完成猫屋+鱼缸+主题（约 3400）</th>
+<th>含每日 1 次广告</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>轻度 25 分钟/天</td>
+<td>≈98</td>
+<td><strong>约 21 天</strong></td>
+<td><strong>约 35 天</strong></td>
+<td>约 15 天 / 25 天</td>
+</tr>
+<tr>
+<td>中度 25+25 分钟/天</td>
+<td>≈164</td>
+<td><strong>约 12–13 天</strong></td>
+<td><strong>约 21 天</strong></td>
+<td>约 10 天 / 17 天</td>
+</tr>
+</tbody>
+</table>
+<p>这个节奏适合治愈养成：轻度玩家一个月里始终有下一件想买的东西；中度玩家两到三周能把小屋和猫屋都打理漂亮，但不会第一周就把游戏玩空。若上线后发现买得太快，优先加一套季节家具，而不是再砍专注收益。</p>
+<p>现有 8 级门槛可以先不动（0 / 30 / 90 / 180 / 300 / 480 / 720 / 1000 分钟）。按轻度 25 分钟/天，满级仍约 40 天，正好落在「中期收藏完成之后」的荣誉段。需要改的是：<strong>每一级都要给东西，500 分钟后还要有猫屋或番外可看。</strong></p>
+<hr />
+<h2 id="_5">四、成长、情感陪伴与独立猫屋</h2>
+<p>把现在彼此断开的 8 级称号、12 个成就、6 篇番外、角落纸箱猫屋，串成一条「小猫越来越黏你」的线。</p>
+<h3 id="41">4.1 等级：每一级都要解锁实在的东西</h3>
+<p>级别阈值建议先保持，只补「升级发什么」。奖励以解锁和外观为主，少发一大笔鱼干，以免打乱经济。</p>
+<table>
+<thead>
+<tr>
+<th>等级</th>
+<th>称号</th>
+<th>累计分钟</th>
+<th>升级奖励建议</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Lv.1</td>
+<td>初识</td>
+<td>0</td>
+<td>开局纸箱猫屋、默认服装（已有）</td>
+</tr>
+<tr>
+<td>Lv.2</td>
+<td>熟悉</td>
+<td>30</td>
+<td>解锁「心情 / 亲密度」显示；赠一枚小屋贴纸或窗台小花</td>
+</tr>
+<tr>
+<td>Lv.3</td>
+<td>黏人</td>
+<td>90</td>
+<td>开放猫屋升级到「原木双层」的购买资格；小猫多一个撒娇动画</td>
+</tr>
+<tr>
+<td>Lv.4</td>
+<td>默契</td>
+<td>180</td>
+<td>解锁第一套房间主题的购买资格；或赠一篇往来信件式番外</td>
+</tr>
+<tr>
+<td>Lv.5</td>
+<td>守护</td>
+<td>300</td>
+<td>开放「阳光花房」购买资格；成就「一下午的专注」若已达成则补发奖励</td>
+</tr>
+<tr>
+<td>Lv.6</td>
+<td>家人</td>
+<td>480</td>
+<td>解锁鱼缸展览；小猫在专注结束会自己走回猫屋</td>
+</tr>
+<tr>
+<td>Lv.7</td>
+<td>心有灵犀</td>
+<td>720</td>
+<td>限定称号框或窗边星星灯效果；可再加 1 篇番外</td>
+</tr>
+<tr>
+<td>Lv.8</td>
+<td>永远陪读</td>
+<td>1000</td>
+<td>终局称号 + 一枚不可交易的纪念装饰；全图鉴补一个「永远的书桌」展览位</td>
+</tr>
+</tbody>
+</table>
+<p>升级时不要只弹一句「小屋升温了」。用一小段动画：小猫 rub 一下屏幕，或镜头短暂推到新解锁的猫屋/家具，再给一句短对白。</p>
+<h3 id="42">4.2 成就：有奖励，且必须立刻结算</h3>
+<p>12 个成就可以全部保留，只补奖励和触发时机。建议在 <code>buyItem</code>、<code>buyOutfit</code>、<code>grantItem</code>、<code>grantOutfit</code>、<code>craftRare</code>、<code>markComicRead</code>、<code>commitSession</code> 之后都调用 <code>checkAchievements</code>。</p>
+<table>
+<thead>
+<tr>
+<th>成就</th>
+<th>条件（已有）</th>
+<th>建议奖励</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>第一次陪读</td>
+<td>完成 1 次专注</td>
+<td>8 鱼干</td>
+</tr>
+<tr>
+<td>一小时的陪伴</td>
+<td>累计 60 分钟</td>
+<td>15 鱼干</td>
+</tr>
+<tr>
+<td>一下午的专注</td>
+<td>累计 300 分钟</td>
+<td>25 鱼干</td>
+</tr>
+<tr>
+<td>三日之约</td>
+<td>连续 3 天</td>
+<td>与打卡里程碑二选一展示，或改发一枚徽章</td>
+</tr>
+<tr>
+<td>七日默契</td>
+<td>连续 7 天</td>
+<td>徽章 + 10 鱼干（若当天已领 7 天里程碑，则只发徽章）</td>
+</tr>
+<tr>
+<td>小有所成 / 温馨小屋 / 满屋都是你</td>
+<td>5 / 12 / 20 件家具</td>
+<td>10 / 15 / 25 鱼干</td>
+</tr>
+<tr>
+<td>衣橱初开</td>
+<td>3 套服装</td>
+<td>10 鱼干</td>
+</tr>
+<tr>
+<td>故事读者 / 故事收藏家</td>
+<td>读完 1 / 6 篇番外</td>
+<td>8 鱼干 / 一篇「作者的话」或纪念书签外观</td>
+</tr>
+<tr>
+<td>满屋都是故事</td>
+<td>集齐 42 件收藏</td>
+<td>限定称号 + 20 鱼干</td>
+</tr>
+</tbody>
+</table>
+<p>记录页的成就行要写出奖励，并区分「进度已满但还未领」（修复当前 <code>done</code> 与 <code>awarded</code> 不同步的问题）。多个成就同时达成时，合并成一条「今天达成 N 个成就」再展开，避免和升级、番外 toast 叠在一起吵。</p>
+<h3 id="43">4.3 心情与亲密度（低成本状态机）</h3>
+<p>不必做复杂养成。两组 0–100 的数就够用，全都可以写在 <code>core.js</code> 的 <code>defaultState</code> 里。</p>
+<ul>
+<li><strong>心情</strong>：当天状态。摸摸 +8，投喂 +12，玩毛线球 +10，完成一轮专注 +15，离开过久略减。第二天若没来，下降约 8–12；喝过「暖暖牛奶」则当日不掉。心情影响小猫动画（开心会跟着你在房间里走，低落则趴在猫屋门口），并给下轮专注一个很小的加成（例如最高 +5%，不要大到破坏经济）。</li>
+<li><strong>亲密度</strong>：长期关系，只升难降。每 10 分钟有效专注 +1，每日互动最多再 +6，断签每天 -2（下限 0）。用 30 / 70 / 100 三档解锁撒娇动画、猫屋升级资格、睡前一句「明天也一起」。</li>
+</ul>
+<p>投喂三种食物的差异见上一节数值表。<code>useFood</code> 现在是按固定顺序扣第一种还有库存的食物（<code>js/core.js</code> 第 704 行），改后应让玩家在宠物栏挑选口味。2D 降级时也不要隐藏整条互动：至少保留顶栏按钮，用 2D 小猫播放简短喂食/摸摸动画。</p>
+<p>陪伴图鉴 8 项不要一开始就全部点亮。第一次真正做出「摸摸 / 投喂 / 陪读 / 收杆」后再点亮对应卡片，全部点亮给一个小徽章。这样图鉴才是收藏，而不是说明书。</p>
+<h3 id="44">4.4 独立猫屋：从布景变成第二条生活空间</h3>
+<p>分两期，都不要重做引擎。</p>
+<p><strong>第一期（建议纳入 P1，首版上线前）：</strong></p>
+<ol>
+<li>三种外观：纸箱（开局）→ 原木双层（180 鱼干）→ 阳光花房（360 鱼干）。只换模型和少量零件，镜头推进逻辑复用现有 <code>focusCatHouse</code>。</li>
+<li>行为：专注开始时小猫离开猫屋走到书桌；完成后走回猫屋睡觉；玩家离开较久或空闲打盹时，优先回到猫屋，而不是在地毯上随机躺下。</li>
+<li>点击猫屋或「小猫屋」按钮：镜头推进，可旋转外观，显示升级按钮和亲密度短句。</li>
+<li>数据：<code>state.catHouse = { tier, rot, interior: {} }</code>，不要再只靠 <code>localStorage.pdm.catHouseRot</code>。</li>
+</ol>
+<p><strong>第二期（P2，验证「小猫会回家」有情感粘性后再做）：</strong></p>
+<ul>
+<li>进入猫屋内部，6 件左右专属小家具可布置（复用现有网格吸附和旋转）。</li>
+<li>一条很短的解锁线：抓板、窗垫、小鱼干仓库，可与钓鱼图鉴或广告季涂装结合。</li>
+<li>番外在 500 分钟之后续写 2 话，把「小店的第一天」接到「花房建成的那天」，让满级前仍有故事。</li>
+</ul>
+<p>这一条是把「陪读桌宠」和「独立小猫小屋」真正接上的地方，优先级应高于再做一套更复杂的 3D 资产管线。</p>
+<h3 id="45">4.5 番外节奏</h3>
+<p>现有 6 话的阈值 0 / 60 / 150 / 240 / 360 / 500 是好的前半段，不必打散。需要补的是后半段：</p>
+<ul>
+<li>保持「累计专注自动解锁」，广告只能提前解锁<strong>下一话</strong>，不能一次买断全部；</li>
+<li>在 720、1000 分钟各加 1 话（可以很短，3 页即可），或把第 6 话之后改成「小猫给你留的信」，用很少的美术继续给满级玩家情绪；</li>
+<li>读完立刻检查成就并发奖励。</li>
+</ul>
+<hr />
+<h2 id="_6">五、留存、复访与终局消耗口</h2>
+<p>单机、个人开发、还要进微信小游戏，不要上运营活动后台，也不要做强社交。用「每天三件小事 + 每周一个小目标 + 买完家具仍有东西想买」就够了。</p>
+<h3 id="51-3-3-2">5.1 每日轻目标（每天 3 选 3，或完成 2 个即可领）</h3>
+<p>固定三个，不要随机，降低理解成本：</p>
+<ol>
+<li>完成 1 次 ≥15 分钟的专注；</li>
+<li>与小猫互动 1 次（摸摸、投喂或玩一次）；</li>
+<li>读完今日论文或复习 3 道错题（没有错题时，改成「去鱼塘收一次杆」）。</li>
+</ol>
+<p>全部完成发 <strong>10 鱼干</strong>（已计入第三节日收入）。入口放在小屋首页和记录页顶部，不要再开一个 Tab。</p>
+<h3 id="52">5.2 每周轻目标</h3>
+<p>一周内完成其中 2 项即可领一件小装饰或 25 鱼干：</p>
+<ul>
+<li>累计专注 150 分钟（中度玩家轻松，轻度玩家约 6 天）；</li>
+<li>连续打卡 5 天；</li>
+<li>钓到 1 条稀有或以上的鱼。</li>
+</ul>
+<p>周末用分享卡生成「本周陪读小结」（时长、连续天数、小猫一句评语），对应每日首次分享奖励。</p>
+<h3 id="53">5.3 错题复习闭环</h3>
+<ul>
+<li>错题按 1 天 / 3 天 / 7 天出现在「今日待复习」；</li>
+<li>当日首次复习答对 +2，最多 6 题；</li>
+<li>答对后从待复习移除，不再允许同一题当天刷奖励；</li>
+<li>这是轻知识模块存在的理由：它服务学习，而不是服务肝金币。</li>
+</ul>
+<h3 id="54-2048">5.4 终局消耗口（买完 2048 鱼干的商店之后）</h3>
+<p>按开发成本从低到高：</p>
+<ol>
+<li><strong>猫屋升级与内装</strong>（见 4.4），这是最值得先做的；</li>
+<li><strong>鱼缸展览</strong>：把钓到的鱼养在 <code>o_fishbowl</code> 里，升级鱼缸容量和背景，传说鱼有特殊展示。这让钓鱼在兑换上限之后仍有意义；</li>
+<li><strong>房间主题套装</strong>：先做 1 套（换墙纸/窗光/地毯色），后续按季节再加，不必每次都做新模型；</li>
+<li><strong>称号与记录页装饰</strong>：Lv.8、连续 30 天、集齐 42 件，各给一个称号框；</li>
+<li><strong>季节或考试季小件</strong>：几件低模家具即可，作为付费或广告季涂装的位置，而不要再把核心稀有装饰放到广告里。</li>
+</ol>
+<h3 id="55">5.5 分享钩子</h3>
+<p>复用现成的 <code>drawShareCard</code>：</p>
+<ul>
+<li>默认图：今日时长、连续天数、小猫当前服装和一句短评；</li>
+<li>连续 7 天、14 天、30 天换不同边框；</li>
+<li>每日首次成功分享 +5 鱼干；</li>
+<li>不要做拉新裂变。微信单机小游戏用「成绩单」就够了。</li>
+</ul>
+<h3 id="56">5.6 论文与题库的运营修正</h3>
+<ul>
+<li><code>papers/daily.json</code> <strong>必须带当天日期</strong>才允许覆盖轮换；没有日期或日期不是今天，就继续用 4 篇内置论文按年积日轮换；</li>
+<li>中期把每日论文从「机器人论文精读」扩展出考公常识、学习方法、心态短文，与产品定位对齐；</li>
+<li>题库补关时优先补考公、理财、人文，逐步把 AI 占比从 7/16 降到不超过三分之一。</li>
+</ul>
+<hr />
+<h2 id="cocos">六、改动优先级与移植 Cocos 前必改清单</h2>
+<p>移植不会修复设计问题。下面按「必须先改数值和规则 / 首版上线前补齐体验 / 后续再做内容」排列。P0 几乎都在现有 JS 里改常量、结算和触发时机，不需要新美术，也不需要等 Cocos。</p>
+<h3 id="61-p0">6.1 P0：移植前必须定稿</h3>
+<p>这些改完，主循环才会立住。建议直接改现仓库，用同一套表再搬到 Cocos。</p>
+<table>
+<thead>
+<tr>
+<th>序号</th>
+<th>改什么</th>
+<th>主要文件</th>
+<th>具体改法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P0-1</td>
+<td>专注成为主收入</td>
+<td><code>js/core.js</code> 的 <code>commitSession</code>（约第 602–656 行）</td>
+<td><code>base = minutes * 2</code>；若 <code>opts.completed</code> 则再加 <code>Math.round(base * 0.25)</code>；<code>first = 8</code>；打卡与首次奖励改为 <code>minutes &gt;= 10</code></td>
+</tr>
+<tr>
+<td>P0-2</td>
+<td>连续打卡里程碑</td>
+<td><code>js/core.js</code> 第 636–638 行；<code>js/app.js</code> 的 <code>showReward</code>（约第 516–547 行）</td>
+<td>增加 14 天 +35、30 天 +60；结算行展示这些加成</td>
+</tr>
+<tr>
+<td>P0-3</td>
+<td>严格模式不再挂机付费</td>
+<td><code>js/app.js</code> 的 <code>finishSession</code> / <code>activeElapsedMs</code>（约第 251、451–489 行）</td>
+<td>严格模式的奖励分钟改为在场时间；离开超过阈值只提示，不发鱼干。计时是否继续走，可与「是否发奖」分开</td>
+</tr>
+<tr>
+<td>P0-4</td>
+<td>刷题去金币化</td>
+<td><code>js/quiz.js</code> 第 245、262–268、367–368 行</td>
+<td>首通改为 <code>min(11, 5 + correct * 2)</code>；重刷 <code>want = 0</code>；<code>CAP = 20</code>；为错题复习单独记当日已奖励题数</td>
+</tr>
+<tr>
+<td>P0-5</td>
+<td>每日论文防刷与覆盖修复</td>
+<td><code>js/paper.js</code> 第 111、134–142 行；<code>papers/daily.json</code></td>
+<td>论文奖励固定每日 8；<code>daily.json</code> 校验日期，未通过则保持 4 篇轮换</td>
+</tr>
+<tr>
+<td>P0-6</td>
+<td>广告翻倍降权</td>
+<td><code>js/app.js</code> 第 532–544、1014–1025 行</td>
+<td>主按钮改为「收下小鱼干」；广告改为次要按钮「+50%」，用 <code>dateKey</code> 做每日一次限制；修正 <code>awaySec &gt; 30</code> 时严格模式的错误备注</td>
+</tr>
+<tr>
+<td>P0-7</td>
+<td>成就即时结算并给奖励</td>
+<td><code>js/core.js</code> 的 <code>checkAchievements</code>、<code>buyItem</code>、<code>buyOutfit</code>、<code>grantItem</code>、<code>grantOutfit</code>、<code>craftRare</code>、<code>markComicRead</code>；<code>js/ui2.js</code> 成就列表</td>
+<td>统一从上述出口调用检查；成就表增加 <code>reward</code> 字段并发鱼干；记录页展示奖励与领取态</td>
+</tr>
+<tr>
+<td>P0-8</td>
+<td>等级升级发解锁，不只 toast</td>
+<td><code>js/core.js</code> 的 <code>LEVELS</code> / <code>levelInfo</code>；<code>js/app.js</code> 升级提示</td>
+<td>按 4.1 给每级 <code>unlock</code> 字段，升级时写入资格并明确告诉玩家「现在可以升级猫屋了」</td>
+</tr>
+<tr>
+<td>P0-9</td>
+<td>猫粮更名并赋予作用</td>
+<td><code>js/core.js</code> 的 <code>FOODS</code>、<code>buyFood</code>、<code>useFood</code>；<code>js/app.js</code> 的 <code>feedCat</code>、<code>petBar</code>；<code>js/ui.js</code> 的 <code>foodCard</code></td>
+<td>改名；为三种食物写入短时 buff 到 <code>state</code>；投喂时允许选择口味；<code>petBar</code> 在 2D 下也可用</td>
+</tr>
+<tr>
+<td>P0-10</td>
+<td>钓鱼期望、保底与钓具价值</td>
+<td><code>js/core.js</code> 的 <code>FISH</code> / <code>FISHING</code> / <code>rollFish</code> / <code>fishCast</code> / <code>buyGear</code>；<code>js/fishing.js</code></td>
+<td>日上限 8；第一次空杆不耗杆；加入 8 次非稀有 / 40 杆传说保底；钓竿改为 +1 杆、夜灯改价并加快保底</td>
+</tr>
+</tbody>
+</table>
+<p>P0 不要求先做完猫屋内部和主题套装，但 <strong>P0-8 要把升级资格预留进数据</strong>，避免 Cocos 存档结构回头再改。</p>
+<h3 id="62-p1">6.2 P1：首版上线前补齐</h3>
+<table>
+<thead>
+<tr>
+<th>序号</th>
+<th>改什么</th>
+<th>主要文件</th>
+<th>具体改法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P1-1</td>
+<td>每日 / 每周轻目标</td>
+<td>新建小模块或写入 <code>js/core.js</code> + 首页/记录页 UI</td>
+<td>按 5.1–5.2 做 3 个每日目标和 3 个每周目标，奖励走 <code>addBonusFish</code></td>
+</tr>
+<tr>
+<td>P1-2</td>
+<td>心情与亲密度</td>
+<td><code>js/core.js</code> 状态；<code>js/app.js</code> 的 <code>petCat</code> / <code>feedCat</code> / <code>playCat</code> / <code>commitSession</code>；小屋 UI</td>
+<td>两组 0–100 数值、衰减和短加成；2D 也要能互动</td>
+</tr>
+<tr>
+<td>P1-3</td>
+<td>猫屋三外观 + 小猫回家</td>
+<td><code>js/room3d.js</code> 的 <code>buildCatHouse</code> / <code>focusCatHouse</code> / <code>moveCatTo</code>；<code>js/core.js</code> 存档；<code>js/app.js</code> 的 <code>enterCatHouse</code></td>
+<td>三种 tier 模型、升级购买、专注后走路回家；朝向写入 <code>state.catHouse</code></td>
+</tr>
+<tr>
+<td>P1-4</td>
+<td>稀有装饰改为钓鱼独占</td>
+<td><code>js/ui.js</code> 限定页；<code>js/app.js</code> 广告解锁；<code>js/fishing.js</code> 合成</td>
+<td>广告不再 <code>grantItem</code> 这三件，改为季涂装或其它外观</td>
+</tr>
+<tr>
+<td>P1-5</td>
+<td>陪伴图鉴需体验后点亮</td>
+<td><code>js/ui.js</code> 的 <code>renderBook</code>；<code>js/core.js</code></td>
+<td>记录 <code>state.activitiesSeen</code>，首次摸摸/投喂/陪读等再点亮</td>
+</tr>
+<tr>
+<td>P1-6</td>
+<td>错题间隔复习</td>
+<td><code>js/quiz.js</code> 错题本</td>
+<td>为错题增加 <code>due</code> 日期，首页或刷题页出现「今日待复习」</td>
+</tr>
+<tr>
+<td>P1-7</td>
+<td>分享每日奖励与 7/14/30 天边框</td>
+<td><code>js/app.js</code> 的 <code>openShare</code>；<code>js/extras.js</code> 的 <code>drawShareCard</code></td>
+<td>首次分享 +5；按连续天数换边框</td>
+</tr>
+<tr>
+<td>P1-8</td>
+<td>结算反馈降噪</td>
+<td><code>js/app.js</code> 的 <code>finishSession</code></td>
+<td>升级、成就、番外解锁合并进结算面板，不再连弹 4 条 toast</td>
+</tr>
+</tbody>
+</table>
+<h3 id="63-p2">6.3 P2：后续迭代</h3>
+<ul>
+<li>猫屋内部布置与 6 件内装；</li>
+<li>鱼缸展览、第一套房间主题、称号框；</li>
+<li>番外第 7、8 话（720 / 1000 分钟）；</li>
+<li>补考公 / 理财 / 人文关卡，降低 AI 占比；每日论文扩到学习方法与心态短文；</li>
+<li>任务标签做成记录页的分类统计（阅读 / 写作各多少分钟）；</li>
+<li>微信小游戏订阅消息：「该陪读啦」「连续天数今晚要断了」；</li>
+<li>更精致的小猫 3D / GLB 资产，应在玩法循环稳定后再做，否则只是给旧循环换皮。</li>
+</ul>
+<h3 id="64">6.4 建议的实施顺序</h3>
+<ol>
+<li>先落地全部 P0（大约就是改结算公式、上限、触发时机和文案，便于立刻试玩对比「还会不会去刷题」）；</li>
+<li>用轻度 25 分钟和中度 60 分钟各跑一周，看日收入是否接近 98 / 164，商店是否在 3 周 / 2 周左右买完；</li>
+<li>再做 P1 的亲密度、每日目标和猫屋升级——这是上线完整体验；</li>
+<li>确认「小猫会回家」有情感后再做内部布置和主题，然后才进入 Cocos 移植。移植时把 <code>commitSession</code>、任务、钓鱼和猫屋存档做成明确的数据层，避免把规则写散在场景脚本里。</li>
+</ol>
+<hr />
+<h2 id="_7">附录：关键数值与代码出处</h2>
+<p>便于对照和复算，不作为玩法叙述的重复。</p>
+<ul>
+<li>开局：<code>fish: 40</code>，<code>owned: ['fl_rug', 'd_lamp', 'w_poster']</code>，<code>ownedOutfits: ['default']</code>，<code>comics: ['c1']</code>（<code>js/core.js</code> <code>defaultState</code>）</li>
+<li>家具 29 件，可买 26 件合计 1338，3 件 <code>price: 0</code> 且 <code>ad: true</code> 并带 <code>fishCost</code>；服装 7 套，可买 5 套合计 620，节日套装走广告</li>
+<li>专注结算：<code>base = minutes</code>，首次 +5，3 天 +10，7 天 +20（<code>js/core.js</code> 第 611、632、636–638 行）</li>
+<li>等级阈值：0 / 30 / 90 / 180 / 300 / 480 / 720 / 1000，称号为初识、熟悉、黏人、默契、守护、家人、心有灵犀、永远陪读（第 160–168 行）</li>
+<li>番外阈值：0 / 60 / 150 / 240 / 360 / 500（第 109–157 行）</li>
+<li>钓鱼：9 种鱼，权重和 99.5，期望 2.05；夜灯非普通 ×2.2 后期望 2.34；日上限 10；咬钩等待 1000–2400 ms，窗口 1150 ms</li>
+<li>刷题：4 个领域 16 关 48 题，日上限 60；论文 4 篇内置 + <code>papers/daily.json</code> 覆盖</li>
+<li>收藏总数 42 = 29 家具 + 7 服装 + 6 番外，与成就 <code>allcat</code> 的 goal 一致</li>
+<li>当前仓库已具备但玩法未闭环的能力：房间左右旋转、俯视平面图、角落猫屋镜头、摸摸/投喂/毛线球、分享卡、装修网格与撤销（见 <code>PROGRESS.md</code> 与 <code>js/room3d.js</code>、<code>js/app.js</code>）</li>
+</ul>
+<hr />
+<p><em>核查与写作日期：2026-11-27（Asia/Shanghai）。若仓库继续更新结算公式，请以当时代码为准，并先复算第三节的日收入与收藏周期。</em></p>
+    </div>
+    <footer>本文档由仓库代码核查生成，供产品定稿与 Cocos 移植前对齐使用。</footer>
+  </div>
+  <script>
+    // Move generated TOC just under hero if present
+    const content = document.querySelector('.content');
+    const toc = content && content.querySelector('.toc');
+    const hero = document.querySelector('.hero');
+    if (toc && hero) hero.after(toc);
+    // Drop the first H1 inside content to avoid duplicating the hero title
+    const firstH1 = content && content.querySelector('h1');
+    if (firstH1) {
+      firstH1.remove();
+    }
+  </script>
+</body>
+</html>

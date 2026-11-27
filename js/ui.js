@@ -50,6 +50,12 @@ window.PDM = window.PDM || {};
 
   function toast(msg, ms) {
     const el = refs.toast || $('toast');
+    // 相同提示不重复叠：直接续时，避免多条 toast 抢屏
+    if (el.textContent === msg && el.classList.contains('show')) {
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), ms || 2200);
+      return;
+    }
     el.textContent = msg;
     el.classList.add('show');
     clearTimeout(toastTimer);
@@ -240,7 +246,7 @@ window.PDM = window.PDM || {};
     } else if (uiState.shopTab === 'outfit') {
       html = '<div class="shop-grid">' + core.OUTFITS.filter(o => !o.ad).map(o => outfitCard(o)).join('') + '</div>';
     } else if (uiState.shopTab === 'food') {
-      html = '<div class="tiny shop-note">完成专注会得到基础零食，也可以用小鱼干给小喵换不同口味。</div>' +
+      html = '<div class="tiny shop-note">完成专注会得到免费猫鱼条；不同口味会带来短时加成，喂食时可以选择。</div>' +
         '<div class="shop-grid">' + core.FOODS.map(f => foodCard(f)).join('') + '</div>';
     } else {
       const adFurn = core.FURNITURE.filter(f => f.ad);
@@ -255,7 +261,7 @@ window.PDM = window.PDM || {};
           '<button class="buy-btn ad" style="margin-top:6px" data-action="adComic" data-id="' + next.id + '">看广告提前解锁</button></div></div>'
           : '<div class="empty-note">番外已经全部解锁啦，等小喵写新的故事。</div>') +
         '</div>' +
-        '<div class="tiny" style="margin:14px 4px 0;line-height:1.7">限定物品通过激励视频解锁，放在商店里但不会主动弹出；正式版接入广告 SDK 后即可上线。</div>';
+        '<div class="tiny" style="margin:14px 4px 0;line-height:1.7">限定物品通过激励视频解锁，放在商店里但不会主动弹出。</div>';
     }
     body.innerHTML = html;
     hydrate(body);

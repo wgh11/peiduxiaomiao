@@ -123,11 +123,11 @@ window.PDM = window.PDM || {};
 
   function miss(msg) {
     if (G.phase === 'result' || G.phase === 'recover') return;
-    core.fishCast(false);
+    const r = core.fishCast(false);
     G.phase = 'recover';
     G.nextAt = performance.now() + 950;
     G.splash = performance.now();
-    floatText(msg || '鱼儿溜走了', 'miss');
+    floatText(r && r.free ? '第一次空杆，不耗次数' : (msg || '鱼儿溜走了'), 'miss');
     syncHud();
   }
 

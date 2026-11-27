@@ -61,6 +61,19 @@
   line-height: 15px;
   text-align: center;
 }
+.pet-bar .pet-stats {
+  position: absolute;
+  top: 32px; right: 0;
+  height: 22px; line-height: 22px;
+  padding: 0 8px;
+  border-radius: 7px;
+  background: rgba(252, 252, 249, .9);
+  border: 1px solid rgba(216, 222, 218, .9);
+  font-size: 10px;
+  font-weight: 700;
+  color: #7B8A90;
+  white-space: nowrap;
+}
 #stageWrap.decorating .pet-bar { display: none; }
 
 .level-chip, .tod-chip {

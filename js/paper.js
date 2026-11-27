@@ -95,6 +95,7 @@ window.PDM = window.PDM || {};
       tag: '论文精读',
       domainId: 'ai',
       domainName: 'AI 科技',
+      isPaper: true,
       cards: p.sections.map(s => ({ h: s.h, p: s.p })),
       quiz: p.quiz
     };
@@ -113,11 +114,12 @@ window.PDM = window.PDM || {};
   /* ---------------- 视图 ---------------- */
   function cardHTML() {
     if (!current) return '';
+    const claimed = PDM.quiz && PDM.quiz.paperClaimed && PDM.quiz.paperClaimed();
     return '<button class="qz-daily" data-act="paper">' +
-        '<div class="qzd-top"><span class="qzd-badge">今日论文</span><span class="qzd-min">约 ' + current.mins + ' 分钟</span></div>' +
+        '<div class="qzd-top"><span class="qzd-badge">今日论文</span><span class="qzd-min">约 ' + current.mins + ' 分钟 · ' + (claimed ? '今日已领' : '今日 +8 🐟') + '</span></div>' +
         '<div class="qzd-title">' + current.title + '</div>' +
         '<div class="qzd-sub">' + current.source + ' · ' + current.sections.length + ' 段精读 + ' + current.quiz.length + ' 题</div>' +
-        '<div class="qzd-go">开始今天的精读 →</div>' +
+        '<div class="qzd-go">' + (claimed ? '再读一遍 →' : '开始今天的精读 →') + '</div>' +
       '</button>';
   }
 
@@ -128,7 +130,8 @@ window.PDM = window.PDM || {};
 
   /* ---------------- 预留：线上每日更新 ---------------- */
   function update(json) {
-    if (json && json.title && json.sections && json.quiz) apply(json);
+    // 只接受标注今天日期的线上内容，避免旧数据覆盖当天论文
+    if (json && json.date === core.dateKey() && json.title && json.sections && json.quiz) apply(json);
   }
 
   function sync() {
