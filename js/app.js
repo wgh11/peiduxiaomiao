@@ -548,8 +548,6 @@ window.PDM = window.PDM || {};
     app.catNextAt = performance.now() + 7500;
     app.justFinishedAt = performance.now();
     showBubble(randOf(BUBBLE.finish));
-    app.todoDraft = [];
-    saveTodoDraft();
     renderTodos();
 
     if (minutes < 1) {
@@ -559,6 +557,10 @@ window.PDM = window.PDM || {};
       ui.toast(awaySec > 60 ? '离开太久，这轮没有计入奖励' : '这次只坐了一小会儿，小猫下次还等你', 2400);
       return;
     }
+    // 真正记入本轮后，才清空待办草稿（误触开始再结束不会丢）
+    app.todoDraft = [];
+    saveTodoDraft();
+    renderTodos();
 
     // 这一轮专注结束，可以休息一下去鱼塘
     core.startBreak();
@@ -592,6 +594,10 @@ window.PDM = window.PDM || {};
     showReward(summary);
     if (PDM.audio) PDM.audio.playSfx('ding');
     sendCatHomeLater(7400);
+    // 第一次真正完成陪读，预告每天门口信箱的小纸条
+    if ((core.state().sessions || []).length === 1) {
+      setTimeout(() => showBubble('明天回来，记得看看门口的小信箱～'), 3200);
+    }
   }
 
   function showReward(sum) {
@@ -656,7 +662,12 @@ window.PDM = window.PDM || {};
         ? 'assets/cat/cat_' + oc + '.png'
         : 'assets/cat/cat_cheer.png';
       const img = new Image();
-      img.onload = () => { ctx.clearRect(0, 0, size, size); ctx.drawImage(img, -size * .02, -size * .1, size * 1.04, size * 1.04); };
+      img.onload = () => {
+        ctx.clearRect(0, 0, size, size);
+        ctx.drawImage(img, -size * .02, -size * .1, size * 1.04, size * 1.04);
+        // 精灵图之上补画配饰，结算卡也能看到小喵今天戴的东西
+        PDM.art.drawAccessoryLayer(ctx, size / 2, size * 0.908, 3.45 * (size * 1.04 / 512), core.state().accessories);
+      };
       img.src = src;
     }
   }
@@ -820,6 +831,17 @@ window.PDM = window.PDM || {};
     const st = core.state();
     const s = app.session;
     const streak = core.computeStreak(st);
+    // 把倒计时牌和本轮待办念出来
+    const cd = core.countdownInfo();
+    if (cd.days != null && Math.random() < 0.3) {
+      return cd.past
+        ? '「' + cd.label + '」已经过去啦，辛苦了。'
+        : '离「' + cd.label + '」还有 ' + cd.days + ' 天。';
+    }
+    if (s && Array.isArray(s.todos)) {
+      const left = s.todos.filter(t => !t.done).length;
+      if (left > 0 && Math.random() < 0.35) return '这轮还差 ' + left + ' 条，慢慢来。';
+    }
     if (h >= 23 || h < 5) {
       if (Math.random() < 0.7) return randOf(BUBBLE.late);
     }
@@ -991,7 +1013,9 @@ window.PDM = window.PDM || {};
     const b = $('btnMail');
     if (!b) return;
     const m = core.state().mail || {};
-    b.classList.toggle('has-mail', !!(m.gift > 0 && !m.claimed));
+    const unread = !!(m.gift > 0 && !m.claimed);
+    const weekReady = core.weekLetterData().ready;
+    b.classList.toggle('has-mail', unread || weekReady);
   }
 
   function openMail() {
@@ -1013,7 +1037,7 @@ window.PDM = window.PDM || {};
       ? '<div class="week-letter">' +
         '<div class="wl-head">本周猫咪来信</div>' +
         '<div class="wl-range">' + wk.weekLabel + '</div>' +
-        '<div class="wl-row"><span>本周专注</span><b>' + core.fmtMin(wk.minutes) + ' 分钟</b></div>' +
+        '<div class="wl-row"><span>本周专注</span><b>' + core.fmtMinutes(wk.minutes) + '</b></div>' +
         '<div class="wl-row"><span>最常学的标签</span><b>' + esc(wk.topTag || '还没记录') + '</b></div>' +
         '<div class="wl-row"><span>最晚学习时间</span><b>' + (wk.latest || '—') + '</b></div>' +
         '<div class="wl-row"><span>本周专注天数</span><b>' + wk.days + ' 天</b></div>' +
@@ -1161,13 +1185,29 @@ window.PDM = window.PDM || {};
     ui.renderBook();
   }
 
-  // 达成条件时自动发放配饰 / 主题，只在新增时提示
+  // 达成条件时自动发放配饰 / 主题，并给一个「立即戴上 / 换上」的入口
   function maybeGrantPerks() {
     const added = core.syncPerks();
     if (!added.length) return;
-    const names = added.map(x => x.name).join('、');
-    ui.toast('解锁新收藏 · ' + names, 3200);
     ui.refreshHeader();
+    const names = added.map(x => x.name).join('、');
+    // 首次引导还没结束时不打断，只提示
+    if (!core.state().settings.welcomeDone) {
+      ui.toast('解锁新收藏 · ' + names, 3200);
+      return;
+    }
+    const rows = added.map(x => {
+      const isAcc = x.type === 'accessory';
+      return '<div class="kv-row"><div><b>' + esc(x.name) + '</b>' +
+        '<div class="tiny">' + (isAcc ? '新配饰已放进衣橱' : '新房间主题已解锁') + '</div></div>' +
+        '<button class="btn primary small" data-action="' + (isAcc ? 'accItem' : 'themeItem') + '" data-id="' + x.id + '">' +
+        (isAcc ? '立即戴上' : '立即换上') + '</button></div>';
+    }).join('');
+    ui.openModal(
+      '<h2 style="font-size:17px;margin-bottom:4px">解锁新收藏</h2>' +
+      '<p class="tiny" style="margin-bottom:12px">' + esc(names) + '</p>' +
+      '<div class="kv-list">' + rows + '</div>' +
+      '<button class="btn ghost wide" style="margin-top:12px" data-action="closeModal">稍后再说</button>');
   }
 
   /* ---------------- refresh ---------------- */
@@ -1248,10 +1288,18 @@ window.PDM = window.PDM || {};
     try {
       const payload = {
         app: 'peiduxiaomiao',
-        v: 1,
+        v: 2,
         exportedAt: new Date().toISOString(),
-        save: core.state()
+        save: core.state(),
+        keys: {}
       };
+      // 主存档之外，把待办、混音台、刷题进度和视角也一起打包
+      ['peiduxiaomiao.save.v1', TODO_KEY, 'pdm.audio.v1', 'peiduxiaomiao.quiz.v1', 'pdm.camAz', 'pdm.catHouseRot'].forEach(k => {
+        try {
+          const raw = localStorage.getItem(k);
+          if (raw != null) payload.keys[k] = raw;
+        } catch (e) {}
+      });
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -1264,10 +1312,41 @@ window.PDM = window.PDM || {};
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 4000);
       core.logEvent('export_save', {});
-      ui.toast('存档已导出，可在下载文件夹里找到', 2600);
+      ui.toast('存档、待办、混音与刷题进度已一起导出', 2600);
     } catch (e) {
       ui.toast('导出失败，请换个浏览器再试', 2200);
     }
+  }
+
+  function importSave() {
+    const inp = $('importFile');
+    if (!inp) return;
+    const file = inp.files && inp.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const p = JSON.parse(String(reader.result || ''));
+        let keys = p && p.keys && typeof p.keys === 'object' ? p.keys : null;
+        // 兼容旧版只导出 save 的文件
+        if (!keys && p && p.save) keys = { 'peiduxiaomiao.save.v1': JSON.stringify(p.save) };
+        if (!keys) throw new Error('bad');
+        let n = 0;
+        Object.keys(keys).forEach(k => {
+          if (typeof keys[k] !== 'string') return;
+          if (!/^(peiduxiaomiao\.|pdm\.)/.test(k)) return;
+          try { localStorage.setItem(k, keys[k]); n++; } catch (e) {}
+        });
+        if (!n) throw new Error('empty');
+        ui.toast('存档已导入，正在重新载入…', 1800);
+        setTimeout(() => location.reload(), 700);
+      } catch (e) {
+        ui.toast('这个文件看起来不是小喵的存档', 2400);
+      } finally {
+        inp.value = '';
+      }
+    };
+    reader.readAsText(file);
   }
 
   function updateSpeedChip() {
@@ -1457,6 +1536,11 @@ window.PDM = window.PDM || {};
         exportSave();
         break;
       }
+      case 'importSave': {
+        const inp = $('importFile');
+        if (inp) inp.click();
+        break;
+      }
       case 'confirmCustomMin': {
         const inp = $('customMinInput');
         let v = Math.round(Number(inp ? inp.value : 0));
@@ -1492,9 +1576,18 @@ window.PDM = window.PDM || {};
         clearSessionStore();
         try {
           localStorage.removeItem('peiduxiaomiao.quiz.v1');
+          localStorage.removeItem(TODO_KEY);
           localStorage.removeItem('pdm.camAz');
           localStorage.removeItem('pdm.catHouseRot');
         } catch (e) {}
+        // 待办草稿和混音台一起恢复出厂
+        app.todoDraft = [];
+        app.todoOpen = false;
+        saveTodoDraft();
+        if (PDM.audio) {
+          PDM.audio.reset();
+          updateSoundBtn();
+        }
         if (PDM.quiz && PDM.quiz.reset) PDM.quiz.reset();
         if (PDM.room3d && PDM.room3d.resetCamera) PDM.room3d.resetCamera();
         app.selMin = 25;
@@ -1638,6 +1731,7 @@ window.PDM = window.PDM || {};
           const r = core.equipAccessory(id);
           ui.toast(r.on ? '小喵戴上了「' + a.name + '」' : '摘下了「' + a.name + '」', 1800);
         }
+        ui.closeModal();
         refreshAll();
         if (document.querySelector('#screen-shop.active')) ui.renderShop();
         break;
@@ -1662,6 +1756,17 @@ window.PDM = window.PDM || {};
           core.equipTheme(id);
           ui.toast('小屋换成了「' + t.name + '」', 2000);
         }
+        // 雨夜窗台顺手把细雨的混音推起来
+        if (id === 'rainy' && PDM.audio) {
+          try {
+            const info = PDM.audio.mixerInfo();
+            const rain = info.layers.find(l => l.id === 'rain');
+            if (rain && rain.vol < 45) PDM.audio.setVolume('rain', 45);
+            if (!PDM.audio.isOn()) PDM.audio.setOn(true);
+            updateSoundBtn();
+          } catch (e) {}
+        }
+        ui.closeModal();
         refreshAll();
         if (document.querySelector('#screen-shop.active')) ui.renderShop();
         break;
@@ -2145,6 +2250,9 @@ window.PDM = window.PDM || {};
       const val = $('mixVal-' + id);
       if (val) val.textContent = v + '%';
     });
+    document.addEventListener('change', e => {
+      if (e.target && e.target.id === 'importFile') importSave();
+    });
     // 首次手势后再创建 AudioContext，避免浏览器拦截自动播放
     const unlockAudio = () => { if (PDM.audio) PDM.audio.ensure(); };
     document.addEventListener('pointerdown', unlockAudio, { once: true, passive: true });
@@ -2206,13 +2314,18 @@ window.PDM = window.PDM || {};
       const el = e.target.closest('[data-action]');
       if (!el) return;
       const action = el.dataset.action;
-      if (action === 'closeModal' || action === 'confirmReset' || action === 'confirmStop' || action === 'adDouble' || action.startsWith('ad') || action.startsWith('buy') || action.startsWith('decor') || action === 'openDecor' || action === 'comic' || action === 'makeup' || action === 'toggleSpeed' || action === 'toggleBreak' || action === 'exportSave' || action === 'confirmCustomMin' || action === 'share' || action === 'analytics' || action === 'resetData' || action === 'closeReward' || action === 'goShop' || action === 'wearOutfit' || action === 'closeWelcome' || action === 'goStart' || action === 'goFishing' || action === 'goals' || action === 'claimDailyGoals' || action === 'claimWeeklyGoal' || action === 'catHouseUpgrade' || action === 'catHouseVisit' || action === 'feedFood' || action === 'claimMail' || action === 'toggleAmbient' || action === 'toggleSfx' || action === 'accItem' || action === 'themeItem' || action === 'tankFish' || action === 'openTank' || action === 'openCountdown' || action === 'saveCountdown' || action === 'clearCountdown' || action === 'shareWeek') {
+      if (action === 'closeModal' || action === 'confirmReset' || action === 'confirmStop' || action === 'adDouble' || action.startsWith('ad') || action.startsWith('buy') || action.startsWith('decor') || action === 'openDecor' || action === 'comic' || action === 'makeup' || action === 'toggleSpeed' || action === 'toggleBreak' || action === 'exportSave' || action === 'confirmCustomMin' || action === 'share' || action === 'analytics' || action === 'resetData' || action === 'closeReward' || action === 'goShop' || action === 'wearOutfit' || action === 'closeWelcome' || action === 'goStart' || action === 'goFishing' || action === 'goals' || action === 'claimDailyGoals' || action === 'claimWeeklyGoal' || action === 'catHouseUpgrade' || action === 'catHouseVisit' || action === 'feedFood' || action === 'claimMail' || action === 'toggleAmbient' || action === 'toggleSfx' || action === 'accItem' || action === 'themeItem' || action === 'tankFish' || action === 'openTank' || action === 'openCountdown' || action === 'saveCountdown' || action === 'clearCountdown' || action === 'shareWeek' || action === 'importSave') {
         if (el.tagName === 'BUTTON' || el.classList.contains('switch') || el.dataset.action === 'openDecor') e.preventDefault();
         handleAction(action, el);
       }
     });
 
     document.addEventListener('visibilitychange', () => {
+      // 切后台时挂起音频，回来再继续，避免后台一直响
+      if (PDM.audio) {
+        if (document.hidden) PDM.audio.suspend();
+        else PDM.audio.resume();
+      }
       if (!app.session) return;
       if (app.session.pausedAt) return;
       if (document.hidden) {

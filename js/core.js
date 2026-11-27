@@ -36,6 +36,11 @@ window.PDM = window.PDM || {};
     const r = s % 60;
     return String(m).padStart(2, '0') + ':' + String(r).padStart(2, '0');
   }
+  // 带单位的时长文案：避免「2 小时 分钟」这类拼接错字
+  function fmtMinutes(min) {
+    const n = Math.max(0, Math.round(Number(min) || 0));
+    return n >= 60 ? fmtMin(n) : n + ' 分钟';
+  }
 
   /* ---------- catalog ---------- */
   const SLOTS = [
@@ -313,6 +318,29 @@ window.PDM = window.PDM || {};
   let memory = null;
   let state = defaultState();
 
+  // 跨天刷新：日常互动计数 + 按断签/缺席天数衰减心情与亲密度
+  function refreshDaily() {
+    const today = dateKey();
+    if (!state.daily || state.daily.date !== today) state.daily = { date: today, interact: 0 };
+    if (state.moodDate === today) return;
+    const yesterday = addDays(today, -1);
+    const checkedYesterday = state.checkins.indexOf(yesterday) >= 0;
+    const openedYesterday = state.moodDate === yesterday;
+    const gap = Math.max(0, daysBetween(state.moodDate, today));
+    // 昨天打过卡不扣；昨天来过但断签扣 1 天；多日没来按缺席天数累计
+    let decayDays = 0;
+    if (!checkedYesterday) {
+      decayDays = openedYesterday ? 1 : Math.max(1, gap);
+    }
+    // 昨天喝过牛奶只抵消一天的衰减
+    if (state.buffs && state.buffs.milkDate === yesterday) decayDays = Math.max(0, decayDays - 1);
+    if (decayDays > 0) {
+      state.mood = Math.max(20, clamp100(state.mood - 10 * decayDays));
+      state.intimacy = Math.max(0, clamp100((state.intimacy || 0) - 2 * decayDays));
+    }
+    state.moodDate = today;
+  }
+
   function load() {
     try {
       const raw = localStorage.getItem(KEY);
@@ -362,26 +390,7 @@ window.PDM = window.PDM || {};
         state.activities = Array.isArray(parsed.activities) ? parsed.activities.filter(x => ACTIVITY_TASKS.some(t => t.id === x)) : [];
         state.activityBonusDone = !!parsed.activityBonusDone;
         ensureGoals();
-        const today0 = dateKey();
-        if (state.daily.date !== today0) state.daily = { date: today0, interact: 0 };
-        if (state.moodDate !== today0) {
-          const yesterday = addDays(today0, -1);
-          const checkedYesterday = state.checkins.indexOf(yesterday) >= 0;
-          const openedYesterday = state.moodDate === yesterday;
-          const gap = Math.max(0, daysBetween(state.moodDate, today0));
-          // 昨天打过卡不扣；昨天来过但断签扣 1 天；多日没来按缺席天数累计
-          let decayDays = 0;
-          if (!checkedYesterday) {
-            decayDays = openedYesterday ? 1 : Math.max(1, gap);
-          }
-          // 昨天喝过牛奶只抵消一天的衰减
-          if (state.buffs.milkDate === yesterday) decayDays = Math.max(0, decayDays - 1);
-          if (decayDays > 0) {
-            state.mood = Math.max(20, clamp100(state.mood - 10 * decayDays));
-            state.intimacy = Math.max(0, clamp100((state.intimacy || 0) - 2 * decayDays));
-          }
-          state.moodDate = today0;
-        }
+        refreshDaily();
         // 钓鱼存档迁移
         const f = (parsed.fishing && typeof parsed.fishing === 'object' && !Array.isArray(parsed.fishing)) ? parsed.fishing : {};
         state.fishing = Object.assign(defaultFishing(), f);
@@ -910,7 +919,7 @@ window.PDM = window.PDM || {};
     if (!a || state.accessories.owned.indexOf(id) >= 0) return false;
     state.accessories.owned.push(id);
     logEvent('unlock_accessory', { id: id, via: via || '' });
-    if (bucket) bucket.push({ type: 'accessory', name: a.name });
+    if (bucket) bucket.push({ type: 'accessory', id: a.id, name: a.name });
     return true;
   }
 
@@ -945,7 +954,7 @@ window.PDM = window.PDM || {};
     if (!t || state.themes.indexOf(id) >= 0) return false;
     state.themes.push(id);
     logEvent('unlock_theme', { id: id, via: via || '' });
-    if (bucket) bucket.push({ type: 'theme', name: t.name });
+    if (bucket) bucket.push({ type: 'theme', id: t.id, name: t.name });
     return true;
   }
 
@@ -955,7 +964,10 @@ window.PDM = window.PDM || {};
     if (computeStreak(state) >= 7) grantAccessory('a_bearband', 'streak7', added);
     if (levelInfo().level >= 4) grantAccessory('a_gradcap', 'level4', added);
     if (fishDex().filter(f => f.caught > 0).length >= 5) grantAccessory('a_bell', 'dex5', added);
-    if (state.activityBonusDone) grantAccessory('a_shades', 'activity', added);
+    // 旧存档可能已清完互动但没补 activityBonusDone 标记
+    if (state.activityBonusDone || (Array.isArray(state.activities) && state.activities.length >= ACTIVITY_TASKS.length)) {
+      grantAccessory('a_shades', 'activity', added);
+    }
     if (computeStreak(state) >= 14) grantTheme('sakura', 'streak14', added);
     if (added.length) {
       checkAchievements();
@@ -1059,6 +1071,8 @@ window.PDM = window.PDM || {};
 
   /* ---------- sessions ---------- */
   function commitSession(opts) {
+    // 长挂后台再结算时，先补上跨天的心情/亲密度衰减
+    refreshDaily();
     const minutes = Math.max(0, Math.floor(opts.minutes || 0));
     const awaySec = Math.max(0, Math.floor(opts.awaySec || 0));
     const today = dateKey();
@@ -1091,6 +1105,8 @@ window.PDM = window.PDM || {};
       at: Date.now(),
       completed: !!opts.completed
     });
+    // 防存档膨胀：只保留最近 500 条专注记录
+    if (state.sessions.length > 500) state.sessions = state.sessions.slice(-500);
 
     if (eligible) {
       if (!hadToday) {
@@ -1531,6 +1547,7 @@ window.PDM = window.PDM || {};
     addDays: addDays,
     daysBetween: daysBetween,
     fmtMin: fmtMin,
+    fmtMinutes: fmtMinutes,
     fmtClock: fmtClock,
     SLOTS: SLOTS,
     FURNITURE: FURNITURE,

@@ -111,8 +111,11 @@ window.PDM = window.PDM || {};
       '<div class="switch ' + (speedOn ? 'on' : '') + '" data-action="toggleSpeed"></div></div>' : '') +
       '<div class="set-row"><div><div class="lab">休息提醒</div><div class="desc">每连续专注 25 分钟，提醒你起来活动一下</div></div>' +
       '<div class="switch ' + (st.settings.breakRemind !== false ? 'on' : '') + '" data-action="toggleBreak"></div></div>' +
-      '<div class="set-row"><div><div class="lab">导出存档</div><div class="desc">把小鱼干、家具、记录导出成 JSON 备份</div></div>' +
+      '<div class="set-row"><div><div class="lab">导出存档</div><div class="desc">小鱼干、家具、待办、混音和刷题进度一起备份成 JSON</div></div>' +
       '<button class="btn ghost small" data-action="exportSave">导出</button></div>' +
+      '<div class="set-row"><div><div class="lab">导入存档</div><div class="desc">选择之前导出的 JSON，覆盖当前进度并重新载入</div></div>' +
+      '<input id="importFile" type="file" accept="application/json,.json" style="display:none">' +
+      '<button class="btn ghost small" data-action="importSave">导入</button></div>' +
       '<div class="set-row"><div><div class="lab">生成分享卡片</div><div class="desc">「今天陪读 2 小时」竖屏图，带小喵和小屋</div></div>' +
       '<button class="btn ghost small" data-action="share">生成</button></div>' +
       '<div class="set-row"><div><div class="lab">数据埋点</div><div class="desc">开始率、完成率、次日回访、广告点击</div></div>' +

@@ -184,6 +184,9 @@ window.PDM = window.PDM || {};
 
   function scheduleCrackle() {
     clearTimeout(fireTimer);
+    fireTimer = 0;
+    // 环境音关闭或壁炉音量为 0 时不再空转定时器
+    if (!ctx || !cfg.on || !(cfg.vol.fire > 0) || !nodes.fire) return;
     fireTimer = setTimeout(() => {
       if (!ctx) return;
       if (cfg.on && (cfg.vol.fire || 0) > 0 && nodes.fire) crackle();
@@ -255,6 +258,10 @@ window.PDM = window.PDM || {};
     if (cfg.on) {
       ensure();
       ensureLayers();
+      if (built) scheduleCrackle();
+    } else {
+      clearTimeout(fireTimer);
+      fireTimer = 0;
     }
     applyAll();
     return cfg.on;
@@ -274,6 +281,14 @@ window.PDM = window.PDM || {};
     cfg.vol[id] = v;
     save();
     applyLayer(id);
+    if (id === 'fire') {
+      if (cfg.on && v > 0) {
+        if (!fireTimer) scheduleCrackle();
+      } else {
+        clearTimeout(fireTimer);
+        fireTimer = 0;
+      }
+    }
     return v;
   }
 
@@ -352,8 +367,38 @@ window.PDM = window.PDM || {};
     }
   }
 
+  /* ---------------- 切后台 / 重置 ---------------- */
+  function suspend() {
+    clearTimeout(fireTimer);
+    fireTimer = 0;
+    if (ctx && ctx.state === 'running' && ctx.suspend) {
+      try { ctx.suspend(); } catch (e) {}
+    }
+  }
+
+  function resume() {
+    if (!ctx) return;
+    if (ctx.state === 'suspended' && ctx.resume) {
+      try { ctx.resume(); } catch (e) {}
+    }
+    if (cfg.on && built && (cfg.vol.fire || 0) > 0) scheduleCrackle();
+  }
+
+  function reset() {
+    cfg = { on: DEFAULTS.on, sfx: DEFAULTS.sfx, vol: Object.assign({}, DEFAULTS.vol) };
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    clearTimeout(fireTimer);
+    fireTimer = 0;
+    applyAll();
+    if (cfg.on && built) scheduleCrackle();
+    return cfg;
+  }
+
   PDM.audio = {
     ensure: ensure,
+    suspend: suspend,
+    resume: resume,
+    reset: reset,
     isOn: () => cfg.on,
     isSfxOn: () => cfg.sfx,
     setOn: setOn,

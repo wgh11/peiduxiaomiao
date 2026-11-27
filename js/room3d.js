@@ -659,7 +659,7 @@ window.PDM = window.PDM || {};
     ctx.closePath();
   }
 
-  function drawCatFx(state, t) {
+  function drawCatFx(state, t, access) {
     if (!catFxCtx) return;
     const box = catArtBox[catCurKey] || { top: 60, bottom: 505, cx: 256 };
     const ctx = catFxCtx;
@@ -733,13 +733,18 @@ window.PDM = window.PDM || {};
         ctx.restore();
       }
     }
+    // 配饰独立挂件层：精灵图姿态照常切换，只把配饰叠上去
+    if (access && (access.head || access.neck)) {
+      // 睡觉时整只猫趴低，配饰跟着往下挪，避免飘在半空
+      const ay = state === 'sleep' ? 560 : 496;
+      PDM.art.drawAccessoryLayer(ctx, 256, ay, 3.45, access);
+    }
     catFxTex.needsUpdate = true;
   }
 
   function paintCat(state, outfit, t, access) {
     if (!catCtx || !cat) return;
-    const wearing = !!(access && (access.head || access.neck));
-    if (wearing || PROCEDURAL_OUTFITS.has(outfit)) {
+    if (PROCEDURAL_OUTFITS.has(outfit)) {
       if (cat.material !== catBaseMat) cat.material = catBaseMat;
       if (t - lastCatDraw >= .055) {
         lastCatDraw = t;
@@ -747,7 +752,7 @@ window.PDM = window.PDM || {};
         PDM.art.drawCat(catCtx, 256, 496, 3.45, { state: state, outfit: outfit, t: t, access: access });
         catTex.needsUpdate = true;
       }
-      drawCatFx(state, t);
+      drawCatFx(state, t, null);
       return;
     }
     let key = catKeyFor(state, outfit);
@@ -783,7 +788,7 @@ window.PDM = window.PDM || {};
     }
     if (t - catFxLast < .04) return;
     catFxLast = t;
-    drawCatFx(state, t);
+    drawCatFx(state, t, access);
   }
 
   /* ---------- cat house & snap marker ---------- */
@@ -1724,7 +1729,11 @@ window.PDM = window.PDM || {};
       const r = wrapEl.getBoundingClientRect();
       if (r.width > 20 && r.height > 20) resize(r.width, r.height);
     }
-    const env = PDM.room.tod();
+    let env = PDM.room.tod();
+    // 雨夜窗台主题固定成夜晚光线，避免白天大太阳叠着雨
+    if (PDM.core && PDM.core.state().roomTheme === 'rainy') {
+      env = { key: 'night', label: '雨夜', night: true, dusk: false };
+    }
     applyTod(env);
     syncItems();
     Object.values(items).forEach(g => {

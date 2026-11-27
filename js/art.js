@@ -940,25 +940,27 @@ window.PDM = window.PDM || {};
       ctx.stroke();
     });
 
-    // collar
-    ctx.strokeStyle = C.collar;
-    ctx.lineWidth = 5;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.arc(0, -53, 19, 0.28, Math.PI - 0.28);
-    ctx.stroke();
-    ctx.fillStyle = C.bell;
-    ell(ctx, 0, -34.5, 4.4, 4.4); ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,.6)';
-    ell(ctx, -1.4, -36, 1.2, 1.2); ctx.fill();
-    ctx.strokeStyle = 'rgba(160, 112, 40, .5)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(-1.8, -32.4);
-    ctx.lineTo(-1.8, -30.6);
-    ctx.moveTo(1.8, -32.4);
-    ctx.lineTo(1.8, -30.6);
-    ctx.stroke();
+    // collar（戴颈饰时交给配饰层，避免双项圈/双铃铛）
+    if (!(opts.access && opts.access.neck)) {
+      ctx.strokeStyle = C.collar;
+      ctx.lineWidth = 5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(0, -53, 19, 0.28, Math.PI - 0.28);
+      ctx.stroke();
+      ctx.fillStyle = C.bell;
+      ell(ctx, 0, -34.5, 4.4, 4.4); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.6)';
+      ell(ctx, -1.4, -36, 1.2, 1.2); ctx.fill();
+      ctx.strokeStyle = 'rgba(160, 112, 40, .5)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(-1.8, -32.4);
+      ctx.lineTo(-1.8, -30.6);
+      ctx.moveTo(1.8, -32.4);
+      ctx.lineTo(1.8, -30.6);
+      ctx.stroke();
+    }
 
     const blinkPhase = (t % 4.6);
     const blink = blinkPhase < 0.11;
@@ -985,12 +987,24 @@ window.PDM = window.PDM || {};
     ctx.restore();
   }
 
+  // 独立挂件层：在精灵图/结算卡上叠加配饰，不改动整只猫的姿态
+  function drawAccessoryLayer(ctx, x, y, scale, access) {
+    if (!access || (!access.head && !access.neck)) return;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(scale, scale);
+    drawAccessories(ctx, access);
+    ctx.restore();
+  }
+
   PDM.art = {
     colors: C,
     rr: rr,
     ell: ell,
     star: star,
     drawCat: drawCat,
+    drawAccessories: drawAccessories,
+    drawAccessoryLayer: drawAccessoryLayer,
     drawZzz: drawZzz,
     drawSparkles: drawSparkles
   };

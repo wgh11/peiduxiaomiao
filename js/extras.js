@@ -516,7 +516,7 @@ window.PDM = window.PDM || {};
     ctx.stroke();
 
     const rows = [
-      ['本周专注', core.fmtMin(wk.minutes) + ' 分钟'],
+      ['本周专注', core.fmtMinutes(wk.minutes)],
       ['最常学的标签', wk.topTag || '还没记录'],
       ['最晚学习时间', wk.latest || '—'],
       ['本周专注天数', wk.days + ' / 7 天']

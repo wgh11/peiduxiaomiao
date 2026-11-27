@@ -1330,18 +1330,16 @@
 .theme-rain {
   background-image: repeating-linear-gradient(102deg, rgba(206, 228, 242, .55) 0 1px, transparent 1px 13px);
   background-size: 140px 140px;
-  animation: rainFall .8s linear infinite;
 }
-#stageWrap[data-theme="rainy"] .theme-rain { opacity: .5; }
+#stageWrap[data-theme="rainy"] .theme-rain { opacity: .5; animation: rainFall .8s linear infinite; }
 @keyframes rainFall { from { background-position: 0 0; } to { background-position: -34px 140px; } }
 .theme-petals {
   background-image:
     radial-gradient(circle, rgba(255, 183, 198, .95) 0 3px, transparent 3px),
     radial-gradient(circle, rgba(255, 220, 228, .9) 0 2px, transparent 2px);
   background-size: 64px 84px, 106px 128px;
-  animation: petalFall 9s linear infinite;
 }
-#stageWrap[data-theme="sakura"] .theme-petals { opacity: .55; }
+#stageWrap[data-theme="sakura"] .theme-petals { opacity: .55; animation: petalFall 9s linear infinite; }
 @keyframes petalFall { from { background-position: 0 0, 40px 0; } to { background-position: -26px 168px, 68px 256px; } }
 
 #stageWrap[data-theme="rainy"]::after,
