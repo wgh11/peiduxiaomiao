@@ -203,6 +203,22 @@ window.PDM = window.PDM || {};
     { tier: 2, name: '阳光花房', desc: '玻璃花房、晒太阳的窗台，还有几盆猫草。', level: 5, furniture: 16, fish: 0, intimacy: 50 }
   ];
 
+  // 猫咪配饰：头饰 / 颈饰 各一槽，获取途径分散到各个系统
+  const ACCESSORIES = [
+    { id: 'a_beret', name: '贝雷帽', slot: 'head', price: 45, how: 'shop', desc: '歪戴一点点，今天有点文艺' },
+    { id: 'a_bearband', name: '小熊发箍', slot: 'head', price: 0, how: 'streak7', cond: '连续打卡 7 天', desc: '两只小耳朵，走路会晃' },
+    { id: 'a_gradcap', name: '学士帽', slot: 'head', price: 0, how: 'level4', cond: '等级达到 Lv.4', desc: '为了那一天，先戴上试试' },
+    { id: 'a_shades', name: '小墨镜', slot: 'head', price: 0, how: 'activity', cond: '完成全部互动手册', desc: '小猫也有酷酷的时候' },
+    { id: 'a_scarf', name: '红格子围巾', slot: 'neck', price: 60, how: 'shop', desc: '冬天写题的时候最暖' },
+    { id: 'a_bell', name: '铃铛项圈', slot: 'neck', price: 0, how: 'dex5', cond: '鱼图鉴收集 5 种', desc: '走两步就叮当响' }
+  ];
+
+  const ROOM_THEMES = [
+    { id: 'sunny', name: '晴日木屋', price: 0, desc: '默认的小屋，午后阳光刚好' },
+    { id: 'rainy', name: '雨夜窗台', price: 180, desc: '窗外落着雨，台灯是暖黄的' },
+    { id: 'sakura', name: '樱花书房', price: 0, streak: 14, desc: '连续打卡 14 天解锁，窗外会飘樱花' }
+  ];
+
   const ACTIVITY_TASKS = [
     { id: 'pet', name: '摸摸小喵', desc: '在小屋里摸摸它的头', reward: 2 },
     { id: 'feed', name: '投喂一次', desc: '给它一份猫鱼条、牛奶或饼干', reward: 2 },
@@ -283,6 +299,11 @@ window.PDM = window.PDM || {};
       makeupUsed: '',
       settings: { speed: 1, speedSet: false, welcomeDone: false, studyMode: 'strict', modeChosen: false, breakRemind: true, lastTag: '阅读' },
       mail: { date: '', claimed: true, gift: 0, tag: '', min: 0, weather: '', note: '' },
+      accessories: { owned: [], head: null, neck: null },
+      themes: ['sunny'],
+      roomTheme: 'sunny',
+      tank: [],
+      countdown: { label: '', date: '' },
       fishing: defaultFishing(),
       events: [],
       created: new Date().toISOString()
@@ -325,6 +346,19 @@ window.PDM = window.PDM || {};
         state.catHouse.tier = Math.max(0, Math.min(2, Number(state.catHouse.tier) || 0));
         state.catHouse.rot = Number.isFinite(Number(state.catHouse.rot)) ? Number(state.catHouse.rot) : 0.34;
         state.mail = Object.assign({ date: '', claimed: true, gift: 0, tag: '', min: 0, weather: '', note: '' }, (parsed.mail && typeof parsed.mail === 'object') ? parsed.mail : {});
+        // 配饰 / 房间主题 / 鱼缸 / 倒计时
+        const acc = (parsed.accessories && typeof parsed.accessories === 'object') ? parsed.accessories : {};
+        const accOwned = Array.isArray(acc.owned) ? acc.owned.filter(id => ACCESSORIES.some(a => a.id === id)) : [];
+        state.accessories = { owned: Array.from(new Set(accOwned)), head: null, neck: null };
+        state.accessories.head = state.accessories.owned.indexOf(acc.head) >= 0 ? acc.head : null;
+        state.accessories.neck = state.accessories.owned.indexOf(acc.neck) >= 0 ? acc.neck : null;
+        state.themes = Array.isArray(parsed.themes) ? parsed.themes.filter(id => ROOM_THEMES.some(t => t.id === id)) : [];
+        if (state.themes.indexOf('sunny') < 0) state.themes.unshift('sunny');
+        state.roomTheme = state.themes.indexOf(parsed.roomTheme) >= 0 ? parsed.roomTheme : 'sunny';
+        state.tank = Array.isArray(parsed.tank) ? parsed.tank.filter(id => FISH.some(sp => sp.id === id)).slice(0, 5) : [];
+        state.countdown = Object.assign({ label: '', date: '' }, (parsed.countdown && typeof parsed.countdown === 'object') ? parsed.countdown : {});
+        state.countdown.label = typeof state.countdown.label === 'string' ? state.countdown.label.slice(0, 12) : '';
+        state.countdown.date = /^\d{4}-\d{2}-\d{2}$/.test(String(state.countdown.date || '')) ? state.countdown.date : '';
         state.activities = Array.isArray(parsed.activities) ? parsed.activities.filter(x => ACTIVITY_TASKS.some(t => t.id === x)) : [];
         state.activityBonusDone = !!parsed.activityBonusDone;
         ensureGoals();
@@ -837,6 +871,182 @@ window.PDM = window.PDM || {};
     return { ok: true, tier: state.catHouse.tier, name: next.name };
   }
 
+  /* ---------- accessories / themes / tank / countdown ---------- */
+  function accessoryById(id) {
+    return ACCESSORIES.find(a => a.id === id) || null;
+  }
+
+  function buyAccessory(id) {
+    const a = accessoryById(id);
+    if (!a) return { ok: false, reason: 'none' };
+    if (state.accessories.owned.indexOf(id) >= 0) return { ok: false, reason: 'owned' };
+    if (a.how !== 'shop' || !(a.price > 0)) return { ok: false, reason: 'locked', cond: a.cond || '' };
+    if (state.fish < a.price) return { ok: false, reason: 'fish' };
+    state.fish -= a.price;
+    state.accessories.owned.push(id);
+    state.accessories[a.slot] = id;
+    logEvent('buy_accessory', { id: id, price: a.price });
+    save();
+    return { ok: true, item: a };
+  }
+
+  function equipAccessory(id) {
+    const a = accessoryById(id);
+    if (!a || state.accessories.owned.indexOf(id) < 0) return { ok: false, reason: 'locked' };
+    if (state.accessories[a.slot] === id) {
+      state.accessories[a.slot] = null;
+      logEvent('equip_accessory', { id: id, on: false });
+      save();
+      return { ok: true, on: false };
+    }
+    state.accessories[a.slot] = id;
+    logEvent('equip_accessory', { id: id, on: true });
+    save();
+    return { ok: true, on: true };
+  }
+
+  function grantAccessory(id, via, bucket) {
+    const a = accessoryById(id);
+    if (!a || state.accessories.owned.indexOf(id) >= 0) return false;
+    state.accessories.owned.push(id);
+    logEvent('unlock_accessory', { id: id, via: via || '' });
+    if (bucket) bucket.push({ type: 'accessory', name: a.name });
+    return true;
+  }
+
+  function themeById(id) {
+    return ROOM_THEMES.find(t => t.id === id) || null;
+  }
+
+  function buyTheme(id) {
+    const t = themeById(id);
+    if (!t) return { ok: false, reason: 'none' };
+    if (state.themes.indexOf(id) >= 0) return { ok: false, reason: 'owned' };
+    if (!(t.price > 0)) return { ok: false, reason: 'locked' };
+    if (state.fish < t.price) return { ok: false, reason: 'fish' };
+    state.fish -= t.price;
+    state.themes.push(id);
+    state.roomTheme = id;
+    logEvent('buy_theme', { id: id, price: t.price });
+    save();
+    return { ok: true, theme: t };
+  }
+
+  function equipTheme(id) {
+    if (state.themes.indexOf(id) < 0) return { ok: false, reason: 'locked' };
+    state.roomTheme = id;
+    logEvent('equip_theme', { id: id });
+    save();
+    return { ok: true, theme: themeById(id) };
+  }
+
+  function grantTheme(id, via, bucket) {
+    const t = themeById(id);
+    if (!t || state.themes.indexOf(id) >= 0) return false;
+    state.themes.push(id);
+    logEvent('unlock_theme', { id: id, via: via || '' });
+    if (bucket) bucket.push({ type: 'theme', name: t.name });
+    return true;
+  }
+
+  // 一次性检查各系统发放条件，只新增，不重复
+  function syncPerks() {
+    const added = [];
+    if (computeStreak(state) >= 7) grantAccessory('a_bearband', 'streak7', added);
+    if (levelInfo().level >= 4) grantAccessory('a_gradcap', 'level4', added);
+    if (fishDex().filter(f => f.caught > 0).length >= 5) grantAccessory('a_bell', 'dex5', added);
+    if (state.activityBonusDone) grantAccessory('a_shades', 'activity', added);
+    if (computeStreak(state) >= 14) grantTheme('sakura', 'streak14', added);
+    if (added.length) {
+      checkAchievements();
+      save();
+    }
+    return added;
+  }
+
+  function setTankFish(id) {
+    const sp = fishById(id);
+    if (!sp) return { ok: false, reason: 'none' };
+    if (!(state.fishing.dex[id] > 0)) return { ok: false, reason: 'notcaught' };
+    const idx = state.tank.indexOf(id);
+    if (idx >= 0) {
+      state.tank.splice(idx, 1);
+      save();
+      return { ok: true, in: false };
+    }
+    if (state.tank.length >= 5) return { ok: false, reason: 'full' };
+    state.tank.push(id);
+    save();
+    return { ok: true, in: true };
+  }
+
+  function tankInfo() {
+    return state.tank.map(id => fishById(id)).filter(Boolean).map(sp => Object.assign({}, sp, { color: sp.color }));
+  }
+
+  function setCountdown(label, date) {
+    const text = String(label == null ? '' : label).trim().slice(0, 12);
+    const key = String(date == null ? '' : date).trim();
+    if (!text || !/^\d{4}-\d{2}-\d{2}$/.test(key)) {
+      state.countdown = { label: '', date: '' };
+      save();
+      return { ok: true, cleared: true };
+    }
+    state.countdown = { label: text, date: key };
+    logEvent('countdown_set', { label: text, date: key });
+    save();
+    return { ok: true };
+  }
+
+  function countdownInfo() {
+    const c = state.countdown || {};
+    if (!c.label || !c.date) return { label: '', date: '', days: null, past: false };
+    const days = daysBetween(dateKey(), c.date);
+    return { label: c.label, date: c.date, days: days, past: days < 0 };
+  }
+
+  // 每周来信：本周专注、最常标签、最晚学习时间与小猫评价
+  function weekLetterData() {
+    const start = startOfWeekKey();
+    const today = dateKey();
+    const end = addDays(start, 6);
+    let minutes = 0;
+    let latest = '';
+    let latestMin = -1;
+    const tagMin = {};
+    (state.sessions || []).forEach(s => {
+      if (!s || s.date < start || s.date > today) return;
+      const m = s.minutes || 0;
+      minutes += m;
+      if (s.tag) tagMin[s.tag] = (tagMin[s.tag] || 0) + m;
+      if (m > 0 && s.at) {
+        const at = new Date(s.at);
+        const clock = at.getHours() * 60 + at.getMinutes();
+        // 凌晨 0-5 点算作前一晚的“最晚时间”
+        const adjusted = at.getHours() < 5 ? clock + 1440 : clock;
+        if (adjusted > latestMin) {
+          latestMin = adjusted;
+          latest = String(at.getHours()).padStart(2, '0') + ':' + String(at.getMinutes()).padStart(2, '0');
+        }
+      }
+    });
+    const tags = Object.keys(tagMin).sort((a, b) => tagMin[b] - tagMin[a]);
+    const days = weekFocusDays();
+    const weekLabel = (parseKey(start).getMonth() + 1) + '/' + parseKey(start).getDate() + ' - ' +
+      (parseKey(end).getMonth() + 1) + '/' + parseKey(end).getDate();
+    const ready = days > 0 && (new Date().getDay() === 0 || days >= 5);
+    let verdict;
+    if (minutes >= 300) verdict = '这周的你有点耀眼，我尾巴都翘起来了。';
+    else if (minutes >= 120) verdict = '稳稳当当的一周，我给你留了最软的坐垫。';
+    else if (minutes > 0) verdict = '虽然不多，但每一分钟我都记着。';
+    else verdict = '这周还没怎么见到你，下周一起坐一会儿吧。';
+    return {
+      start: start, end: end, weekLabel: weekLabel,
+      minutes: minutes, topTag: tags[0] || '', latest: latest,
+      days: days, goal: 5, ready: ready, verdict: verdict
+    };
+  }
+
   function grantShareReward() {
     const today = dateKey();
     if (state.shareDay === today) return 0;
@@ -1332,6 +1542,20 @@ window.PDM = window.PDM || {};
     ACHIEVEMENTS: ACHIEVEMENTS,
     CAT_HOUSE_TIERS: CAT_HOUSE_TIERS,
     ACTIVITY_TASKS: ACTIVITY_TASKS,
+    ACCESSORIES: ACCESSORIES,
+    ROOM_THEMES: ROOM_THEMES,
+    accessoryById: accessoryById,
+    buyAccessory: buyAccessory,
+    equipAccessory: equipAccessory,
+    themeById: themeById,
+    buyTheme: buyTheme,
+    equipTheme: equipTheme,
+    syncPerks: syncPerks,
+    setTankFish: setTankFish,
+    tankInfo: tankInfo,
+    setCountdown: setCountdown,
+    countdownInfo: countdownInfo,
+    weekLetterData: weekLetterData,
     FISHING: FISHING,
     FISH: FISH,
     RARITY: RARITY,

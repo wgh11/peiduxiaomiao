@@ -391,7 +391,8 @@ window.PDM = window.PDM || {};
       catState: 'celebrate',
       level: core.levelInfo().level,
       t: 2.2,
-      outfit: S.outfit
+      outfit: S.outfit,
+      access: S.accessories
     });
 
     // confetti-ish sparkles in scene
@@ -469,10 +470,116 @@ window.PDM = window.PDM || {};
     ctx.textAlign = 'left';
   }
 
+  function drawWeekCard(canvas) {
+    const core = PDM.core;
+    const S = core.state();
+    const wk = core.weekLetterData();
+    const W = 1080, H = 1440;
+    const ctx = setup(canvas, W, H);
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#FDF3E6');
+    bg.addColorStop(1, '#F6E0CD');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // 信纸
+    ctx.fillStyle = '#FFFDF8';
+    rr(ctx, 64, 64, W - 128, H - 128, 40);
+    ctx.fill();
+    ctx.strokeStyle = '#EAD6BF';
+    ctx.lineWidth = 3;
+    rr(ctx, 64, 64, W - 128, H - 128, 40);
+    ctx.stroke();
+
+    // 顶部胶带
+    ctx.save();
+    ctx.translate(W / 2, 66);
+    ctx.rotate(-0.035);
+    ctx.fillStyle = 'rgba(240, 169, 142, .72)';
+    rr(ctx, -110, -18, 220, 38, 8);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#5B4A42';
+    ctx.font = '700 54px "PingFang SC", "HarmonyOS Sans SC", sans-serif';
+    ctx.fillText('本周猫咪来信', W / 2, 214);
+    ctx.fillStyle = '#A18A78';
+    ctx.font = '400 28px "PingFang SC", sans-serif';
+    ctx.fillText(wk.weekLabel, W / 2, 260);
+
+    ctx.strokeStyle = '#EEDCC8';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(140, 296);
+    ctx.lineTo(W - 140, 296);
+    ctx.stroke();
+
+    const rows = [
+      ['本周专注', core.fmtMin(wk.minutes) + ' 分钟'],
+      ['最常学的标签', wk.topTag || '还没记录'],
+      ['最晚学习时间', wk.latest || '—'],
+      ['本周专注天数', wk.days + ' / 7 天']
+    ];
+    ctx.textAlign = 'left';
+    rows.forEach((r, i) => {
+      const y = 366 + i * 74;
+      ctx.fillStyle = '#A18A78';
+      ctx.font = '400 28px "PingFang SC", sans-serif';
+      ctx.fillText(r[0], 150, y);
+      ctx.textAlign = 'right';
+      ctx.fillStyle = '#5B4A42';
+      ctx.font = '700 30px "PingFang SC", sans-serif';
+      ctx.fillText(r[1], W - 150, y);
+      ctx.textAlign = 'left';
+    });
+
+    // 小猫评价
+    ctx.fillStyle = '#FBF0E4';
+    rr(ctx, 132, 678, W - 264, 146, 22);
+    ctx.fill();
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#B0795F';
+    ctx.font = '400 30px "Kaiti SC", "STKaiti", "Songti SC", serif';
+    ctx.fillText(wk.verdict, W / 2, 762);
+    ctx.textAlign = 'left';
+
+    PDM.art.drawCat(ctx, W / 2, H - 250, 1.8, {
+      state: 'idle',
+      outfit: S.outfit,
+      access: S.accessories,
+      t: 1.1
+    });
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#C0AC99';
+    ctx.font = '400 24px "PingFang SC", sans-serif';
+    ctx.fillText('陪读小喵 · 原创学习桌宠 · ' + core.dateKey(), W / 2, H - 96);
+    ctx.textAlign = 'left';
+
+    // 连续打卡专属边框
+    const streak = core.computeStreak(S) || 0;
+    if (streak >= 7) {
+      const tier = streak >= 30
+        ? { main: '#D79A3E', soft: '#F6DCA4' }
+        : streak >= 14 ? { main: '#8E6FA8', soft: '#D9C7E8' }
+          : { main: '#5E8FA8', soft: '#CFE0EA' };
+      ctx.lineWidth = 12;
+      ctx.strokeStyle = tier.main;
+      rr(ctx, 26, 26, W - 52, H - 52, 46);
+      ctx.stroke();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = tier.soft;
+      rr(ctx, 52, 52, W - 104, H - 104, 34);
+      ctx.stroke();
+    }
+  }
+
   PDM.extras = {
     drawComicPanel: drawComicPanel,
     drawComicCover: drawComicCover,
     drawWelcome: drawWelcome,
-    drawShareCard: drawShareCard
+    drawShareCard: drawShareCard,
+    drawWeekCard: drawWeekCard
   };
 })(window.PDM);

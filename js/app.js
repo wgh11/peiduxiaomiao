@@ -128,6 +128,7 @@ window.PDM = window.PDM || {};
         t: ts / 1000,
         catState: app.cat.state,
         outfit: core.state().outfit,
+        access: core.state().accessories,
         level: core.levelInfo().level,
         focus: !!app.session
       });
@@ -141,6 +142,7 @@ window.PDM = window.PDM || {};
       t: ts / 1000,
       catState: app.cat.state,
       outfit: core.state().outfit,
+      access: core.state().accessories,
       equipped: core.state().equipped,
       level: core.levelInfo().level
     });
@@ -707,6 +709,14 @@ window.PDM = window.PDM || {};
     refreshAll();
   }
 
+  function openWeekShare() {
+    ui.closeModal();
+    $('shareWrap').classList.add('show');
+    PDM.extras.drawWeekCard($('shareCanvas'));
+    core.logEvent('share', { kind: 'week' });
+    core.save();
+  }
+
   function saveShare() {
     const canvas = $('shareCanvas');
     canvas.toBlob(blob => {
@@ -998,6 +1008,19 @@ window.PDM = window.PDM || {};
       ? '<button class="btn primary" data-action="claimMail">收下小礼物</button>' +
         '<button class="btn ghost" data-action="closeModal">等会儿再收</button>'
       : '<button class="btn primary" data-action="closeModal">合上信箱</button>';
+    const wk = core.weekLetterData();
+    const weekHtml = wk.ready
+      ? '<div class="week-letter">' +
+        '<div class="wl-head">本周猫咪来信</div>' +
+        '<div class="wl-range">' + wk.weekLabel + '</div>' +
+        '<div class="wl-row"><span>本周专注</span><b>' + core.fmtMin(wk.minutes) + ' 分钟</b></div>' +
+        '<div class="wl-row"><span>最常学的标签</span><b>' + esc(wk.topTag || '还没记录') + '</b></div>' +
+        '<div class="wl-row"><span>最晚学习时间</span><b>' + (wk.latest || '—') + '</b></div>' +
+        '<div class="wl-row"><span>本周专注天数</span><b>' + wk.days + ' 天</b></div>' +
+        '<div class="wl-verdict">' + esc(wk.verdict) + '</div>' +
+        '<button class="btn ghost wide" data-action="shareWeek">生成周报图</button>' +
+        '</div>'
+      : '';
     ui.openModal(
       '<div class="mail-modal">' +
       '<div class="mail-head">门口的小信箱</div>' +
@@ -1007,6 +1030,7 @@ window.PDM = window.PDM || {};
       '<div class="mail-hand">' + esc(m.note || '') + '</div>' +
       giftHtml +
       '</div>' +
+      weekHtml +
       '<div class="reward-actions">' + actions + '</div>' +
       '</div>');
   }
@@ -1071,6 +1095,81 @@ window.PDM = window.PDM || {};
       '<p class="tiny" style="margin-top:12px;line-height:1.7">首次打开需要点一下页面，浏览器才允许播放声音。</p>');
   }
 
+  /* ---------------- 房间主题 / 倒计时 / 角落鱼缸 ---------------- */
+  function applyTheme() {
+    const wrap = $('stageWrap');
+    if (!wrap) return;
+    const id = core.state().roomTheme;
+    wrap.dataset.theme = core.themeById(id) ? id : 'sunny';
+  }
+
+  function renderCountdown() {
+    const el = $('countdownBoard');
+    if (!el) return;
+    const c = core.countdownInfo();
+    if (!c.label || c.days == null) {
+      el.innerHTML = '<span class="cd-empty">＋ 立个目标</span>';
+      el.classList.remove('past');
+      return;
+    }
+    el.classList.toggle('past', c.past);
+    el.innerHTML = '<span>' + esc(c.label) + '</span><b>' + Math.abs(c.days) + '</b><span>天' + (c.past ? '（已过）' : '') + '</span>';
+  }
+
+  function openCountdownSheet() {
+    const c = core.countdownInfo();
+    ui.openModal(
+      '<h2 style="font-size:17px;margin-bottom:6px">书桌上的小立牌</h2>' +
+      '<p class="tiny" style="margin-bottom:12px">写一个目标日期，每天一抬头就能看见。</p>' +
+      '<input id="cdLabel" class="text-input" maxlength="12" placeholder="比如：考研 / 六级" value="' + esc(c.label || '') + '">' +
+      '<input id="cdDate" class="text-input" type="date" value="' + esc(c.date || '') + '" style="margin-top:8px">' +
+      '<div class="reward-actions" style="margin-top:14px">' +
+      '<button class="btn primary" data-action="saveCountdown">立起来</button>' +
+      '<button class="btn ghost" data-action="clearCountdown">清空</button>' +
+      '<button class="btn ghost" data-action="closeModal">取消</button></div>');
+  }
+
+  function saveCountdown() {
+    const label = $('cdLabel') ? $('cdLabel').value : '';
+    const date = $('cdDate') ? $('cdDate').value : '';
+    if (!label.trim() || !date) {
+      ui.toast('写一个名字，再选个日期吧', 2200);
+      return;
+    }
+    core.setCountdown(label, date);
+    ui.closeModal();
+    renderCountdown();
+    ui.toast('小立牌立好了，每天都能看到', 2200);
+  }
+
+  function renderTank() {
+    const el = $('tankBox');
+    if (!el) return;
+    const fish = core.tankInfo();
+    el.classList.toggle('hidden', !fish.length);
+    if (!fish.length) { el.innerHTML = ''; return; }
+    const spots = [[6, 22], [22, 30], [38, 21], [12, 38], [34, 38]];
+    el.innerHTML = fish.slice(0, 5).map((f, i) => {
+      const s = spots[i] || [10, 30];
+      return '<i style="left:' + s[0] + 'px;top:' + s[1] + 'px;--c:' + f.color + ';--d:' + (4 + i * 1.3) + 's"></i>';
+    }).join('') + '<b>鱼缸</b>';
+  }
+
+  function openTankDex() {
+    ui.switchScreen('book');
+    ui.uiState.bookTab = 'fish';
+    ui.renderBook();
+  }
+
+  // 达成条件时自动发放配饰 / 主题，只在新增时提示
+  function maybeGrantPerks() {
+    const added = core.syncPerks();
+    if (!added.length) return;
+    const names = added.map(x => x.name).join('、');
+    ui.toast('解锁新收藏 · ' + names, 3200);
+    ui.refreshHeader();
+  }
+
   /* ---------------- refresh ---------------- */
   function refreshAll() {
     ui.refreshHeader();
@@ -1089,6 +1188,10 @@ window.PDM = window.PDM || {};
     updateGoalChip();
     updateMailBadge();
     renderTodos();
+    applyTheme();
+    renderCountdown();
+    renderTank();
+    maybeGrantPerks();
   }
 
   /* ---------------- welcome ---------------- */
@@ -1513,6 +1616,88 @@ window.PDM = window.PDM || {};
       case 'catHouseVisit': {
         ui.closeSheet();
         setTimeout(() => enterCatHouse(), 180);
+        break;
+      }
+      case 'accItem': {
+        const id = el.dataset.id;
+        const a = core.accessoryById(id);
+        if (!a) break;
+        const owned = core.state().accessories.owned.indexOf(id) >= 0;
+        if (!owned) {
+          if (a.how !== 'shop') {
+            ui.toast('「' + a.name + '」还没解锁：' + (a.cond || '完成对应条件'), 2600);
+            break;
+          }
+          const r = core.buyAccessory(id);
+          if (!r.ok) {
+            ui.toast(r.reason === 'fish' ? '小鱼干还不够，再专注一会儿吧' : '这个配饰暂时买不了', 2200);
+            break;
+          }
+          ui.toast('买下「' + a.name + '」并戴上了', 2200);
+        } else {
+          const r = core.equipAccessory(id);
+          ui.toast(r.on ? '小喵戴上了「' + a.name + '」' : '摘下了「' + a.name + '」', 1800);
+        }
+        refreshAll();
+        if (document.querySelector('#screen-shop.active')) ui.renderShop();
+        break;
+      }
+      case 'themeItem': {
+        const id = el.dataset.id;
+        const t = core.themeById(id);
+        if (!t) break;
+        const owned = core.state().themes.indexOf(id) >= 0;
+        if (!owned) {
+          if (!(t.price > 0)) {
+            ui.toast('连续打卡 ' + t.streak + ' 天后会自动解锁', 2400);
+            break;
+          }
+          const r = core.buyTheme(id);
+          if (!r.ok) {
+            ui.toast(r.reason === 'fish' ? '小鱼干还不够，慢慢攒吧' : '暂时换不了这个主题', 2200);
+            break;
+          }
+          ui.toast('换上了「' + t.name + '」', 2400);
+        } else {
+          core.equipTheme(id);
+          ui.toast('小屋换成了「' + t.name + '」', 2000);
+        }
+        refreshAll();
+        if (document.querySelector('#screen-shop.active')) ui.renderShop();
+        break;
+      }
+      case 'tankFish': {
+        const r = core.setTankFish(el.dataset.id);
+        if (!r.ok) {
+          ui.toast(r.reason === 'full' ? '鱼缸最多养 5 条，先取出一条吧' : '还没钓到这条鱼', 2200);
+          break;
+        }
+        renderTank();
+        if (document.querySelector('#screen-book.active')) ui.renderBook();
+        ui.toast(r.in ? '小鱼游进角落的鱼缸里啦' : '小鱼从鱼缸里捞出来了', 1800);
+        break;
+      }
+      case 'openTank': {
+        openTankDex();
+        break;
+      }
+      case 'openCountdown': {
+        openCountdownSheet();
+        break;
+      }
+      case 'saveCountdown': {
+        saveCountdown();
+        break;
+      }
+      case 'clearCountdown': {
+        core.setCountdown('', '');
+        ui.closeModal();
+        renderCountdown();
+        ui.toast('小立牌收起来了', 1800);
+        break;
+      }
+      case 'shareWeek': {
+        openWeekShare();
         break;
       }
       case 'confirmStop': {
@@ -2021,7 +2206,7 @@ window.PDM = window.PDM || {};
       const el = e.target.closest('[data-action]');
       if (!el) return;
       const action = el.dataset.action;
-      if (action === 'closeModal' || action === 'confirmReset' || action === 'confirmStop' || action === 'adDouble' || action.startsWith('ad') || action.startsWith('buy') || action.startsWith('decor') || action === 'openDecor' || action === 'comic' || action === 'makeup' || action === 'toggleSpeed' || action === 'toggleBreak' || action === 'exportSave' || action === 'confirmCustomMin' || action === 'share' || action === 'analytics' || action === 'resetData' || action === 'closeReward' || action === 'goShop' || action === 'wearOutfit' || action === 'closeWelcome' || action === 'goStart' || action === 'goFishing' || action === 'goals' || action === 'claimDailyGoals' || action === 'claimWeeklyGoal' || action === 'catHouseUpgrade' || action === 'catHouseVisit' || action === 'feedFood' || action === 'claimMail' || action === 'toggleAmbient' || action === 'toggleSfx') {
+      if (action === 'closeModal' || action === 'confirmReset' || action === 'confirmStop' || action === 'adDouble' || action.startsWith('ad') || action.startsWith('buy') || action.startsWith('decor') || action === 'openDecor' || action === 'comic' || action === 'makeup' || action === 'toggleSpeed' || action === 'toggleBreak' || action === 'exportSave' || action === 'confirmCustomMin' || action === 'share' || action === 'analytics' || action === 'resetData' || action === 'closeReward' || action === 'goShop' || action === 'wearOutfit' || action === 'closeWelcome' || action === 'goStart' || action === 'goFishing' || action === 'goals' || action === 'claimDailyGoals' || action === 'claimWeeklyGoal' || action === 'catHouseUpgrade' || action === 'catHouseVisit' || action === 'feedFood' || action === 'claimMail' || action === 'toggleAmbient' || action === 'toggleSfx' || action === 'accItem' || action === 'themeItem' || action === 'tankFish' || action === 'openTank' || action === 'openCountdown' || action === 'saveCountdown' || action === 'clearCountdown' || action === 'shareWeek') {
         if (el.tagName === 'BUTTON' || el.classList.contains('switch') || el.dataset.action === 'openDecor') e.preventDefault();
         handleAction(action, el);
       }

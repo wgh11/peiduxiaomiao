@@ -467,6 +467,7 @@ window.PDM = window.PDM || {};
     A.drawCat(ctx, catX, catY, u * 1.12, {
       state: catState,
       outfit: outfit,
+      access: opts.access,
       t: env.t
     });
 

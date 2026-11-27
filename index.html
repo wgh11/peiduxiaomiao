@@ -12,7 +12,7 @@
 <title>陪读小喵 · 学习自习室桌宠</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='34' r='20' fill='%23F7E3CC'/%3E%3Cpath d='M12 18l10 8-11 5zM52 18L42 26l11 5z' fill='%23F2A48C'/%3E%3Ccircle cx='25' cy='33' r='2.6' fill='%235B4A42'/%3E%3Ccircle cx='39' cy='33' r='2.6' fill='%235B4A42'/%3E%3Cpath d='M29 40q3 3 6 0' stroke='%235B4A42' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="css/base.css?v=20261127-blueprint">
-<link rel="stylesheet" href="css/screens.css?v=20261127-companion">
+<link rel="stylesheet" href="css/screens.css?v=20261127-second">
 <link rel="stylesheet" href="css/quiz.css?v=20261127-warm">
 </head>
 <body>
@@ -129,6 +129,10 @@
         <div id="stageWrap">
           <canvas id="room"></canvas>
           <canvas id="room3d"></canvas>
+          <div class="room-theme" id="roomTheme" aria-hidden="true">
+            <div class="theme-rain"></div>
+            <div class="theme-petals"></div>
+          </div>
           <div class="stage-top">
             <div class="level-chip" id="levelChip">
               <span class="level-dot"></span><span id="levelText">Lv.1 初识</span>
@@ -139,6 +143,8 @@
             </div>
           </div>
           <div class="cat-bubble" id="catBubble"></div>
+          <button class="stage-countdown" id="countdownBoard" data-action="openCountdown" aria-label="目标倒计时"></button>
+          <button class="stage-tank hidden" id="tankBox" data-action="openTank" aria-label="角落小鱼缸"></button>
           <div class="pet-bar" id="petBar">
             <button data-pet="pet">摸摸</button>
             <button data-pet="feed">投喂<i id="snackCount">0</i></button>

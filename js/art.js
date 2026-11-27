@@ -208,7 +208,107 @@ window.PDM = window.PDM || {};
     ctx.stroke();
   }
 
-  function drawHead(ctx, state, outfit, t, blink) {
+  // 配饰画在头部坐标系里：头饰跟着头部一起倾斜，颈饰贴着脖子
+  function drawAccessories(ctx, access) {
+    const head = access.head, neck = access.neck;
+    if (head === 'a_beret') {
+      ctx.save();
+      ctx.translate(-3, -112);
+      ctx.rotate(-0.14);
+      ctx.fillStyle = '#D9705F';
+      ell(ctx, 0, 2, 33, 12); ctx.fill();
+      ell(ctx, -2, -6, 23, 15); ctx.fill();
+      ctx.fillStyle = '#C05A4C';
+      ell(ctx, -1, -20, 3.4, 4.2); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.35)';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.arc(0, -4, 16, Math.PI * 1.12, Math.PI * 1.55);
+      ctx.stroke();
+      ctx.restore();
+    } else if (head === 'a_bearband') {
+      ctx.strokeStyle = '#D9A47F';
+      ctx.lineWidth = 4.6;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-33, -97);
+      ctx.quadraticCurveTo(0, -122, 33, -97);
+      ctx.stroke();
+      ctx.fillStyle = '#EFC2A0';
+      ell(ctx, -25, -115, 10, 10); ctx.fill();
+      ell(ctx, 25, -115, 10, 10); ctx.fill();
+      ctx.fillStyle = '#F7DCC6';
+      ell(ctx, -25, -115, 4.6, 4.6); ctx.fill();
+      ell(ctx, 25, -115, 4.6, 4.6); ctx.fill();
+    } else if (head === 'a_gradcap') {
+      ctx.fillStyle = '#3B4A63';
+      ell(ctx, 0, -106, 31, 9); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(0, -131);
+      ctx.lineTo(37, -114);
+      ctx.lineTo(0, -101);
+      ctx.lineTo(-37, -114);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.18)';
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+      ctx.strokeStyle = '#E8C36A';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(31, -114);
+      ctx.lineTo(34, -99);
+      ctx.stroke();
+      ctx.fillStyle = '#E8C36A';
+      ell(ctx, 34.5, -97, 3, 3); ctx.fill();
+    } else if (head === 'a_shades') {
+      ctx.fillStyle = 'rgba(52, 50, 56, .94)';
+      ell(ctx, -15, -78, 10, 6.6); ctx.fill();
+      ell(ctx, 15, -78, 10, 6.6); ctx.fill();
+      ctx.fillRect(-3, -80, 6, 2.6);
+      ctx.fillStyle = 'rgba(255,255,255,.34)';
+      ell(ctx, -18, -81, 3, 1.6); ctx.fill();
+      ell(ctx, 12, -81, 3, 1.6); ctx.fill();
+    }
+
+    if (neck === 'a_scarf') {
+      ctx.fillStyle = '#C4584F';
+      ell(ctx, 0, -49, 30, 9.5); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(10, -46);
+      ctx.quadraticCurveTo(20, -40, 17, -24);
+      ctx.lineTo(27, -26);
+      ctx.quadraticCurveTo(28, -40, 22, -47);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,246,236,.55)';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(-22, -51); ctx.lineTo(-6, -44);
+      ctx.moveTo(-10, -53); ctx.lineTo(6, -45);
+      ctx.moveTo(2, -52); ctx.lineTo(18, -45);
+      ctx.stroke();
+    } else if (neck === 'a_bell') {
+      ctx.strokeStyle = '#D2604F';
+      ctx.lineWidth = 5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(0, -53, 19, 0.28, Math.PI - 0.28);
+      ctx.stroke();
+      ctx.fillStyle = '#F2C24F';
+      ell(ctx, 0, -34.5, 5, 5); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.6)';
+      ell(ctx, -1.6, -36, 1.3, 1.3); ctx.fill();
+      ctx.strokeStyle = 'rgba(150,105,35,.6)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(-1.8, -31); ctx.lineTo(-1.8, -29);
+      ctx.moveTo(1.8, -31); ctx.lineTo(1.8, -29);
+      ctx.stroke();
+    }
+  }
+
+  function drawHead(ctx, state, outfit, t, blink, access) {
     const tilt = state === 'read' ? 0.1 : state === 'doze' ? 0.16 : state === 'wash' ? 0.05 : state === 'eat' ? 0.28 : state === 'pet' ? -0.06 : 0;
     const nod = state === 'doze' ? Math.sin(t * 0.9) * 2 : 0;
     ctx.save();
@@ -353,6 +453,7 @@ window.PDM = window.PDM || {};
       star(ctx, 3, -122, 5, '#FFE7A8', .95);
       ctx.fillStyle = '#F5D37A'; ell(ctx, 25, -101, 5, 3); ctx.fill();
     }
+    if (access && (access.head || access.neck)) drawAccessories(ctx, access);
     ctx.restore();
   }
 
@@ -861,7 +962,7 @@ window.PDM = window.PDM || {};
 
     const blinkPhase = (t % 4.6);
     const blink = blinkPhase < 0.11;
-    drawHead(ctx, state, outfit, t, blink && !['doze', 'sleep', 'stretch', 'wash'].includes(state));
+    drawHead(ctx, state, outfit, t, blink && !['doze', 'sleep', 'stretch', 'wash'].includes(state), opts.access);
     drawArms(ctx, state, t);
 
     if (state === 'read') drawBook(ctx, t);

@@ -736,14 +736,15 @@ window.PDM = window.PDM || {};
     catFxTex.needsUpdate = true;
   }
 
-  function paintCat(state, outfit, t) {
+  function paintCat(state, outfit, t, access) {
     if (!catCtx || !cat) return;
-    if (PROCEDURAL_OUTFITS.has(outfit)) {
+    const wearing = !!(access && (access.head || access.neck));
+    if (wearing || PROCEDURAL_OUTFITS.has(outfit)) {
       if (cat.material !== catBaseMat) cat.material = catBaseMat;
       if (t - lastCatDraw >= .055) {
         lastCatDraw = t;
         catCtx.clearRect(0, 0, 512, 512);
-        PDM.art.drawCat(catCtx, 256, 496, 3.45, { state: state, outfit: outfit, t: t });
+        PDM.art.drawCat(catCtx, 256, 496, 3.45, { state: state, outfit: outfit, t: t, access: access });
         catTex.needsUpdate = true;
       }
       drawCatFx(state, t);
@@ -776,7 +777,7 @@ window.PDM = window.PDM || {};
       if (t - lastCatDraw < .055) return;
       lastCatDraw = t;
       catCtx.clearRect(0, 0, 512, 512);
-      PDM.art.drawCat(catCtx, 256, 496, 3.45, { state: state, outfit: outfit || 'default', t: t });
+      PDM.art.drawCat(catCtx, 256, 496, 3.45, { state: state, outfit: outfit || 'default', t: t, access: access });
       catTex.needsUpdate = true;
       return;
     }
@@ -1714,7 +1715,7 @@ window.PDM = window.PDM || {};
       catLastState = state;
       lastCatDraw = 0;
     }
-    paintCat(state, opts.outfit || 'default', t);
+    paintCat(state, opts.outfit || 'default', t, opts.access);
   }
 
   function render(t, opts) {

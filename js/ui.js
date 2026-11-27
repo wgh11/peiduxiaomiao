@@ -248,6 +248,54 @@ window.PDM = window.PDM || {};
     return s ? s.name : '';
   }
 
+  function accessorySection() {
+    const acc = core.state().accessories || { owned: [], head: null, neck: null };
+    const chip = a => {
+      const owned = acc.owned.indexOf(a.id) >= 0;
+      const on = acc[a.slot] === a.id;
+      if (owned) {
+        return '<button class="acc-chip ' + (on ? 'on' : '') + '" data-action="accItem" data-id="' + a.id + '">' +
+          a.name + (on ? '<em>已佩戴</em>' : '') + '</button>';
+      }
+      if (a.how === 'shop') {
+        return '<button class="acc-chip locked" data-action="accItem" data-id="' + a.id + '">' +
+          a.name + '<em>' + icon('fish') + a.price + '</em></button>';
+      }
+      return '<button class="acc-chip locked" data-action="accItem" data-id="' + a.id + '">' +
+        a.name + '<em>' + (a.cond || '未解锁') + '</em></button>';
+    };
+    const slotRow = (slot, name) => {
+      const list = core.ACCESSORIES.filter(a => a.slot === slot);
+      return '<div class="acc-slot"><span class="acc-slot-name">' + name + '</span>' +
+        '<div class="acc-list">' + list.map(chip).join('') + '</div></div>';
+    };
+    return '<div class="panel accessory-panel"><div class="panel-head"><h3>猫咪配饰</h3><span class="hint">头饰 / 颈饰 各 1 件</span></div>' +
+      slotRow('head', '头饰') + slotRow('neck', '颈饰') +
+      '<div class="tiny" style="margin-top:8px;line-height:1.7">配饰会戴在小喵身上；连续打卡、图鉴和互动手册里还藏着免费配饰。</div></div>';
+  }
+
+  function themeShelf() {
+    const st = core.state();
+    const cards = core.ROOM_THEMES.map(t => {
+      const owned = st.themes.indexOf(t.id) >= 0;
+      const on = st.roomTheme === t.id;
+      let btn;
+      if (owned) {
+        btn = '<button class="buy-btn ' + (on ? 'equipped' : 'owned') + '" data-action="themeItem" data-id="' + t.id + '">' + (on ? '使用中' : '换上') + '</button>';
+      } else if (t.price > 0) {
+        btn = '<button class="buy-btn' + (st.fish < t.price ? ' owned' : '') + '" data-action="themeItem" data-id="' + t.id + '">' + icon('fish') + t.price + '</button>';
+      } else {
+        btn = '<button class="buy-btn owned" data-action="themeItem" data-id="' + t.id + '">连续 ' + t.streak + ' 天</button>';
+      }
+      return '<div class="theme-card">' +
+        '<div class="theme-swatch ' + t.id + (on ? ' on' : '') + '"></div>' +
+        '<div class="theme-info"><h4>' + t.name + '</h4><p>' + t.desc + '</p></div>' +
+        btn + '</div>';
+    }).join('');
+    return '<div class="panel-head" style="margin-top:2px"><h3>房间主题</h3><span class="hint">换墙面 / 窗外 / 光色</span></div>' +
+      '<div class="theme-shelf">' + cards + '</div>';
+  }
+
   function renderShop() {
     const st = core.state();
     $('shopFish').textContent = st.fish;
@@ -257,7 +305,7 @@ window.PDM = window.PDM || {};
     if (uiState.shopTab === 'furniture') {
       html = '<div class="shop-grid">' + core.FURNITURE.filter(f => !f.ad && !f.fishCost).map(f => furnitureCard(f)).join('') + '</div>';
     } else if (uiState.shopTab === 'outfit') {
-      html = '<div class="shop-grid">' + core.OUTFITS.filter(o => !o.ad).map(o => outfitCard(o)).join('') + '</div>';
+      html = accessorySection() + '<div class="shop-grid">' + core.OUTFITS.filter(o => !o.ad).map(o => outfitCard(o)).join('') + '</div>';
     } else if (uiState.shopTab === 'food') {
       html = '<div class="tiny shop-note">完成专注会得到免费猫鱼条；不同口味会带来短时加成，喂食时可以选择。</div>' +
         '<div class="shop-grid">' + core.FOODS.map(f => foodCard(f)).join('') + '</div>';
@@ -266,7 +314,7 @@ window.PDM = window.PDM || {};
       const adFurn = core.FURNITURE.filter(f => f.ad && !f.fishCost);
       const adOutfits = core.OUTFITS.filter(o => o.ad);
       const next = core.nextLockedComic();
-      html = '<div class="shop-grid">' +
+      html = themeShelf() + '<div class="shop-grid">' +
         fishFurn.map(f => furnitureCard(f, true)).join('') +
         adFurn.map(f => furnitureCard(f, true)).join('') +
         adOutfits.map(o => outfitCard(o, true)).join('') +
@@ -315,19 +363,21 @@ window.PDM = window.PDM || {};
       const dex = core.fishDex();
       const caughtSpecies = dex.filter(f => f.caught > 0).length;
       const totalCaught = dex.reduce((a, f) => a + f.caught, 0);
-      html = '<div class="panel"><div class="panel-head"><h3>鱼塘图鉴</h3><span class="tiny">已收集 ' + caughtSpecies + '/' + dex.length + ' 种 · 累计钓到 ' + totalCaught + ' 条</span></div>' +
+      html = '<div class="panel"><div class="panel-head"><h3>鱼塘图鉴</h3><span class="tiny">已收集 ' + caughtSpecies + '/' + dex.length + ' 种 · 累计钓到 ' + totalCaught + ' 条 · 鱼缸 ' + (st.tank ? st.tank.length : 0) + '/5</span></div>' +
         '<div class="book-grid">' + dex.map(f => {
           const got = f.caught > 0;
           const rarity = core.RARITY[f.rarity];
+          const inTank = (st.tank || []).indexOf(f.id) >= 0;
           return '<div class="book-card ' + (got ? '' : 'locked') + '">' +
             '<div class="book-thumb fish-thumb" style="background:linear-gradient(160deg,#FFFDF8,' + f.color + '2E)">' +
             '<svg class="fish-dex-icon" style="color:' + f.color + '"><use href="#i-fish"/></svg></div>' +
             '<div class="book-name">' + f.name + '</div>' +
             '<div class="book-meta">' + (rarity ? rarity.name : '') + ' · ' + (got ? '已钓到 ' + f.caught + ' 条' : '还没钓到') + '</div>' +
+            (got ? '<button class="dex-tank-btn ' + (inTank ? 'on' : '') + '" data-action="tankFish" data-id="' + f.id + '">' + (inTank ? '已放进鱼缸' : '放进鱼缸') + '</button>' : '') +
             (got ? '' : '<div class="lock-veil">' + icon('lock') + '<span>去鱼塘</span></div>') +
             '</div>';
         }).join('') + '</div></div>' +
-        '<div class="panel" style="margin-top:12px"><div class="panel-head"><h3>鱼塘笔记</h3></div><div class="tiny" style="line-height:1.8">连续 8 次非稀有会触发保底，40 杆不见传说会大幅提高传说概率；每轮第一次空杆不耗次数。图鉴记录累计钓到的鱼，兑换后也不会消失。</div></div>';
+        '<div class="panel" style="margin-top:12px"><div class="panel-head"><h3>鱼塘笔记</h3></div><div class="tiny" style="line-height:1.8">连续 8 次非稀有会触发保底，40 杆不见传说会大幅提高传说概率；每轮第一次空杆不耗次数。点「放进鱼缸」最多展示 5 条，角落的小鱼缸会一直养着它们。</div></div>';
     } else if (uiState.bookTab === 'activity') {
       const acts = core.activityInfo();
       const actDone = acts.filter(a => a.done).length;
