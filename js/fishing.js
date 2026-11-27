@@ -70,6 +70,8 @@ window.PDM = window.PDM || {};
     $('fishWrap').setAttribute('aria-hidden', 'true');
     window.removeEventListener('resize', layout);
     syncEntry();
+    // 回到小屋时同步首页（今日目标里的钓鱼进度等）
+    if (PDM.app && PDM.app.refreshAll) PDM.app.refreshAll();
   }
 
   function leave() {

@@ -93,6 +93,8 @@ window.PDM = window.PDM || {};
     if (name === 'shop') renderShop();
     if (name === 'book') renderBook();
     if (name === 'log') PDM.ui.renderLog();
+    // 回到小屋时立即刷新首页状态（今日目标进度、鱼干、宠物栏等）
+    if (name === 'home' && PDM.app && PDM.app.refreshAll) PDM.app.refreshAll();
   }
 
   function openSheet(title, html) {

@@ -845,32 +845,32 @@ window.PDM = window.PDM || {};
     [-.07, .07].forEach(x => {
       const e = box(.05, .012, .01, '#FFF3DC'); e.position.set(x, .33, .398); g.add(e);
     });
-    // tiny fish sign
-    const post = box(.02, .14, .02, '#8C6239'); post.position.set(.3, .78, .18); g.add(post);
-    const fish = sph(.06, '#E8836B', 1.4, .6, .4); fish.position.set(.3, .86, .18); g.add(fish);
+    // tiny fish sign (放在屋顶前檐，避开二档阁楼正面)
+    const post = box(.02, .14, .02, '#8C6239'); post.position.set(.3, .78, .3); g.add(post);
+    const fish = sph(.06, '#E8836B', 1.4, .6, .4); fish.position.set(.3, .86, .3); g.add(fish);
     const tail = new THREE.Mesh(new THREE.ConeGeometry(.045, .07, 3), mat('#E8836B'));
-    tail.position.set(.37, .86, .18); tail.rotation.z = -Math.PI / 2; g.add(tail);
+    tail.position.set(.37, .86, .3); tail.rotation.z = -Math.PI / 2; g.add(tail);
 
     if (tier >= 1) {
-      // 原木双层：加一层小阁楼
-      const loft = box(.58, .34, .52, card); loft.position.set(0, .98, 0); g.add(loft);
+      // 原木双层：加一层小阁楼（下沿压住主屋顶，避免悬空）
+      const loft = box(.58, .34, .52, card); loft.position.set(0, .92, 0); g.add(loft);
       const loftHole = new THREE.Mesh(new THREE.CircleGeometry(.12, 22), new THREE.MeshBasicMaterial({ color: '#4A3322' }));
-      loftHole.position.set(0, .98, .266); g.add(loftHole);
+      loftHole.position.set(0, .92, .266); g.add(loftHole);
       const loftRim = new THREE.Mesh(new THREE.TorusGeometry(.12, .018, 8, 22), mat(cardDark));
-      loftRim.position.set(0, .98, .268); g.add(loftRim);
-      const r3 = box(.38, .05, .6, cardLight); r3.position.set(-.17, 1.18, 0); r3.rotation.z = .34; g.add(r3);
-      const r4 = box(.38, .05, .6, cardDark); r4.position.set(.17, 1.18, 0); r4.rotation.z = -.34; g.add(r4);
+      loftRim.position.set(0, .92, .268); g.add(loftRim);
+      const r3 = box(.38, .05, .6, cardLight); r3.position.set(-.17, 1.12, 0); r3.rotation.z = .34; g.add(r3);
+      const r4 = box(.38, .05, .6, cardDark); r4.position.set(.17, 1.12, 0); r4.rotation.z = -.34; g.add(r4);
     }
     if (tier >= 2) {
-      // 阳光花房：侧面玻璃房 + 猫草
+      // 阳光花房：侧面玻璃房 + 猫草（贴住主体，且不遮挡侧面猫洞）
       const glassMat = new THREE.MeshBasicMaterial({ color: '#CFE8E2', transparent: true, opacity: .34 });
-      const glass = new THREE.Mesh(new THREE.BoxGeometry(.34, .3, .36), glassMat);
-      glass.position.set(.62, .15, .06); g.add(glass);
-      const frame = box(.36, .03, .38, '#B99066'); frame.position.set(.62, .3, .06); g.add(frame);
+      const glass = new THREE.Mesh(new THREE.BoxGeometry(.34, .24, .36), glassMat);
+      glass.position.set(.6, .12, .06); g.add(glass);
+      const frame = box(.36, .03, .38, '#B99066'); frame.position.set(.6, .24, .06); g.add(frame);
       const pot = new THREE.Mesh(new THREE.CylinderGeometry(.06, .05, .09, 12), mat('#C98D63'));
-      pot.position.set(.62, .045, .06); g.add(pot);
+      pot.position.set(.6, .045, .06); g.add(pot);
       [[-.05, .02], [.04, -.03], [0, .06]].forEach(([dx, dz]) => {
-        const leaf = sph(.045, '#7FA27A'); leaf.position.set(.62 + dx, .11, .06 + dz); g.add(leaf);
+        const leaf = sph(.045, '#7FA27A'); leaf.position.set(.6 + dx, .1, .06 + dz); g.add(leaf);
       });
     }
 

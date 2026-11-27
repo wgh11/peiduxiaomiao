@@ -1646,6 +1646,7 @@ window.PDM = window.PDM || {};
   PDM.app = {
     boot: boot,
     startSession: startSession,
+    refreshAll: refreshAll,
     state: app
   };
 
