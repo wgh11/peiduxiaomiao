@@ -341,9 +341,6 @@ window.PDM = window.PDM || {};
       html = '<div class="panel"><div class="panel-head"><h3>互动手册</h3><span class="hint">' + actDone + ' / ' + acts.length + '</span></div>' +
         '<div class="act-list">' + actRows + '</div>' +
         '<div class="tiny" style="margin-top:10px;line-height:1.7">每项首次完成 +2 小鱼干；全部 8 项完成再 +10。互动手册只在第一次完成时计数。</div></div>' +
-        '<div class="activity-grid" style="margin-top:12px">' + core.ACTIVITIES.map(a =>
-        '<article class="activity-card"><div class="activity-icon">' + a.icon + '</div><div><h3>' + a.name + '</h3><p>' + a.desc + '</p><span>可在小屋中体验</span></div></article>'
-      ).join('') + '</div>' +
         '<div class="panel" style="margin-top:12px"><div class="panel-head"><h3>陪伴记录</h3></div><div class="tiny" style="line-height:1.8">小喵的日常不靠抽卡解锁。摸摸、投喂、陪读和布置，都会让房间慢慢变成你们共同生活的地方。</div></div>';
     } else {
       html = '<div class="comic-list">' + core.COMICS.map(c => {

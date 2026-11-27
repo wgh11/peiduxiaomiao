@@ -446,6 +446,26 @@ window.PDM = window.PDM || {};
     ctx.fillStyle = '#C0AC99';
     ctx.font = '400 24px "PingFang SC", sans-serif';
     ctx.fillText('陪读小喵 · 原创学习桌宠 · ' + core.dateKey(), W / 2, py + 348);
+
+    // 7 / 14 / 30 天连续打卡专属边框
+    const streak = summary.streak || 0;
+    if (streak >= 7) {
+      const tier = streak >= 30
+        ? { main: '#D79A3E', soft: '#F6DCA4' }
+        : streak >= 14 ? { main: '#8E6FA8', soft: '#D9C7E8' }
+        : { main: '#5E8FA8', soft: '#CFE0EA' };
+      ctx.lineWidth = 16;
+      ctx.strokeStyle = tier.main;
+      rr(ctx, 26, 26, W - 52, H - 52, 46);
+      ctx.stroke();
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = tier.soft;
+      rr(ctx, 54, 54, W - 108, H - 108, 32);
+      ctx.stroke();
+      [[70, 70], [W - 70, 70], [70, H - 70], [W - 70, H - 70]].forEach(([x, y]) => {
+        star(ctx, x, y, 12, tier.main, 1);
+      });
+    }
     ctx.textAlign = 'left';
   }
 

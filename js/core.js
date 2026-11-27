@@ -263,7 +263,7 @@ window.PDM = window.PDM || {};
       adDoubleDate: '',
       shareDay: '',
       goals: { day: '', dayFocus: 0, dayQuiz: 0, dayFish: 0, dayClaimed: false, weekStart: '', weekClaimed: false },
-      catHouse: { tier: 0 },
+      catHouse: { tier: 0, rot: 0.34 },
       activities: [],
       activityBonusDone: false,
       growth: 0,
@@ -320,19 +320,29 @@ window.PDM = window.PDM || {};
         state.adDoubleDate = typeof parsed.adDoubleDate === 'string' ? parsed.adDoubleDate : '';
         state.shareDay = typeof parsed.shareDay === 'string' ? parsed.shareDay : '';
         state.goals = Object.assign({ day: '', dayFocus: 0, dayQuiz: 0, dayFish: 0, dayClaimed: false, weekStart: '', weekClaimed: false }, (parsed.goals && typeof parsed.goals === 'object') ? parsed.goals : {});
-        state.catHouse = Object.assign({ tier: 0 }, (parsed.catHouse && typeof parsed.catHouse === 'object') ? parsed.catHouse : {});
+        state.catHouse = Object.assign({ tier: 0, rot: 0.34 }, (parsed.catHouse && typeof parsed.catHouse === 'object') ? parsed.catHouse : {});
         state.catHouse.tier = Math.max(0, Math.min(2, Number(state.catHouse.tier) || 0));
+        state.catHouse.rot = Number.isFinite(Number(state.catHouse.rot)) ? Number(state.catHouse.rot) : 0.34;
         state.activities = Array.isArray(parsed.activities) ? parsed.activities.filter(x => ACTIVITY_TASKS.some(t => t.id === x)) : [];
         state.activityBonusDone = !!parsed.activityBonusDone;
         ensureGoals();
         const today0 = dateKey();
         if (state.daily.date !== today0) state.daily = { date: today0, interact: 0 };
         if (state.moodDate !== today0) {
-          // 昨天喝过牛奶，今天结算时不掉心情（只保护紧邻的一天）
-          const milkProtected = state.buffs.milkDate === state.moodDate && addDays(state.moodDate, 1) === today0;
-          if (!milkProtected) state.mood = clamp100(state.mood - 10);
-          if (state.checkins.indexOf(addDays(today0, -1)) < 0 && state.checkins.indexOf(today0) < 0) {
-            state.intimacy = clamp100(state.intimacy - 2);
+          const yesterday = addDays(today0, -1);
+          const checkedYesterday = state.checkins.indexOf(yesterday) >= 0;
+          const openedYesterday = state.moodDate === yesterday;
+          const gap = Math.max(0, daysBetween(state.moodDate, today0));
+          // 昨天打过卡不扣；昨天来过但断签扣 1 天；多日没来按缺席天数累计
+          let decayDays = 0;
+          if (!checkedYesterday) {
+            decayDays = openedYesterday ? 1 : Math.max(1, gap);
+          }
+          // 昨天喝过牛奶只抵消一天的衰减
+          if (state.buffs.milkDate === yesterday) decayDays = Math.max(0, decayDays - 1);
+          if (decayDays > 0) {
+            state.mood = Math.max(20, clamp100(state.mood - 10 * decayDays));
+            state.intimacy = Math.max(0, clamp100((state.intimacy || 0) - 2 * decayDays));
           }
           state.moodDate = today0;
         }
@@ -504,6 +514,8 @@ window.PDM = window.PDM || {};
   function buyItem(id) {
     const item = itemById(id);
     if (!item || isOwned(id)) return { ok: false, reason: 'owned' };
+    // 鱼塘限定家具只能靠钓鱼素材打造，不能直接用小鱼干购买
+    if (item.fishCost) return { ok: false, reason: 'fishonly' };
     if (state.fish < item.price) return { ok: false, reason: 'fish' };
     state.fish -= item.price;
     state.owned.push(id);

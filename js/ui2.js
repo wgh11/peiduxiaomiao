@@ -104,9 +104,11 @@ window.PDM = window.PDM || {};
   /* ---------------- 设置 / 埋点 ---------------- */
   function openSettings() {
     const st = core.state();
+    const debug = !!(PDM.app && PDM.app.state && PDM.app.state.debug);
+    const speedOn = !!(PDM.app && PDM.app.state && PDM.app.state.speed > 1);
     PDM.ui.openSheet('设置', '' +
-      '<div class="set-row"><div><div class="lab">演示加速 ×60</div><div class="desc">默认关闭。开启后 25 分钟约 25 秒走完，方便一次看完整个循环</div></div>' +
-      '<div class="switch ' + (st.settings.speed > 1 ? 'on' : '') + '" data-action="toggleSpeed"></div></div>' +
+      (debug ? '<div class="set-row"><div><div class="lab">演示加速 ×60</div><div class="desc">仅调试可用。开启后 25 分钟约 25 秒走完，不会写入正式存档</div></div>' +
+      '<div class="switch ' + (speedOn ? 'on' : '') + '" data-action="toggleSpeed"></div></div>' : '') +
       '<div class="set-row"><div><div class="lab">休息提醒</div><div class="desc">每连续专注 25 分钟，提醒你起来活动一下</div></div>' +
       '<div class="switch ' + (st.settings.breakRemind !== false ? 'on' : '') + '" data-action="toggleBreak"></div></div>' +
       '<div class="set-row"><div><div class="lab">导出存档</div><div class="desc">把小鱼干、家具、记录导出成 JSON 备份</div></div>' +

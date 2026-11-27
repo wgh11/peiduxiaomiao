@@ -249,11 +249,11 @@ const DOMAINS = [
   // 兼容旧版 "lessonId-qIdx" 字符串，同时保留题目快照，避免每日论文换日后错题失效
   Q.wrong = (Array.isArray(Q.wrong) ? Q.wrong : []).map(item => {
     if (item && typeof item === 'object') {
-      return Object.assign({ stage: 0, due: core.dateKey() }, item);
+      return Object.assign({ stage: 0, due: core.addDays(core.dateKey(), 1) }, item);
     }
     const key = String(item || '');
     const cut = key.lastIndexOf('-');
-    return { lessonId: cut > 0 ? key.slice(0, cut) : key, qIdx: cut > 0 ? Number(key.slice(cut + 1)) : 0, stage: 0, due: core.dateKey() };
+    return { lessonId: cut > 0 ? key.slice(0, cut) : key, qIdx: cut > 0 ? Number(key.slice(cut + 1)) : 0, stage: 0, due: core.addDays(core.dateKey(), 1) };
   }).filter(item => item && item.lessonId && Number.isFinite(Number(item.qIdx)));
   Q.reviewDay = Object.assign({ date: '', counted: 0 }, (Q.reviewDay && typeof Q.reviewDay === 'object') ? Q.reviewDay : {});
   function saveQ(){ try { localStorage.setItem(QKEY, JSON.stringify(Q)); } catch (e) {} }
@@ -262,12 +262,12 @@ const DOMAINS = [
 
   const domainDone = did => domainOf(did).lessons.filter(l => Q.done[l.id] !== undefined).length;
 
-  function award(n){
+  function award(n, reason){
     const t = core.dateKey();
     if (Q.coinDay.date !== t) Q.coinDay = { date:t, earned:0 };
     const room = Math.max(0, CAP - Q.coinDay.earned);
     const give = Math.min(n, room);
-    if (give > 0) { core.addBonusFish(give, 'quiz'); Q.coinDay.earned += give; }
+    if (give > 0) { core.addBonusFish(give, reason || 'quiz'); Q.coinDay.earned += give; }
     return give;
   }
 
@@ -289,9 +289,10 @@ const DOMAINS = [
     const today = core.dateKey();
     if (Q.reviewDay.date !== today) Q.reviewDay = { date: today, counted: 0 };
     if (Q.reviewDay.counted >= 6) return 0;
-    Q.reviewDay.counted += 1;
-    core.addBonusFish(2, 'review');
-    return 2;
+    // 复习奖励与刷题共享每日上限（CAP）
+    const give = award(2, 'review');
+    if (give > 0) Q.reviewDay.counted += 1;
+    return give;
   }
 
   function reviewHTML() {
@@ -316,7 +317,7 @@ const DOMAINS = [
     const exp = answered
       ? '<div class="qz-exp"><b>' + (R.picked === data.a ? '答对了 ✓' + (R.lastGain ? ' +' + R.lastGain + ' 🐟' : '') : '正确答案：' + 'ABCD'[data.a]) + '</b>' + data.exp + '</div>'
       : '';
-    return '<div class="qz-met">错题复习 ' + (R.idx + 1) + ' / ' + R.queue.length + ' · 答对 +2 🐟（每天最多 6 题）</div>' +
+    return '<div class="qz-met">错题复习 ' + (R.idx + 1) + ' / ' + R.queue.length + ' · 答对 +2 🐟（每天最多 6 题，计入刷题日上限）</div>' +
       '<div class="qz-card"><div class="qz-k">' + (item.domainName || '错题') + ' · ' + (item.title || '') + '</div>' +
       '<h3>' + data.q + '</h3>' + opts + exp + '</div>' +
       '<div class="qz-foot">' +
@@ -500,7 +501,7 @@ const DOMAINS = [
         const q = L.quiz[st.q];
         const exists = Q.wrong.some(item => item.lessonId === L.id && Number(item.qIdx) === st.q);
         if (!exists) {
-          Q.wrong.push({ lessonId: L.id, qIdx: st.q, title: L.title, domainName: L.domainName, q: q.q, opts: q.opts, a: q.a, exp: q.exp, stage: 0, due: core.dateKey() });
+          Q.wrong.push({ lessonId: L.id, qIdx: st.q, title: L.title, domainName: L.domainName, q: q.q, opts: q.opts, a: q.a, exp: q.exp, stage: 0, due: core.addDays(core.dateKey(), 1) });
           saveQ();
         }
       } else {

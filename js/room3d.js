@@ -1373,8 +1373,15 @@ window.PDM = window.PDM || {};
     try {
       const a = parseFloat(localStorage.getItem('pdm.camAz'));
       if (!isNaN(a)) camAz = camAzGoal = a;
-      const h = parseFloat(localStorage.getItem('pdm.catHouseRot'));
-      if (!isNaN(h)) houseRot = h;
+      // 猫屋朝向优先读主存档，旧版本再回退到独立 localStorage
+      const st = PDM.core && PDM.core.state ? PDM.core.state() : null;
+      const savedRot = st && st.catHouse ? Number(st.catHouse.rot) : NaN;
+      if (Number.isFinite(savedRot)) {
+        houseRot = savedRot;
+      } else {
+        const h = parseFloat(localStorage.getItem('pdm.catHouseRot'));
+        if (!isNaN(h)) houseRot = h;
+      }
     } catch (err) {}
     camera.position.set(
       baseTarget.x + Math.sin(camAz) * CAM_R,
@@ -1482,8 +1489,21 @@ window.PDM = window.PDM || {};
   function rotateHouse() {
     houseRot += Math.PI / 2;
     if (house) house.rotation.y = houseRot;
+    // 朝向写入主存档，换机/导存档不丢
+    try {
+      if (PDM.core && PDM.core.state) {
+        const st = PDM.core.state();
+        if (st.catHouse) { st.catHouse.rot = houseRot; PDM.core.save(); }
+      }
+    } catch (e) {}
     try { localStorage.setItem('pdm.catHouseRot', String(houseRot)); } catch (e) {}
     return houseRot;
+  }
+
+  // 小猫屋门口的位置（随猫屋朝向变化）
+  function catHouseSpot() {
+    const r = 0.62;
+    return { x: -1.68 + Math.sin(houseRot) * r, z: -1.02 + Math.cos(houseRot) * r };
   }
 
   function rotateRoom(step) {
@@ -1978,6 +1998,7 @@ window.PDM = window.PDM || {};
     rotateRoom: rotateRoom,
     cameraInfo: () => ({ az: camAzGoal, zoom: camZoomGoal, focused: houseFocus }),
     setCatHouseTier: setCatHouseTier,
+    catHouseSpot: catHouseSpot,
     setPointer: setPointer,
     items: () => items
   };

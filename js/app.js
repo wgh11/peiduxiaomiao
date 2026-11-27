@@ -29,6 +29,7 @@ window.PDM = window.PDM || {};
     reward: null,
     rewarded: false,
     tipTimer: 0,
+    settling: false,
     decorMode: false,
     drag: null,
     decorUndo: [],
@@ -190,15 +191,22 @@ window.PDM = window.PDM || {};
   function maybeFurniture(now) {
     if (!app.use3d || !PDM.room3d || !PDM.room3d.itemPos) return;
     const cands = [];
+    const ch = core.state().catHouse || {};
+    if (PDM.room3d.catHouseSpot) {
+      cands.push({
+        house: true, dur: 12000,
+        tip: ch.tier >= 2 ? '小猫钻进阳光花房晒太阳' : ch.tier >= 1 ? '小猫溜回原木双层的小阁楼' : '小猫钻回纸箱猫屋趴下'
+      });
+    }
     if (core.isPlaced('fl_bed')) cands.push({ id: 'fl_bed', dur: 15000, tip: '小猫窝进云朵猫窝，团成一团' });
     if (core.isPlaced('fl_cushion')) cands.push({ id: 'fl_cushion', dur: 9000, tip: '小猫趴在鱼鱼坐垫上打盹' });
     if (!cands.length) { app.behaviorAt = now + 14000; return; }
     if (Math.random() < 0.35) { app.behaviorAt = now + 12000; return; }
     const c = cands[Math.floor(Math.random() * cands.length)];
-    const p = PDM.room3d.itemPos(c.id);
+    const p = c.house ? PDM.room3d.catHouseSpot() : PDM.room3d.itemPos(c.id);
     if (!p) { app.behaviorAt = now + 14000; return; }
     app.behaviorAt = now + c.dur + 10000;
-    PDM.room3d.moveCatTo(p.x, p.z + .12, () => {
+    PDM.room3d.moveCatTo(p.x, c.house ? p.z : p.z + .12, () => {
       app.napUntil = performance.now() + c.dur;
       setCatState('nap');
       app.cat.label = c.tip;
@@ -206,6 +214,27 @@ window.PDM = window.PDM || {};
       if (txt) txt.textContent = c.tip;
       showStageTip(c.tip, 2400);
     });
+  }
+
+  // 专注结束后，小猫会自己走回猫屋
+  function sendCatHomeLater(delay) {
+    if (!app.use3d || !PDM.room3d || !PDM.room3d.catHouseSpot) return;
+    clearTimeout(app.catHomeTimer);
+    app.catHomeTimer = setTimeout(() => {
+      if (app.session) return;
+      const ch = core.state().catHouse || {};
+      const p = PDM.room3d.catHouseSpot();
+      const tip = ch.tier >= 2 ? '小猫钻进阳光花房晒太阳' : ch.tier >= 1 ? '小猫溜回原木双层的小阁楼' : '小猫钻回纸箱猫屋趴下';
+      app.behaviorAt = performance.now() + 20000;
+      PDM.room3d.moveCatTo(p.x, p.z, () => {
+        app.napUntil = performance.now() + 12000;
+        setCatState('nap');
+        app.cat.label = tip;
+        const txt = $('catStateText');
+        if (txt) txt.textContent = tip;
+        showStageTip(tip, 2400);
+      });
+    }, delay || 7400);
   }
 
   /* ---------------- timer ---------------- */
@@ -225,7 +254,7 @@ window.PDM = window.PDM || {};
     const hint = $('modeHint');
     if (hint) {
       hint.textContent = mode === 'strict'
-        ? '严格专注：离开界面继续计时，并计入奖励'
+        ? '严格专注：离开界面继续计时，但只按在场时间结算'
         : '自由学习：离开界面时计时自动暂停';
     }
     const box = $('studyModes');
@@ -239,7 +268,7 @@ window.PDM = window.PDM || {};
     st.settings.modeChosen = true;
     core.save();
     updateModeUI();
-    ui.toast(mode === 'strict' ? '严格专注：离开界面继续计时，并计入奖励' : '自由学习：离开界面自动暂停', 2200);
+    ui.toast(mode === 'strict' ? '严格专注：离开继续计时，但只按在场时间结算' : '自由学习：离开界面自动暂停', 2200);
   }
 
   function presenceElapsedMs(s, now) {
@@ -397,12 +426,12 @@ window.PDM = window.PDM || {};
     const tagTxt = s.tag ? ' · ' + s.tag : '';
     if (s.awayMs > 3000) {
       subEl.textContent = s.mode === 'strict'
-        ? '严格专注 · 离开界面也继续计时'
+        ? '严格专注 · 计时继续，离开不计奖励'
         : '小猫打了会儿盹 · 离开时间已自动暂停';
     } else {
       const est = Math.round(s.durationSec / 60 * 2 * 1.25);
       subEl.textContent = '小猫在认真陪读 · 完成可得约 ' + est + ' 条小鱼干' +
-        tagTxt + (s.mode === 'strict' ? ' · 离开继续计时' : '');
+        tagTxt + (s.mode === 'strict' ? ' · 离开仍计时' : '');
     }
     bar.style.width = pct + '%';
     document.title = core.fmtClock(remain) + ' · 陪读小喵';
@@ -453,17 +482,16 @@ window.PDM = window.PDM || {};
     showStageTip('小猫坐好了，开始陪读吧', 2600);
     updateTimerUI();
     ui.toast(app.session.mode === 'strict'
-      ? '严格专注开始 · 离开界面也继续计时'
+      ? '严格专注开始 · 离开也计时，但只按在场时间结算'
       : '自由学习开始 · 离开界面会自动暂停', 2400);
   }
 
   function finishSession(completed) {
     if (!app.session) return;
     const s = app.session;
-    // 严格专注离开继续计时并按全程发奖；自由学习离开暂停，只按在场时间发奖
-    const fullSec = activeElapsedMs(s) / 1000 * app.speed;
+    // 严格专注继续计时，但发奖只按在场时长；自由学习离开暂停
     const presenceSec = presenceElapsedMs(s) / 1000 * app.speed;
-    const calcSec = s.mode === 'strict' ? fullSec : presenceSec;
+    const calcSec = presenceSec;
     let minutes = completed
       ? Math.round(Math.min(calcSec, s.durationSec) / 60)
       : Math.floor(calcSec / 60 + 0.0001);
@@ -494,12 +522,19 @@ window.PDM = window.PDM || {};
     // 这一轮专注结束，可以休息一下去鱼塘
     core.startBreak();
 
-    const summary = core.commitSession({
-      minutes: minutes,
-      awaySec: awaySec,
-      tag: s.tag || '',
-      completed: completed
-    });
+    // 结算期间先压住成就 toast，统一放进结算卡
+    let summary;
+    app.settling = true;
+    try {
+      summary = core.commitSession({
+        minutes: minutes,
+        awaySec: awaySec,
+        tag: s.tag || '',
+        completed: completed
+      });
+    } finally {
+      app.settling = false;
+    }
     summary.completed = completed;
     summary.mode = s.mode;
     summary.tag = s.tag || '';
@@ -514,10 +549,7 @@ window.PDM = window.PDM || {};
     updateTimerUI();
     refreshAll();
     showReward(summary);
-
-    (summary.newComics || []).forEach((c, i) => {
-      setTimeout(() => ui.toast('解锁番外《' + c.title + '》，去图鉴看看', 2600), 2200 + i * 900);
-    });
+    sendCatHomeLater(7400);
   }
 
   function showReward(sum) {
@@ -536,7 +568,7 @@ window.PDM = window.PDM || {};
     if (sum.s14 > 0) lines.push('<div class="reward-line bonus"><span>连续打卡 14 天</span><b>+' + sum.s14 + '</b></div>');
     if (sum.s30 > 0) lines.push('<div class="reward-line bonus"><span>连续打卡 30 天</span><b>+' + sum.s30 + '</b></div>');
     if (sum.awaySec > 30) {
-      lines.push('<div class="reward-line dim"><span>离开 ' + Math.round(sum.awaySec / 60) + ' 分钟</span><b>' + (sum.mode === 'strict' ? '已计入' : '已暂停') + '</b></div>');
+      lines.push('<div class="reward-line dim"><span>离开 ' + Math.round(sum.awaySec / 60) + ' 分钟</span><b>' + (sum.mode === 'strict' ? '不计入' : '已暂停') + '</b></div>');
     }
     if (sum.levelUp) {
       lines.push('<div class="reward-line bonus"><span>小屋升级</span><b>Lv.' + sum.levelAfter.level + ' ' + sum.levelAfter.name + '</b></div>');
@@ -544,9 +576,15 @@ window.PDM = window.PDM || {};
         lines.push('<div class="reward-line bonus"><span>Lv.' + u.level + ' 新解锁</span><b>' + u.unlock + '</b></div>');
       });
     }
+    (sum.achievements || []).forEach(a => {
+      lines.push('<div class="reward-line bonus"><span>成就 · ' + a.name + '</span><b>' + (a.reward > 0 ? '+' + a.reward + ' 鱼干' : '达成') + '</b></div>');
+    });
+    (sum.newComics || []).forEach(c => {
+      lines.push('<div class="reward-line bonus"><span>解锁番外《' + c.title + '》</span><b>去图鉴</b></div>');
+    });
     const note = sum.awaySec > 30
       ? (sum.mode === 'strict'
-        ? '严格专注：离开界面也继续计时，这段时间照常计入奖励。'
+        ? '严格专注：离开界面计时继续，但离开的时间不计奖励。'
         : '自由学习：离开界面时计时自动暂停，离开的时间不计奖励。')
       : (canDouble ? '看一次广告，本次奖励额外 +50%，每天一次。' : '今天的小鱼干收好啦，明天再来陪小喵。');
 
@@ -786,10 +824,7 @@ window.PDM = window.PDM || {};
       return;
     }
     app.speed = app.speed > 1 ? 1 : 60;
-    const st = core.state();
-    st.settings.speed = app.speed;
-    st.settings.speedSet = true;
-    core.save();
+    // 演示倍速只用于当前调试会话，不写进正式存档
     updateSpeedChip();
     ui.toast(app.speed > 1 ? '演示加速已开启：25 分钟约 25 秒走完' : '已切回真实计时');
     updateTimerUI();
@@ -801,7 +836,9 @@ window.PDM = window.PDM || {};
       case 'buyItem': {
         const r = core.buyItem(el.dataset.id);
         if (!r.ok) {
-          ui.toast(r.reason === 'fish' ? '小鱼干还不够，再专注一会儿吧' : '这个已经在你的小屋里了');
+          ui.toast(r.reason === 'fish' ? '小鱼干还不够，再专注一会儿吧'
+            : r.reason === 'fishonly' ? '这件是鱼塘限定，要去鱼塘用鱼获打造'
+            : '这个已经在你的小屋里了');
           return;
         }
         ui.toast('买下「' + r.item.name + '」' + (r.autoEquipped ? '，已经摆上去啦' : '，去布置小屋摆上吧'), 2400);
@@ -1595,11 +1632,17 @@ window.PDM = window.PDM || {};
   function boot() {
     core.load();
     app.debug = /(?:\?|&)debug=1(?:&|$)/.test(location.search);
-    app.speed = core.state().settings.speed || 1;
-    if (app.speed <= 1) app.speed = 1;
+    const savedSpeed = Number(core.state().settings.speed) || 1;
+    app.speed = app.debug ? (savedSpeed > 1 ? savedSpeed : 1) : 1;
+    // 非调试启动一律真实计时，并清掉旧存档里被演示倍速污染的字段
+    if (!app.debug && core.state().settings.speed !== 1) {
+      core.state().settings.speed = 1;
+      core.save();
+    }
     ui.init();
     core._onAchievements = list => {
       if (!list || !list.length) return;
+      if (app.settling) return; // 结算卡里统一展示
       const names = list.map(a => a.name).join('、');
       const fish = list.reduce((s, a) => s + (a.reward || 0), 0);
       ui.toast('成就达成 · ' + names + (fish > 0 ? ' · +' + fish + ' 鱼干' : ''), 3200);
