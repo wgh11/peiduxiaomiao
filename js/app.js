@@ -225,8 +225,8 @@ window.PDM = window.PDM || {};
     const hint = $('modeHint');
     if (hint) {
       hint.textContent = mode === 'strict'
-        ? '严格专注：离开仍计时，但离开时间不计奖励'
-        : '自由学习：切到其他页面时，计时自动暂停';
+        ? '严格专注：离开界面继续计时，并计入奖励'
+        : '自由学习：离开界面时计时自动暂停';
     }
     const box = $('studyModes');
     if (box) box.classList.toggle('locked', !!app.session);
@@ -236,9 +236,10 @@ window.PDM = window.PDM || {};
     if (app.session) return;
     const st = core.state();
     st.settings.studyMode = mode === 'strict' ? 'strict' : 'free';
+    st.settings.modeChosen = true;
     core.save();
     updateModeUI();
-    ui.toast(mode === 'strict' ? '严格专注：离开仍计时，但不计入奖励' : '自由学习：离开页面自动暂停', 2200);
+    ui.toast(mode === 'strict' ? '严格专注：离开界面继续计时，并计入奖励' : '自由学习：离开界面自动暂停', 2200);
   }
 
   function presenceElapsedMs(s, now) {
@@ -308,7 +309,7 @@ window.PDM = window.PDM || {};
     s.tag = s.tag || '';
     s.breakShown = s.breakShown || 0;
     if (!s.pausedAt) {
-      // 严格模式也记录离开时长，只用于结算时扣除奖励
+      // 严格模式也记录离开时长；自由模式用于暂停，严格模式仅用于展示
       s.awayMs = (s.awayMs || 0) + Math.max(0, Date.now() - savedAt);
       s.hiddenAt = document.hidden ? Date.now() : 0;
     } else {
@@ -396,12 +397,12 @@ window.PDM = window.PDM || {};
     const tagTxt = s.tag ? ' · ' + s.tag : '';
     if (s.awayMs > 3000) {
       subEl.textContent = s.mode === 'strict'
-        ? '严格专注 · 离开时间继续计时，但不计入奖励'
+        ? '严格专注 · 离开界面也继续计时'
         : '小猫打了会儿盹 · 离开时间已自动暂停';
     } else {
       const est = Math.round(s.durationSec / 60 * 2 * 1.25);
       subEl.textContent = '小猫在认真陪读 · 完成可得约 ' + est + ' 条小鱼干' +
-        tagTxt + (s.mode === 'strict' ? ' · 离开时间不计奖励' : '');
+        tagTxt + (s.mode === 'strict' ? ' · 离开继续计时' : '');
     }
     bar.style.width = pct + '%';
     document.title = core.fmtClock(remain) + ' · 陪读小喵';
@@ -452,18 +453,20 @@ window.PDM = window.PDM || {};
     showStageTip('小猫坐好了，开始陪读吧', 2600);
     updateTimerUI();
     ui.toast(app.session.mode === 'strict'
-      ? '严格专注开始 · 离开继续计时，但不计入奖励'
-      : '自由学习开始 · 切到其他页面会自动暂停', 2400);
+      ? '严格专注开始 · 离开界面也继续计时'
+      : '自由学习开始 · 离开界面会自动暂停', 2400);
   }
 
   function finishSession(completed) {
     if (!app.session) return;
     const s = app.session;
-    // 奖励只按在场时间计算：严格模式离开仍然计时，但离开时长不发鱼干
+    // 严格专注离开继续计时并按全程发奖；自由学习离开暂停，只按在场时间发奖
+    const fullSec = activeElapsedMs(s) / 1000 * app.speed;
     const presenceSec = presenceElapsedMs(s) / 1000 * app.speed;
+    const calcSec = s.mode === 'strict' ? fullSec : presenceSec;
     let minutes = completed
-      ? Math.round(Math.min(presenceSec, s.durationSec) / 60)
-      : Math.floor(presenceSec / 60 + 0.0001);
+      ? Math.round(Math.min(calcSec, s.durationSec) / 60)
+      : Math.floor(calcSec / 60 + 0.0001);
     minutes = Math.max(0, Math.min(minutes, s.durationSec / 60));
     const awaySec = Math.min(Math.round(s.durationSec), Math.round((s.awayMs + (s.hiddenAt && !s.pausedAt ? Math.max(0, Date.now() - s.hiddenAt) : 0)) / 1000 * app.speed));
 
@@ -533,7 +536,7 @@ window.PDM = window.PDM || {};
     if (sum.s14 > 0) lines.push('<div class="reward-line bonus"><span>连续打卡 14 天</span><b>+' + sum.s14 + '</b></div>');
     if (sum.s30 > 0) lines.push('<div class="reward-line bonus"><span>连续打卡 30 天</span><b>+' + sum.s30 + '</b></div>');
     if (sum.awaySec > 30) {
-      lines.push('<div class="reward-line dim"><span>离开 ' + Math.round(sum.awaySec / 60) + ' 分钟</span><b>不计奖励</b></div>');
+      lines.push('<div class="reward-line dim"><span>离开 ' + Math.round(sum.awaySec / 60) + ' 分钟</span><b>' + (sum.mode === 'strict' ? '已计入' : '已暂停') + '</b></div>');
     }
     if (sum.levelUp) {
       lines.push('<div class="reward-line bonus"><span>小屋升级</span><b>Lv.' + sum.levelAfter.level + ' ' + sum.levelAfter.name + '</b></div>');
@@ -542,7 +545,9 @@ window.PDM = window.PDM || {};
       });
     }
     const note = sum.awaySec > 30
-      ? '离开的时间只计时，没有计入奖励；小猫会一直等你回来。'
+      ? (sum.mode === 'strict'
+        ? '严格专注：离开界面也继续计时，这段时间照常计入奖励。'
+        : '自由学习：离开界面时计时自动暂停，离开的时间不计奖励。')
       : (canDouble ? '看一次广告，本次奖励额外 +50%，每天一次。' : '今天的小鱼干收好啦，明天再来陪小喵。');
 
     $('rewardBody').innerHTML =
@@ -1387,7 +1392,7 @@ window.PDM = window.PDM || {};
       ui.openModal(
         '<h2 style="font-size:17px;margin-bottom:6px">要提前结束吗？</h2>' +
         '<p class="tiny" style="line-height:1.7;margin-bottom:14px">已经专注的 ' + doneMin + ' 分钟会计入记录，' +
-        '只统计在场时间，离开的部分不计奖励。' +
+        (app.session.mode === 'strict' ? '严格模式离开也继续计时并计入。' : '自由模式离开会自动暂停。') +
         '小猫不会生气。</p>' +
         '<div class="reward-actions"><button class="btn primary" data-action="confirmStop">结束这次陪读</button>' +
         '<button class="btn ghost" data-action="closeModal">继续专注</button></div>');
@@ -1487,7 +1492,7 @@ window.PDM = window.PDM || {};
           app.awaySleepUntil = performance.now() + 2600;
           setCatState('sleep');
           ui.toast(app.session.mode === 'strict'
-            ? '严格模式：离开的 ' + Math.round(away / 1000) + ' 秒继续计时，但不计入奖励'
+            ? '严格模式：离开的 ' + Math.round(away / 1000) + ' 秒继续计时'
             : '小猫见你离开，先睡了一小会儿', 2400);
           updateTimerUI();
         }

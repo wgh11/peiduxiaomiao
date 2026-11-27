@@ -270,8 +270,9 @@ window.PDM = window.PDM || {};
   /* ---------- book ---------- */
   function renderBook() {
     const st = core.state();
-    const got = st.owned.length + st.ownedOutfits.length + st.comics.length;
-    $('bookProgress').textContent = Math.round(got / (core.FURNITURE.length + core.OUTFITS.length + core.COMICS.length) * 100) + '%';
+    const fishCaught = core.fishDex().filter(f => f.caught > 0).length;
+    const got = st.owned.length + st.ownedOutfits.length + st.comics.length + fishCaught;
+    $('bookProgress').textContent = Math.round(got / (core.FURNITURE.length + core.OUTFITS.length + core.COMICS.length + core.FISH.length) * 100) + '%';
     document.querySelectorAll('#bookTabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === uiState.bookTab));
     const body = $('bookBody');
     let html = '';
@@ -295,6 +296,23 @@ window.PDM = window.PDM || {};
           (owned ? '' : '<div class="lock-veil">' + icon('lock') + '<span>' + (o.ad ? '看广告解锁' : '商店购买') + '</span></div>') +
           '</div>';
       }).join('') + '</div>';
+    } else if (uiState.bookTab === 'fish') {
+      const dex = core.fishDex();
+      const caughtSpecies = dex.filter(f => f.caught > 0).length;
+      const totalCaught = dex.reduce((a, f) => a + f.caught, 0);
+      html = '<div class="panel"><div class="panel-head"><h3>鱼塘图鉴</h3><span class="tiny">已收集 ' + caughtSpecies + '/' + dex.length + ' 种 · 累计钓到 ' + totalCaught + ' 条</span></div>' +
+        '<div class="book-grid">' + dex.map(f => {
+          const got = f.caught > 0;
+          const rarity = core.RARITY[f.rarity];
+          return '<div class="book-card ' + (got ? '' : 'locked') + '">' +
+            '<div class="book-thumb fish-thumb" style="background:linear-gradient(160deg,#FFFDF8,' + f.color + '2E)">' +
+            '<svg class="fish-dex-icon" style="color:' + f.color + '"><use href="#i-fish"/></svg></div>' +
+            '<div class="book-name">' + f.name + '</div>' +
+            '<div class="book-meta">' + (rarity ? rarity.name : '') + ' · ' + (got ? '已钓到 ' + f.caught + ' 条' : '还没钓到') + '</div>' +
+            (got ? '' : '<div class="lock-veil">' + icon('lock') + '<span>去鱼塘</span></div>') +
+            '</div>';
+        }).join('') + '</div></div>' +
+        '<div class="panel" style="margin-top:12px"><div class="panel-head"><h3>鱼塘笔记</h3></div><div class="tiny" style="line-height:1.8">连续 8 次非稀有会触发保底，40 杆不见传说会大幅提高传说概率；每轮第一次空杆不耗次数。图鉴记录累计钓到的鱼，兑换后也不会消失。</div></div>';
     } else if (uiState.bookTab === 'activity') {
       html = '<div class="activity-grid">' + core.ACTIVITIES.map(a =>
         '<article class="activity-card"><div class="activity-icon">' + a.icon + '</div><div><h3>' + a.name + '</h3><p>' + a.desc + '</p><span>可在小屋中体验</span></div></article>'

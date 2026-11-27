@@ -224,6 +224,7 @@ window.PDM = window.PDM || {};
       gear: { rod: false, lamp: false },
       totalFish: 0,
       totalSnacks: 0,
+      dex: {},             // 鱼图鉴：{ 鱼种 id: 累计钓到次数 }
       bonusCasts: 0,       // 饼干等来源的额外杆数，下次休息生效
       missFree: true,      // 每轮第一次空杆不耗次数
       pity: { nonRare: 0, legendMiss: 0 }
@@ -258,7 +259,7 @@ window.PDM = window.PDM || {};
       bestStreak: 0,
       streakAwards: [],
       makeupUsed: '',
-      settings: { speed: 1, speedSet: false, welcomeDone: false, studyMode: 'free', breakRemind: true, lastTag: '阅读' },
+      settings: { speed: 1, speedSet: false, welcomeDone: false, studyMode: 'strict', modeChosen: false, breakRemind: true, lastTag: '阅读' },
       fishing: defaultFishing(),
       events: [],
       created: new Date().toISOString()
@@ -274,10 +275,11 @@ window.PDM = window.PDM || {};
       if (raw) {
         const parsed = JSON.parse(raw);
         state = Object.assign(defaultState(), parsed);
-        state.settings = Object.assign({ speed: 1, speedSet: false, welcomeDone: false, breakRemind: true, lastTag: '阅读' }, parsed.settings || {});
+        state.settings = Object.assign({ speed: 1, speedSet: false, welcomeDone: false, studyMode: 'strict', modeChosen: false, breakRemind: true, lastTag: '阅读' }, parsed.settings || {});
         // 旧存档默认值曾为 ×60，未手动切换过的统一回到真实计时
         if (!state.settings.speedSet) state.settings.speed = 1;
-        if (!state.settings.studyMode) state.settings.studyMode = 'free';
+        // 默认改为「严格专注」：离开界面继续计时；旧存档也迁移一次
+        if (!state.settings.modeChosen) state.settings.studyMode = 'strict';
         if (typeof state.snacks !== 'number' || state.snacks < 0) state.snacks = 0;
         state.foods = Object.assign({ fish: 0, milk: 0, cookie: 0 }, parsed.foods || {});
         // 旧存档里的免费零食没有口味，归到基础猫鱼条
@@ -330,6 +332,13 @@ window.PDM = window.PDM || {};
         state.fishing.totalFish = safeInt(state.fishing.totalFish, 0);
         state.fishing.totalSnacks = safeInt(state.fishing.totalSnacks, 0);
         state.fishing.bonusCasts = safeInt(state.fishing.bonusCasts, 0, 9);
+        state.fishing.dex = (f.dex && typeof f.dex === 'object') ? f.dex : {};
+        // 旧存档没有图鉴，用当前鱼篓补一次底
+        if (!Object.keys(state.fishing.dex).length) {
+          const bag = (f.bag && typeof f.bag === 'object') ? f.bag : {};
+          FISH.forEach(sp => { state.fishing.dex[sp.id] = safeInt(bag[sp.id], 0, 999999); });
+        }
+        FISH.forEach(sp => { state.fishing.dex[sp.id] = safeInt(state.fishing.dex[sp.id], 0, 999999); });
         state.fishing.breakReady = !!state.fishing.breakReady;
         state.fishing.granted = !!state.fishing.granted;
         state.fishing.missFree = f.missFree !== false;
@@ -872,6 +881,11 @@ window.PDM = window.PDM || {};
     };
   }
 
+  function fishDex() {
+    const dex = (state.fishing && state.fishing.dex) || {};
+    return FISH.map(sp => Object.assign({}, sp, { caught: dex[sp.id] || 0 }));
+  }
+
   // 暂停 / 提前结束时给一次休息资格；一轮专注只发一次
   function startBreak() {
     const f = state.fishing;
@@ -957,6 +971,7 @@ window.PDM = window.PDM || {};
     const forceRare = (f.pity.nonRare || 0) >= 8;
     const sp = rollFish(r, forceRare);
     f.bag[sp.id] = (f.bag[sp.id] || 0) + 1;
+    f.dex[sp.id] = (f.dex[sp.id] || 0) + 1;
     f.totalFish += 1;
     if (sp.rarity === 'legend') f.pity.legendMiss = 0;
     else f.pity.legendMiss = Math.min(40, (f.pity.legendMiss || 0) + 1);
@@ -1129,6 +1144,7 @@ window.PDM = window.PDM || {};
     RARITY: RARITY,
     fishById: fishById,
     fishDaily: fishDaily,
+    fishDex: fishDex,
     startBreak: startBreak,
     endBreak: endBreak,
     clearBreak: clearBreak,

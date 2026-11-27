@@ -5,8 +5,8 @@
   position: relative;
   flex: 1;
   min-height: 0;
-  margin: 8px 14px 0;
-  border-radius: 16px;
+  margin: 6px 12px 0;
+  border-radius: 14px;
   overflow: hidden;
   background: #EDE4D6;
   box-shadow: inset 0 0 0 1px rgba(205, 184, 156, .32), 0 8px 22px rgba(104, 74, 50, .09);
@@ -171,10 +171,10 @@
 
 #timerCard {
   flex: none;
-  margin: 8px 14px 0;
-  padding: 16px 18px 12px;
+  margin: 6px 12px 0;
+  padding: 10px 14px 9px;
   border: 1px solid var(--line);
-  border-radius: 14px 14px 0 0;
+  border-radius: 12px 12px 0 0;
   background: #FFFDF8;
 }
 .timer-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -212,23 +212,23 @@
 .speed-chip.fast { background: var(--honey-soft); color: #C08A45; }
 
 .timer-time {
-  font-size: 58px;
+  font-size: 46px;
   font-weight: 650;
   line-height: 1.02;
-  letter-spacing: -1.8px;
+  letter-spacing: -1.2px;
   font-variant-numeric: tabular-nums;
-  margin-top: 4px;
+  margin-top: 0;
   color: var(--ink);
 }
 .timer-time.dim { color: #D2C0B0; }
-.timer-sub { font-size: 11.5px; color: var(--ink-faint); margin-top: 4px; min-height: 16px; }
+.timer-sub { font-size: 10.5px; color: var(--ink-faint); margin-top: 2px; min-height: 14px; }
 
 .progress {
   height: 4px;
   border-radius: 100px;
   background: #E5E9E5;
   overflow: hidden;
-  margin: 12px 0 12px;
+  margin: 8px 0;
 }
 .progress-bar {
   height: 100%; width: 0;
@@ -237,9 +237,9 @@
   transition: width .25s linear;
 }
 
-.durations { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-bottom: 10px; }
+.durations { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 7px; }
 .durations button {
-  height: 36px;
+  height: 32px;
   border-radius: 8px;
   border: 1px solid var(--line);
   background: var(--card);
@@ -257,18 +257,26 @@
 }
 .durations.locked { opacity: .4; pointer-events: none; }
 
+.timer-options {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 3px;
+}
+.timer-options .study-modes { flex: 1.15; min-width: 0; }
+.timer-options .task-tag-row { flex: 1; min-width: 0; }
 .study-modes {
   display: flex; gap: 4px;
-  padding: 4px;
-  margin: 10px 0 5px;
+  padding: 3px;
+  margin: 0;
   border-radius: 8px;
   background: var(--card-soft);
 }
 .study-modes button {
   flex: 1;
-  height: 32px;
-  border-radius: 9px;
-  font-size: 12px;
+  height: 28px;
+  border-radius: 7px;
+  font-size: 11.5px;
   font-weight: 600;
   color: var(--ink-soft);
   transition: all .18s ease;
@@ -280,15 +288,15 @@
 }
 .study-modes.locked { opacity: .45; pointer-events: none; }
 .mode-hint {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--ink-faint);
-  margin-bottom: 9px;
-  min-height: 15px;
+  margin-bottom: 6px;
+  min-height: 13px;
 }
 
-.timer-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.timer-actions .btn { flex: 1; height: 50px; border-radius: 10px; font-size: 15px; letter-spacing: .2px; }
-#btnFishing { flex: 1 0 100%; height: 44px; font-size: 13px; }
+.timer-actions { display: flex; flex-wrap: wrap; gap: 7px; }
+.timer-actions .btn { flex: 1; height: 44px; border-radius: 10px; font-size: 14px; letter-spacing: .2px; }
+#btnFishing { flex: 1 0 100%; height: 38px; font-size: 12.5px; }
 .timer-actions .btn.ghost.on {
   border-color: #F5B6A2;
   background: var(--coral-soft);
@@ -297,26 +305,26 @@
 .task-tag-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 8px 0 9px;
-  font-size: 12px;
+  gap: 6px;
+  margin: 0;
+  font-size: 11px;
   color: var(--ink-soft);
 }
-.task-tag-row label { font-weight: 600; }
 .task-tag-row select {
   flex: 1;
-  height: 34px;
-  padding: 0 10px;
-  border-radius: 10px;
+  min-width: 0;
+  height: 30px;
+  padding: 0 9px;
+  border-radius: 8px;
   border: 1px solid var(--line);
   background: var(--card);
   color: var(--ink);
-  font-size: 12px;
+  font-size: 11px;
   font-family: inherit;
   appearance: none;
   -webkit-appearance: none;
   background-image: linear-gradient(45deg, transparent 50%, var(--ink-faint) 50%), linear-gradient(135deg, var(--ink-faint) 50%, transparent 50%);
-  background-position: calc(100% - 14px) 15px, calc(100% - 9px) 15px;
+  background-position: calc(100% - 13px) 12px, calc(100% - 8px) 12px;
   background-size: 5px 5px, 5px 5px;
   background-repeat: no-repeat;
 }
@@ -431,6 +439,8 @@
   display: grid; place-items: center;
 }
 .book-thumb canvas { width: 74px; height: 74px; }
+.book-thumb.fish-thumb { display: flex; align-items: center; justify-content: center; }
+.fish-dex-icon { width: 44px; height: 44px; }
 .book-name { font-size: 11.5px; font-weight: 700; padding: 0 1px; }
 .book-meta { font-size: 9.5px; color: var(--ink-faint); padding: 0 1px; }
 .lock-veil {

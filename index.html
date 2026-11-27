@@ -152,21 +152,22 @@
           <div class="timer-time" id="timeText">25:00</div>
           <div class="timer-sub" id="timeSub">选一个时长，开始今天的陪读</div>
           <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
-          <div class="study-modes" id="studyModes">
-            <button data-mode="free" class="on">自由学习</button>
-            <button data-mode="strict">严格专注</button>
+          <div class="timer-options">
+            <div class="study-modes" id="studyModes">
+              <button data-mode="free">自由学习</button>
+              <button data-mode="strict" class="on">严格专注</button>
+            </div>
+            <div class="task-tag-row">
+              <select id="taskTag" aria-label="学习任务">
+                <option value="阅读">阅读</option>
+                <option value="刷题">刷题</option>
+                <option value="写作">写作</option>
+                <option value="复习">复习</option>
+                <option value="其他">其他</option>
+              </select>
+            </div>
           </div>
-          <div class="mode-hint" id="modeHint">切到其他页面时，计时自动暂停</div>
-          <div class="task-tag-row">
-            <label for="taskTag">学习任务</label>
-            <select id="taskTag">
-              <option value="阅读">阅读</option>
-              <option value="刷题">刷题</option>
-              <option value="写作">写作</option>
-              <option value="复习">复习</option>
-              <option value="其他">其他</option>
-            </select>
-          </div>
+          <div class="mode-hint" id="modeHint">严格专注：离开界面继续计时，并计入奖励</div>
           <div class="durations" id="durationChips">
             <button data-min="15">15 分钟</button>
             <button data-min="25" class="on">25 分钟</button>
@@ -210,7 +211,7 @@
         <div class="screen-head">
           <div>
             <h1>喵喵图鉴</h1>
-            <p>家具、服装和它的小故事</p>
+            <p>家具、服装、鱼和它的小故事</p>
           </div>
           <div class="head-progress" id="bookProgress">0%</div>
         </div>
@@ -218,6 +219,7 @@
           <button data-tab="furniture" class="on">家具</button>
           <button data-tab="outfit">服装</button>
           <button data-tab="activity">猫咪日常</button>
+          <button data-tab="fish">鱼图鉴</button>
           <button data-tab="comic">番外</button>
         </div>
         <div class="scroll" id="bookBody"></div>
@@ -314,7 +316,7 @@
 
   <div class="fish-hud">
     <div class="fish-meta-row">
-      <span id="fishDaily">今日兑换 0 / 10</span>
+      <span id="fishDaily">今日兑换 0 / 8</span>
       <span id="fishRaw">鱼篓 0 条</span>
     </div>
     <div class="fish-tip" id="fishTip">还剩 3 杆 · 等浮标沉下去的一瞬间收竿</div>
