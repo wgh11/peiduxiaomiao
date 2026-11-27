@@ -51,7 +51,7 @@ window.PDM = window.PDM || {};
     { id: 'w_star', name: '星星灯串', slot: 'wall', price: 60, desc: '晚上开灯，整间小屋会暖暖的' },
     { id: 'w_neon', name: '加油霓虹灯', slot: 'wall', price: 90, desc: '粉粉的光，夜里写着「加油」' },
     { id: 'w_calendar', name: '手撕日历', slot: 'wall', price: 28, desc: '每天撕一页，离目标更近一点' },
-    { id: 'w_clock', name: '蘑菇咕咕钟', slot: 'wall', price: 0, ad: true, fishCost: { jinli: 2 }, desc: '每到整点，蘑菇里会探出小鸟' },
+    { id: 'w_clock', name: '蘑菇咕咕钟', slot: 'wall', price: 0, fishCost: { jinli: 2 }, desc: '每到整点，蘑菇里会探出小鸟' },
     { id: 'w_poster', name: '猫咪海报', slot: 'wall', price: 30, desc: '小喵自己挑的，上面写着「加油」' },
     { id: 'wd_curtain', name: '奶油纱帘', slot: 'window', price: 35, desc: '风一吹就轻轻晃，很催眠' },
     { id: 'wd_sill', name: '窗台多肉', slot: 'window', price: 55, desc: '两盆小多肉，晒着太阳慢慢长' },
@@ -70,8 +70,8 @@ window.PDM = window.PDM || {};
     { id: 'fl_cushion', name: '鱼鱼坐垫', slot: 'floor', price: 50, desc: '看起来很好吃，但它只是坐垫' },
     { id: 'fl_pouf', name: '针织坐墩', slot: 'floor', price: 42, desc: '软软的一团，靠着很舒服' },
     { id: 'o_plant', name: '小盆栽', slot: 'ornament', price: 25, desc: '每天都在偷偷长高一点点' },
-    { id: 'o_maneki', name: '招财喵', slot: 'ornament', price: 0, ad: true, fishCost: { jinlong: 1 }, desc: '举着小爪子，祝你顺利上岸' },
-    { id: 'o_globe', name: '星空地球仪', slot: 'ornament', price: 0, ad: true, fishCost: { hetun: 1, jinli: 1 }, desc: '晚上会亮起细碎的星座' },
+    { id: 'o_maneki', name: '招财喵', slot: 'ornament', price: 0, fishCost: { jinlong: 1 }, desc: '举着小爪子，祝你顺利上岸' },
+    { id: 'o_globe', name: '星空地球仪', slot: 'ornament', price: 0, fishCost: { hetun: 1, jinli: 1 }, desc: '晚上会亮起细碎的星座' },
     { id: 'o_yarn', name: '毛线球', slot: 'ornament', price: 20, desc: '滚到桌脚就再也找不到了' },
     { id: 'o_vase', name: '小陶瓶花', slot: 'ornament', price: 38, desc: '插着两朵不知名的小花' },
     { id: 'o_fishbowl', name: '会游泳的鱼缸', slot: 'ornament', price: 95, desc: '里面的小鱼会跟着小喵一起打瞌睡' },
@@ -197,6 +197,23 @@ window.PDM = window.PDM || {};
     { id: 'jinlong', name: '金龙鱼', rarity: 'legend', snacks: 8, weight: 0.7, color: '#F4C04F', desc: '鱼塘里的传说' }
   ];
 
+  const CAT_HOUSE_TIERS = [
+    { tier: 0, name: '纸箱猫屋', desc: '小喵最初的小家，装得下它和一条毯子。', level: 1, furniture: 0, fish: 0, intimacy: 0 },
+    { tier: 1, name: '原木双层', desc: '多了一层小阁楼和更软的垫子。', level: 3, furniture: 8, fish: 0, intimacy: 20 },
+    { tier: 2, name: '阳光花房', desc: '玻璃花房、晒太阳的窗台，还有几盆猫草。', level: 5, furniture: 16, fish: 0, intimacy: 50 }
+  ];
+
+  const ACTIVITY_TASKS = [
+    { id: 'pet', name: '摸摸小喵', desc: '在小屋里摸摸它的头', reward: 2 },
+    { id: 'feed', name: '投喂一次', desc: '给它一份猫鱼条、牛奶或饼干', reward: 2 },
+    { id: 'play', name: '逗猫一次', desc: '用毛线球陪它玩一会儿', reward: 2 },
+    { id: 'decor', name: '布置小屋', desc: '拖动或旋转一件家具', reward: 2 },
+    { id: 'focus', name: '完成一次专注', desc: '完成一轮陪读', reward: 2 },
+    { id: 'fish', name: '钓到一条鱼', desc: '在休息鱼塘成功收竿', reward: 2 },
+    { id: 'quiz', name: '通过一关刷题', desc: '答对 2 题以上通关', reward: 2 },
+    { id: 'comic', name: '读完一篇番外', desc: '在番外里读完一话', reward: 2 }
+  ];
+
   const ACHIEVEMENTS = [
     { id: 'first', name: '第一次陪读', desc: '完成 1 次专注', goal: 1, reward: 8, val: s => s.sessions.length },
     { id: 'hour1', name: '一小时的陪伴', desc: '累计专注 60 分钟', goal: 60, reward: 15, val: s => s.growth },
@@ -244,6 +261,11 @@ window.PDM = window.PDM || {};
       buffs: { focusBoostUntil: 0, milkDate: '', cookieDate: '' },
       daily: { date: dateKey(), interact: 0 },
       adDoubleDate: '',
+      shareDay: '',
+      goals: { day: '', dayFocus: 0, dayQuiz: 0, dayFish: 0, dayClaimed: false, weekStart: '', weekClaimed: false },
+      catHouse: { tier: 0 },
+      activities: [],
+      activityBonusDone: false,
       growth: 0,
       checkins: [],
       sessions: [],
@@ -296,6 +318,13 @@ window.PDM = window.PDM || {};
         state.buffs = Object.assign({ focusBoostUntil: 0, milkDate: '', cookieDate: '' }, (parsed.buffs && typeof parsed.buffs === 'object') ? parsed.buffs : {});
         state.daily = Object.assign({ date: dateKey(), interact: 0 }, (parsed.daily && typeof parsed.daily === 'object') ? parsed.daily : {});
         state.adDoubleDate = typeof parsed.adDoubleDate === 'string' ? parsed.adDoubleDate : '';
+        state.shareDay = typeof parsed.shareDay === 'string' ? parsed.shareDay : '';
+        state.goals = Object.assign({ day: '', dayFocus: 0, dayQuiz: 0, dayFish: 0, dayClaimed: false, weekStart: '', weekClaimed: false }, (parsed.goals && typeof parsed.goals === 'object') ? parsed.goals : {});
+        state.catHouse = Object.assign({ tier: 0 }, (parsed.catHouse && typeof parsed.catHouse === 'object') ? parsed.catHouse : {});
+        state.catHouse.tier = Math.max(0, Math.min(2, Number(state.catHouse.tier) || 0));
+        state.activities = Array.isArray(parsed.activities) ? parsed.activities.filter(x => ACTIVITY_TASKS.some(t => t.id === x)) : [];
+        state.activityBonusDone = !!parsed.activityBonusDone;
+        ensureGoals();
         const today0 = dateKey();
         if (state.daily.date !== today0) state.daily = { date: today0, interact: 0 };
         if (state.moodDate !== today0) {
@@ -627,6 +656,7 @@ window.PDM = window.PDM || {};
     if (state.comicsRead.indexOf(id) < 0) {
       state.comicsRead.push(id);
       logEvent('comic_read', { id: id });
+      markActivity('comic');
       checkAchievements();
       save();
     }
@@ -663,6 +693,144 @@ window.PDM = window.PDM || {};
       const cur = Math.min(a.goal, a.val(state) || 0);
       return { def: a, cur: cur, done: cur >= a.goal, awarded: state.achievements.indexOf(a.id) >= 0 };
     });
+  }
+
+  /* ---------- goals / activities / cat house ---------- */
+  function startOfWeekKey(k) {
+    const d = k ? parseKey(k) : new Date();
+    const offset = (d.getDay() + 6) % 7; // 周一为一周开始
+    d.setDate(d.getDate() - offset);
+    return dateKey(d);
+  }
+
+  function ensureGoals() {
+    const today = dateKey();
+    const week = startOfWeekKey(today);
+    if (!state.goals || typeof state.goals !== 'object') state.goals = {};
+    const g = state.goals;
+    if (g.day !== today) {
+      g.day = today; g.dayFocus = 0; g.dayQuiz = 0; g.dayFish = 0; g.dayClaimed = false;
+    }
+    if (g.weekStart !== week) {
+      g.weekStart = week; g.weekClaimed = false;
+    }
+    return g;
+  }
+
+  function weekFocusDays() {
+    const start = startOfWeekKey();
+    const today = dateKey();
+    let n = 0;
+    for (let i = 0; i < 7; i++) {
+      const k = addDays(start, i);
+      if (k > today) break;
+      if (state.checkins.indexOf(k) >= 0) n++;
+    }
+    return n;
+  }
+
+  function goalInfo() {
+    const g = ensureGoals();
+    const dailyDone = g.dayFocus >= 15 && g.dayQuiz >= 1 && g.dayFish >= 1;
+    return {
+      daily: {
+        focus: Math.min(15, g.dayFocus || 0), focusGoal: 15,
+        quiz: Math.min(1, g.dayQuiz || 0), quizGoal: 1,
+        fish: Math.min(1, g.dayFish || 0), fishGoal: 1,
+        done: dailyDone, claimed: !!g.dayClaimed, reward: 10
+      },
+      weekly: { days: weekFocusDays(), goal: 5, claimed: !!g.weekClaimed, reward: 15 }
+    };
+  }
+
+  function trackGoal(kind, n) {
+    const g = ensureGoals();
+    if (kind === 'focus') g.dayFocus = (g.dayFocus || 0) + Math.max(0, Math.floor(n || 0));
+    else if (kind === 'quiz') g.dayQuiz = (g.dayQuiz || 0) + 1;
+    else if (kind === 'fish') g.dayFish = (g.dayFish || 0) + 1;
+    save();
+  }
+
+  function claimDailyGoals() {
+    const info = goalInfo();
+    if (info.daily.claimed) return { ok: false, reason: 'claimed' };
+    if (!info.daily.done) return { ok: false, reason: 'progress' };
+    state.goals.dayClaimed = true;
+    addBonusFish(10, 'goal_daily');
+    logEvent('goal_daily', { reward: 10 });
+    save();
+    return { ok: true, reward: 10 };
+  }
+
+  function claimWeeklyGoal() {
+    const info = goalInfo();
+    if (info.weekly.claimed) return { ok: false, reason: 'claimed' };
+    if (info.weekly.days < info.weekly.goal) return { ok: false, reason: 'progress' };
+    state.goals.weekClaimed = true;
+    addBonusFish(15, 'goal_weekly');
+    logEvent('goal_weekly', { reward: 15 });
+    save();
+    return { ok: true, reward: 15 };
+  }
+
+  function markActivity(id) {
+    const task = ACTIVITY_TASKS.find(t => t.id === id);
+    if (!task) return 0;
+    if (!Array.isArray(state.activities)) state.activities = [];
+    if (state.activities.indexOf(id) >= 0) return 0;
+    state.activities.push(id);
+    let reward = task.reward || 0;
+    state.fish += reward;
+    if (state.activities.length >= ACTIVITY_TASKS.length && !state.activityBonusDone) {
+      state.activityBonusDone = true;
+      state.fish += 10;
+      reward += 10;
+    }
+    logEvent('activity', { id: id, reward: reward });
+    save();
+    return reward;
+  }
+
+  function activityInfo() {
+    return ACTIVITY_TASKS.map(t => ({ def: t, done: (state.activities || []).indexOf(t.id) >= 0 }));
+  }
+
+  function catHouseInfo() {
+    const tier = Math.max(0, Math.min(CAT_HOUSE_TIERS.length - 1, Number(state.catHouse && state.catHouse.tier) || 0));
+    const cur = CAT_HOUSE_TIERS[tier];
+    const next = CAT_HOUSE_TIERS[tier + 1] || null;
+    const lv = levelInfo().level;
+    const owned = state.owned.length;
+    return {
+      tier: tier, name: cur.name, desc: cur.desc, next: next,
+      level: lv, furniture: owned, intimacy: state.intimacy || 0,
+      canUpgrade: !!next && lv >= next.level && owned >= next.furniture && state.fish >= next.fish && (state.intimacy || 0) >= next.intimacy
+    };
+  }
+
+  function upgradeCatHouse() {
+    const info = catHouseInfo();
+    if (!info.next) return { ok: false, reason: 'max' };
+    const next = info.next;
+    if (info.level < next.level) return { ok: false, reason: 'level' };
+    if (info.furniture < next.furniture) return { ok: false, reason: 'furniture' };
+    if ((state.intimacy || 0) < next.intimacy) return { ok: false, reason: 'intimacy' };
+    if (state.fish < next.fish) return { ok: false, reason: 'fish' };
+    state.fish -= next.fish;
+    state.catHouse.tier = info.tier + 1;
+    logEvent('cat_house_upgrade', { tier: state.catHouse.tier });
+    save();
+    return { ok: true, tier: state.catHouse.tier, name: next.name };
+  }
+
+  function grantShareReward() {
+    const today = dateKey();
+    if (state.shareDay === today) return 0;
+    state.shareDay = today;
+    addBonusFish(5, 'share');
+    logEvent('share_reward', { reward: 5 });
+    save();
+    return 5;
   }
 
   /* ---------- sessions ---------- */
@@ -729,8 +897,13 @@ window.PDM = window.PDM || {};
     if (minutes > 0) {
       state.mood = clamp100(mood + (opts.completed ? 15 : 5));
       state.intimacy = clamp100((state.intimacy || 0) + Math.floor(minutes / 10));
+      if (eligible && !hadToday && streak > 0 && streak % 3 === 0) {
+        state.mood = clamp100(state.mood + 5);
+      }
     }
     if (streak > state.bestStreak) state.bestStreak = streak;
+    trackGoal('focus', minutes);
+    if (minutes > 0) markActivity('focus');
 
     const levelAfter = levelInfo();
     const unlocks = [];
@@ -833,6 +1006,7 @@ window.PDM = window.PDM || {};
     const gain = kind === 'pet' ? 8 : kind === 'play' ? 10 : 12;
     state.mood = clamp100((state.mood || 0) + gain);
     registerInteraction(true);
+    markActivity(kind === 'pet' ? 'pet' : 'play');
     logEvent('interact', { kind: kind });
     save();
     return { mood: state.mood, intimacy: state.intimacy };
@@ -860,6 +1034,7 @@ window.PDM = window.PDM || {};
       state.intimacy = clamp100((state.intimacy || 0) + 1);
     }
     registerInteraction(true);
+    markActivity('feed');
     logEvent('feed', { id: fid });
     save();
     return fid;
@@ -973,6 +1148,8 @@ window.PDM = window.PDM || {};
     f.bag[sp.id] = (f.bag[sp.id] || 0) + 1;
     f.dex[sp.id] = (f.dex[sp.id] || 0) + 1;
     f.totalFish += 1;
+    trackGoal('fish', 1);
+    markActivity('fish');
     if (sp.rarity === 'legend') f.pity.legendMiss = 0;
     else f.pity.legendMiss = Math.min(40, (f.pity.legendMiss || 0) + 1);
     if (sp.rarity === 'common') f.pity.nonRare = Math.min(8, (f.pity.nonRare || 0) + 1);
@@ -1139,6 +1316,8 @@ window.PDM = window.PDM || {};
     COMICS: COMICS,
     LEVELS: LEVELS,
     ACHIEVEMENTS: ACHIEVEMENTS,
+    CAT_HOUSE_TIERS: CAT_HOUSE_TIERS,
+    ACTIVITY_TASKS: ACTIVITY_TASKS,
     FISHING: FISHING,
     FISH: FISH,
     RARITY: RARITY,
@@ -1184,6 +1363,16 @@ window.PDM = window.PDM || {};
     markComicRead: markComicRead,
     checkAchievements: checkAchievements,
     achievementInfo: achievementInfo,
+    startOfWeekKey: startOfWeekKey,
+    goalInfo: goalInfo,
+    trackGoal: trackGoal,
+    claimDailyGoals: claimDailyGoals,
+    claimWeeklyGoal: claimWeeklyGoal,
+    markActivity: markActivity,
+    activityInfo: activityInfo,
+    catHouseInfo: catHouseInfo,
+    upgradeCatHouse: upgradeCatHouse,
+    grantShareReward: grantShareReward,
     commitSession: commitSession,
     addBonusFish: addBonusFish,
     addSnack: addSnack,

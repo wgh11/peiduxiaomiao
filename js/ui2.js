@@ -129,7 +129,8 @@ window.PDM = window.PDM || {};
       ad_click: '打开广告', ad_complete: '看完广告', buy: '购买物品', equip: '布置家具', outfit: '换装',
       share: '生成分享卡', comic_read: '阅读番外', makeup: '补签', comic_unlock: '解锁番外',
       achievement: '达成成就', unlock_item: '解锁家具', unlock_outfit: '解锁服装', bonus_fish: '额外奖励',
-      buy_outfit: '购买服装'
+      buy_outfit: '购买服装', goal_daily: '每日目标', goal_weekly: '每周目标', activity: '互动手册',
+      share_reward: '分享奖励', cat_house_upgrade: '猫屋升级'
     };
     const recent = s.recent.map(e => {
       const time = new Date(e.t);

@@ -243,19 +243,22 @@ const DOMAINS = [
 
   const QKEY = 'peiduxiaomiao.quiz.v1';
   const CAP = 20;
-  function defQ(){ return { done:{}, wrong:[], coinDay:{date:'',earned:0}, paperDay:{date:'',earned:0} }; }
+  function defQ(){ return { done:{}, wrong:[], coinDay:{date:'',earned:0}, paperDay:{date:'',earned:0}, reviewDay:{date:'',counted:0} }; }
   let Q = defQ();
   try { const raw = JSON.parse(localStorage.getItem(QKEY)); if (raw) Q = Object.assign(defQ(), raw); } catch (e) {}
   // 兼容旧版 "lessonId-qIdx" 字符串，同时保留题目快照，避免每日论文换日后错题失效
   Q.wrong = (Array.isArray(Q.wrong) ? Q.wrong : []).map(item => {
-    if (item && typeof item === 'object') return item;
+    if (item && typeof item === 'object') {
+      return Object.assign({ stage: 0, due: core.dateKey() }, item);
+    }
     const key = String(item || '');
     const cut = key.lastIndexOf('-');
-    return { lessonId: cut > 0 ? key.slice(0, cut) : key, qIdx: cut > 0 ? Number(key.slice(cut + 1)) : 0 };
+    return { lessonId: cut > 0 ? key.slice(0, cut) : key, qIdx: cut > 0 ? Number(key.slice(cut + 1)) : 0, stage: 0, due: core.dateKey() };
   }).filter(item => item && item.lessonId && Number.isFinite(Number(item.qIdx)));
+  Q.reviewDay = Object.assign({ date: '', counted: 0 }, (Q.reviewDay && typeof Q.reviewDay === 'object') ? Q.reviewDay : {});
   function saveQ(){ try { localStorage.setItem(QKEY, JSON.stringify(Q)); } catch (e) {} }
 
-  const st = { mode:'map', domain:'ai', lessonId:null, card:0, q:0, answers:[], res:null };
+  const st = { mode:'map', domain:'ai', lessonId:null, card:0, q:0, answers:[], res:null, review:null };
 
   const domainDone = did => domainOf(did).lessons.filter(l => Q.done[l.id] !== undefined).length;
 
@@ -266,6 +269,61 @@ const DOMAINS = [
     const give = Math.min(n, room);
     if (give > 0) { core.addBonusFish(give, 'quiz'); Q.coinDay.earned += give; }
     return give;
+  }
+
+  function wrongData(item) {
+    const L = findLesson(item.lessonId);
+    const q = L && L.quiz[Number(item.qIdx)];
+    return q || item;
+  }
+
+  function dueWrong() {
+    const today = core.dateKey();
+    return Q.wrong.filter(item => {
+      const data = wrongData(item);
+      return data && data.q && (!item.due || item.due <= today);
+    });
+  }
+
+  function reviewAward() {
+    const today = core.dateKey();
+    if (Q.reviewDay.date !== today) Q.reviewDay = { date: today, counted: 0 };
+    if (Q.reviewDay.counted >= 6) return 0;
+    Q.reviewDay.counted += 1;
+    core.addBonusFish(2, 'review');
+    return 2;
+  }
+
+  function reviewHTML() {
+    const R = st.review;
+    if (!R) return renderMap();
+    if (R.done) {
+      return '<div class="qz-result"><div class="qz-score" style="--p:100"><span>' + R.correct + '<i>题</i></span></div>' +
+        '<h2>复习完成</h2>' +
+        '<p class="qz-sub">答对 ' + R.correct + ' / ' + R.queue.length + ' 题</p>' +
+        (R.gain > 0 ? '<div class="qz-win">+' + R.gain + ' 🐟</div>' : '<p class="qz-note">今天的复习奖励已经拿满了，明天再来</p>') +
+        '<div class="qz-foot col"><button class="btn primary" data-act="map">回到刷题</button></div></div>';
+    }
+    const item = R.queue[R.idx];
+    const data = wrongData(item);
+    const answered = R.picked !== null;
+    const opts = data.opts.map((o, i) => {
+      let cls = '';
+      if (answered) cls = (i === data.a) ? 'correct' : (i === R.picked ? 'wrong' : 'dim');
+      return '<button class="qz-opt ' + cls + '" ' + (answered ? 'disabled' : 'data-act="rpick" data-i="' + i + '"') + '>' +
+        '<span class="k">' + 'ABCD'[i] + '</span><span>' + o + '</span></button>';
+    }).join('');
+    const exp = answered
+      ? '<div class="qz-exp"><b>' + (R.picked === data.a ? '答对了 ✓' + (R.lastGain ? ' +' + R.lastGain + ' 🐟' : '') : '正确答案：' + 'ABCD'[data.a]) + '</b>' + data.exp + '</div>'
+      : '';
+    return '<div class="qz-met">错题复习 ' + (R.idx + 1) + ' / ' + R.queue.length + ' · 答对 +2 🐟（每天最多 6 题）</div>' +
+      '<div class="qz-card"><div class="qz-k">' + (item.domainName || '错题') + ' · ' + (item.title || '') + '</div>' +
+      '<h3>' + data.q + '</h3>' + opts + exp + '</div>' +
+      '<div class="qz-foot">' +
+        '<button class="btn ghost" data-act="map">退出复习</button>' +
+        '<button class="btn primary" ' + (answered ? 'data-act="rnext"' : 'disabled') + '>' +
+        (R.idx === R.queue.length - 1 ? '完成复习' : '下一题') + '</button>' +
+      '</div>';
   }
 
   /* ---------------- views ---------------- */
@@ -294,6 +352,7 @@ const DOMAINS = [
       '<div class="qz-chips">' + chips + '</div>' +
       '<div class="qz-progress"><span>今日已赚 ' + earned + '/' + CAP + ' 🐟</span><span>' + dc + '/' + d.lessons.length + ' 关</span></div>' +
       items +
+      (dueWrong().length ? '<button class="qz-wrong review" data-act="review">今日复习 ' + dueWrong().length + ' 题 · 答对 +2 🐟</button>' : '') +
       '<button class="qz-wrong" data-act="wrong">错题本' + (Q.wrong.length ? ' · ' + Q.wrong.length + ' 题' : '') + '</button>';
   }
 
@@ -352,7 +411,7 @@ const DOMAINS = [
   function render(){
     const body = $('quizBody');
     if (!body) return;
-    const map = { map:renderMap, card:renderCard, quiz:renderQ, result:renderResult };
+    const map = { map:renderMap, card:renderCard, quiz:renderQ, result:renderResult, review:reviewHTML };
     body.innerHTML = (map[st.mode] || renderMap)();
     body.scrollTop = 0;
   }
@@ -380,6 +439,10 @@ const DOMAINS = [
     }
     const give = want > 0 ? award(want) : 0;
     if (isPaper && want > 0) Q.paperDay.earned += give;
+    if (pass) {
+      core.trackGoal('quiz', 1);
+      core.markActivity('quiz');
+    }
     if (pass && (first || score > Q.done[L.id])) Q.done[L.id] = score;
     saveQ();
     st.res = { score: score, correct: correct, total: L.quiz.length, give: give, want: want, first: first, isPaper: isPaper };
@@ -409,6 +472,14 @@ const DOMAINS = [
     ui.openSheet('错题本', html);
   }
 
+  function startReview() {
+    const queue = dueWrong();
+    if (!queue.length) { ui.toast('今天没有到期的错题'); return; }
+    st.mode = 'review';
+    st.review = { queue: queue, idx: 0, picked: null, correct: 0, gain: 0, lastGain: 0, done: false };
+    render();
+  }
+
   function onClick(e){
     const el = e.target.closest('[data-act]');
     if (!el) return;
@@ -429,7 +500,7 @@ const DOMAINS = [
         const q = L.quiz[st.q];
         const exists = Q.wrong.some(item => item.lessonId === L.id && Number(item.qIdx) === st.q);
         if (!exists) {
-          Q.wrong.push({ lessonId: L.id, qIdx: st.q, title: L.title, domainName: L.domainName, q: q.q, opts: q.opts, a: q.a, exp: q.exp });
+          Q.wrong.push({ lessonId: L.id, qIdx: st.q, title: L.title, domainName: L.domainName, q: q.q, opts: q.opts, a: q.a, exp: q.exp, stage: 0, due: core.dateKey() });
           saveQ();
         }
       } else {
@@ -443,9 +514,48 @@ const DOMAINS = [
       const L = findLesson(st.lessonId);
       if (st.q < L.quiz.length - 1) { st.q++; render(); } else finish();
     }
-    else if (act === 'map') { st.mode = 'map'; render(); }
+    else if (act === 'map') { st.mode = 'map'; st.review = null; render(); }
     else if (act === 'shop') { ui.switchScreen('shop'); }
     else if (act === 'wrong') { openWrong(); }
+    else if (act === 'review') { startReview(); }
+    else if (act === 'rpick') {
+      const R = st.review;
+      if (!R || R.done || R.picked !== null) return;
+      const item = R.queue[R.idx];
+      const data = wrongData(item);
+      const i = +el.dataset.i;
+      R.picked = i;
+      if (i === data.a) {
+        const gain = reviewAward();
+        R.correct += 1;
+        R.lastGain = gain;
+        R.gain += gain;
+        const stage = Math.min(4, (Number(item.stage) || 0) + 1);
+        item.stage = stage;
+        item.due = core.addDays(core.dateKey(), [1, 3, 7, 14][stage - 1]);
+      } else {
+        item.stage = 0;
+        item.due = core.addDays(core.dateKey(), 1);
+        R.lastGain = 0;
+      }
+      saveQ();
+      ui.refreshHeader();
+      render();
+    }
+    else if (act === 'rnext') {
+      const R = st.review;
+      if (!R || R.picked === null) return;
+      if (R.idx < R.queue.length - 1) {
+        R.idx += 1;
+        R.picked = null;
+        R.lastGain = 0;
+        render();
+      } else {
+        R.done = true;
+        ui.refreshHeader();
+        render();
+      }
+    }
     else if (act === 'paper') { PDM.paper.open(); }
   }
 

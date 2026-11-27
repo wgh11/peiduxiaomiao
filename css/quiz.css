@@ -54,6 +54,11 @@
   border: 1px dashed var(--line); background: var(--card-soft);
   color: var(--ink-soft); font-size: 13px; font-weight: 700;
 }
+.qz-wrong.review {
+  border-color: #B9D3B2;
+  background: #EFF6EC;
+  color: #4E7A48;
+}
 
 /* micro card */
 .qz-dots { display: flex; gap: 6px; justify-content: center; margin: 10px 0 16px; }

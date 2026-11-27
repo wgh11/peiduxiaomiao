@@ -76,6 +76,30 @@
 }
 #stageWrap.decorating .pet-bar { display: none; }
 
+.stage-chips {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+.goal-chip {
+  pointer-events: auto;
+  height: 26px;
+  padding: 0 9px;
+  border-radius: 8px;
+  background: rgba(252, 252, 249, .9);
+  border: 1px solid rgba(255, 255, 255, .6);
+  color: var(--ink-soft);
+  font-size: 10px;
+  font-weight: 700;
+  font-family: inherit;
+}
+.goal-chip.ready {
+  background: var(--coral);
+  border-color: var(--coral);
+  color: #FFF7EC;
+  box-shadow: 0 3px 10px rgba(240, 138, 114, .28);
+}
 .level-chip, .tod-chip {
   display: flex; align-items: center; gap: 5px;
   height: 28px; padding: 0 10px;
@@ -440,6 +464,15 @@
 }
 .book-thumb canvas { width: 74px; height: 74px; }
 .book-thumb.fish-thumb { display: flex; align-items: center; justify-content: center; }
+.act-list { display: flex; flex-direction: column; gap: 7px; margin-top: 8px; }
+.act-row { display: flex; align-items: center; gap: 9px; padding: 8px 9px; border-radius: 9px; background: var(--card-soft); }
+.act-check { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line); font-size: 11px; font-weight: 800; color: var(--ink-faint); flex: none; }
+.act-row.done .act-check { background: #E6F0E3; border-color: #B9D3B2; color: #5F8A58; }
+.act-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.act-info b { font-size: 11.5px; }
+.act-info span { font-size: 10px; color: var(--ink-faint); }
+.act-row em { font-style: normal; font-size: 10px; font-weight: 700; color: var(--ink-faint); white-space: nowrap; }
+.act-row.done em { color: #5F8A58; }
 .fish-dex-icon { width: 44px; height: 44px; }
 .book-name { font-size: 11.5px; font-weight: 700; padding: 0 1px; }
 .book-meta { font-size: 9.5px; color: var(--ink-faint); padding: 0 1px; }

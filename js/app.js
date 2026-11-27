@@ -81,7 +81,7 @@ window.PDM = window.PDM || {};
     }
     resize();
     const hb = $('btnCatHouse');
-    if (hb) hb.classList.toggle('hidden', !app.use3d);
+    if (hb) hb.classList.toggle('hidden', false);
     const rb = $('btnRotate');
     if (rb) rb.classList.toggle('hidden', !app.use3d);
     const tl = $('btnTurnLeft');
@@ -641,7 +641,9 @@ window.PDM = window.PDM || {};
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 2000);
-      ui.toast('图片已开始下载');
+      const bonus = core.grantShareReward();
+      ui.refreshHeader();
+      ui.toast(bonus > 0 ? '图片已开始下载 · 分享奖励 +' + bonus + ' 小鱼干' : '图片已开始下载');
     }, 'image/png');
   }
 
@@ -653,6 +655,9 @@ window.PDM = window.PDM || {};
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
           await navigator.share({ files: [file], text: '今天和小喵一起学习 · 陪读小喵' });
+          const bonus = core.grantShareReward();
+          ui.refreshHeader();
+          if (bonus > 0) ui.toast('分享成功 · 奖励 +' + bonus + ' 小鱼干');
         } catch (e) {}
       } else {
         ui.toast('当前环境不支持系统分享，请用「保存图片」');
@@ -688,6 +693,7 @@ window.PDM = window.PDM || {};
       chip.innerHTML = '<span class="level-dot"></span><span id="levelText">Lv.' + lv.level + ' ' + lv.name + '</span>';
     }
     updatePetBar();
+    updateGoalChip();
   }
 
   /* ---------------- welcome ---------------- */
@@ -854,6 +860,8 @@ window.PDM = window.PDM || {};
       }
       case 'decorDone': {
         setDecorMode(false);
+        core.markActivity('decor');
+        refreshAll();
         ui.toast('布置完成，小屋更好看啦');
         break;
       }
@@ -1054,6 +1062,43 @@ window.PDM = window.PDM || {};
         feedCat(el.dataset.id);
         break;
       }
+      case 'goals': {
+        openGoals();
+        break;
+      }
+      case 'claimDailyGoals': {
+        const r = core.claimDailyGoals();
+        if (!r.ok) { ui.toast(r.reason === 'claimed' ? '今天的目标奖励已经领过了' : '还有目标没完成', 2200); break; }
+        refreshAll();
+        ui.toast('今日目标完成 · +' + r.reward + ' 小鱼干', 2400);
+        openGoals();
+        break;
+      }
+      case 'claimWeeklyGoal': {
+        const r = core.claimWeeklyGoal();
+        if (!r.ok) { ui.toast(r.reason === 'claimed' ? '本周奖励已经领过了' : '本周专注天数还不够', 2200); break; }
+        refreshAll();
+        ui.toast('本周目标完成 · +' + r.reward + ' 小鱼干', 2400);
+        openGoals();
+        break;
+      }
+      case 'catHouseUpgrade': {
+        const r = core.upgradeCatHouse();
+        if (!r.ok) {
+          ui.toast(r.reason === 'max' ? '已经是最高级猫屋' : r.reason === 'level' ? '等级还不够' : r.reason === 'furniture' ? '家具还不够' : r.reason === 'intimacy' ? '亲密度还不够，多陪陪小喵吧' : '小鱼干还不够', 2200);
+          break;
+        }
+        if (PDM.room3d && PDM.room3d.setCatHouseTier) PDM.room3d.setCatHouseTier(r.tier);
+        refreshAll();
+        ui.toast('小猫屋升级为「' + r.name + '」', 2600);
+        openCatHouseSheet();
+        break;
+      }
+      case 'catHouseVisit': {
+        ui.closeSheet();
+        setTimeout(() => enterCatHouse(), 180);
+        break;
+      }
       case 'confirmStop': {
         ui.closeModal();
         finishSession(false);
@@ -1083,7 +1128,7 @@ window.PDM = window.PDM || {};
     const btn = $('btnDecor');
     if (btn) btn.classList.toggle('hidden', !!on);
     const hb = $('btnCatHouse');
-    if (hb) hb.classList.toggle('hidden', !app.use3d || !!on || (PDM.room3d && PDM.room3d.isFocused && PDM.room3d.isFocused()));
+    if (hb) hb.classList.toggle('hidden', !!on || (PDM.room3d && PDM.room3d.isFocused && PDM.room3d.isFocused()));
     const rb = $('btnRotate');
     if (rb) rb.classList.toggle('hidden', !app.use3d || !!on);
     const tl = $('btnTurnLeft');
@@ -1092,6 +1137,35 @@ window.PDM = window.PDM || {};
     if (tr) tr.classList.toggle('hidden', !app.use3d);
     const bp = $('btnBlueprint');
     if (bp) bp.classList.toggle('hidden', !app.use3d);
+  }
+
+  function updateGoalChip() {
+    const el = $('goalChip');
+    if (!el) return;
+    const info = core.goalInfo();
+    const d = info.daily;
+    const doneCount = [d.focus >= d.focusGoal, d.quiz >= d.quizGoal, d.fish >= d.fishGoal].filter(Boolean).length;
+    el.textContent = d.claimed ? '今日目标已完成' : d.done ? '今日目标 · 可领取' : '今日目标 ' + doneCount + '/3';
+    el.classList.toggle('ready', d.done && !d.claimed);
+  }
+
+  function openGoals() {
+    const info = core.goalInfo();
+    const d = info.daily, w = info.weekly;
+    const row = (name, cur, goal) =>
+      '<div class="kv-row"><span>' + name + '</span><b>' + Math.min(cur, goal) + ' / ' + goal + '</b></div>';
+    ui.openSheet('今日目标',
+      '<div class="panel-head"><h3>今天的小目标</h3><span class="hint">全部完成 +' + d.reward + '</span></div>' +
+      row('专注 15 分钟', d.focus, d.focusGoal) +
+      row('通过 1 关刷题', d.quiz, d.quizGoal) +
+      row('钓到 1 条鱼', d.fish, d.fishGoal) +
+      '<button class="btn primary" style="margin-top:10px" data-action="claimDailyGoals" ' + (d.done && !d.claimed ? '' : 'disabled') + '>' +
+        (d.claimed ? '今日已领取' : d.done ? '领取 +' + d.reward + ' 鱼干' : '完成后再来领取') + '</button>' +
+      '<div class="panel-head" style="margin-top:18px"><h3>本周目标</h3><span class="hint">+ ' + w.reward + '</span></div>' +
+      '<div class="kv-row"><span>本周专注 5 天</span><b>' + Math.min(w.days, w.goal) + ' / ' + w.goal + '</b></div>' +
+      '<button class="btn ghost" style="margin-top:10px" data-action="claimWeeklyGoal" ' + (w.days >= w.goal && !w.claimed ? '' : 'disabled') + '>' +
+        (w.claimed ? '本周已领取' : w.days >= w.goal ? '领取 +' + w.reward + ' 鱼干' : '还差 ' + (w.goal - w.days) + ' 天') + '</button>' +
+      '<div class="tiny" style="margin-top:14px;line-height:1.7">每日目标每天 0 点重置；本周目标按周一到周日计算。</div>');
   }
 
   function updatePetBar() {
@@ -1200,6 +1274,22 @@ window.PDM = window.PDM || {};
     if (app.decorMode) app.decorUndo.push(JSON.stringify(core.state().layout || {}));
     core.rotateItem(id, 90);
     ui.toast('「' + item.name + '」转了个方向');
+  }
+
+  function openCatHouseSheet() {
+    const info = core.catHouseInfo();
+    const tiers = core.CAT_HOUSE_TIERS.map(t => {
+      const cur = t.tier === info.tier;
+      const locked = t.tier > info.tier;
+      return '<div class="kv-row"><span>' + (cur ? '● ' : locked ? '○ ' : '✓ ') + t.name + '</span><b>' + (cur ? '当前' : locked ? '未解锁' : '已解锁') + '</b></div>';
+    }).join('');
+    const next = info.next;
+    const req = next
+      ? '<div class="tiny" style="margin:10px 0;line-height:1.8">升级需要：Lv.' + next.level + ' · 家具 ' + next.furniture + ' 件 · 亲密 ' + next.intimacy + '<br>当前：Lv.' + info.level + ' · 家具 ' + info.furniture + ' 件 · 亲密 ' + Math.round(info.intimacy) + '</div>'
+      : '<div class="tiny" style="margin:10px 0">已经是最高级猫屋啦。</div>';
+    ui.openSheet('小猫屋', tiers + req +
+      (next ? '<button class="btn primary" data-action="catHouseUpgrade" ' + (info.canUpgrade ? '' : 'disabled') + '>升级到「' + next.name + '」</button>' : '') +
+      '<button class="btn ghost" style="margin-top:8px" data-action="catHouseVisit">进去看看</button>');
   }
 
   function enterCatHouse() {
@@ -1398,7 +1488,7 @@ window.PDM = window.PDM || {};
         '<button class="btn ghost" data-action="closeModal">继续专注</button></div>');
     });
     $('btnDecor').addEventListener('click', () => ui.openDecor(null));
-    $('btnCatHouse').addEventListener('click', enterCatHouse);
+    $('btnCatHouse').addEventListener('click', openCatHouseSheet);
     $('btnBackRoom').addEventListener('click', exitCatHouse);
     $('btnRotate').addEventListener('click', rotateCurrent);
     $('btnTurnLeft').addEventListener('click', () => {
@@ -1471,7 +1561,7 @@ window.PDM = window.PDM || {};
       const el = e.target.closest('[data-action]');
       if (!el) return;
       const action = el.dataset.action;
-      if (action === 'closeModal' || action === 'confirmReset' || action === 'confirmStop' || action === 'adDouble' || action.startsWith('ad') || action.startsWith('buy') || action.startsWith('decor') || action === 'openDecor' || action === 'comic' || action === 'makeup' || action === 'toggleSpeed' || action === 'toggleBreak' || action === 'exportSave' || action === 'confirmCustomMin' || action === 'share' || action === 'analytics' || action === 'resetData' || action === 'closeReward' || action === 'goShop' || action === 'wearOutfit' || action === 'closeWelcome' || action === 'goStart' || action === 'goFishing') {
+      if (action === 'closeModal' || action === 'confirmReset' || action === 'confirmStop' || action === 'adDouble' || action.startsWith('ad') || action.startsWith('buy') || action.startsWith('decor') || action === 'openDecor' || action === 'comic' || action === 'makeup' || action === 'toggleSpeed' || action === 'toggleBreak' || action === 'exportSave' || action === 'confirmCustomMin' || action === 'share' || action === 'analytics' || action === 'resetData' || action === 'closeReward' || action === 'goShop' || action === 'wearOutfit' || action === 'closeWelcome' || action === 'goStart' || action === 'goFishing' || action === 'goals' || action === 'claimDailyGoals' || action === 'claimWeeklyGoal' || action === 'catHouseUpgrade' || action === 'catHouseVisit' || action === 'feedFood') {
         if (el.tagName === 'BUTTON' || el.classList.contains('switch') || el.dataset.action === 'openDecor') e.preventDefault();
         handleAction(action, el);
       }

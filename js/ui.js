@@ -169,29 +169,40 @@ window.PDM = window.PDM || {};
   }
 
   /* ---------- shop ---------- */
+  function fishCostText(f) {
+    return Object.keys(f.fishCost || {}).map(k => {
+      const sp = core.fishById(k);
+      return (sp ? sp.name : k) + '×' + f.fishCost[k];
+    }).join(' + ');
+  }
+
   function furnitureCard(f, limited) {
     const st = core.state();
     const owned = core.isOwned(f.id);
     const eq = core.isPlaced(f.id);
+    const craft = !owned && !!f.fishCost;
     let btn;
-    if (limited) {
-      btn = owned
-        ? '<button class="buy-btn ' + (eq ? 'equipped' : 'owned') + '" data-action="openDecor" data-slot="' + f.slot + '">' + (eq ? '已摆放' : '布置') + '</button>'
-        : '<button class="buy-btn ad" data-action="adItem" data-id="' + f.id + '">看广告</button>';
+    if (owned) {
+      btn = '<button class="buy-btn ' + (eq ? 'equipped' : 'owned') + '" data-action="openDecor" data-slot="' + f.slot + '">' + (eq ? '已摆放' : '布置') + '</button>';
+    } else if (craft) {
+      btn = '<button class="buy-btn ad" data-action="goFishing">去鱼塘打造</button>';
+    } else if (limited) {
+      btn = '<button class="buy-btn ad" data-action="adItem" data-id="' + f.id + '">看广告</button>';
     } else {
-      btn = owned
-        ? '<button class="buy-btn ' + (eq ? 'equipped' : 'owned') + '" data-action="openDecor" data-slot="' + f.slot + '">' + (eq ? '已摆放' : '布置') + '</button>'
-        : '<button class="buy-btn' + (st.fish < f.price ? ' owned' : '') + '" data-action="buyItem" data-id="' + f.id + '">买下</button>';
+      btn = '<button class="buy-btn' + (st.fish < f.price ? ' owned' : '') + '" data-action="buyItem" data-id="' + f.id + '">买下</button>';
     }
     return '<div class="item-card">' +
-      (owned ? '<span class="tag-corner ' + (eq ? 'new' : '') + '">' + (eq ? '已摆放' : '已拥有') + '</span>' : (f.ad ? '<span class="tag-corner ad">限定</span>' : '')) +
+      (owned ? '<span class="tag-corner ' + (eq ? 'new' : '') + '">' + (eq ? '已摆放' : '已拥有') + '</span>'
+        : craft ? '<span class="tag-corner ad">鱼塘限定</span>'
+          : (f.ad ? '<span class="tag-corner ad">限定</span>' : '')) +
       '<div class="item-thumb"><canvas data-item="' + f.id + '"></canvas></div>' +
       '<div class="item-name">' + f.name + '</div>' +
       '<div class="item-desc">' + f.desc + '</div>' +
       '<div class="item-foot">' +
       (owned ? '<span class="tiny">' + slotName(f.slot) + '</span>'
-        : f.ad ? '<span class="tiny">激励视频解锁</span>'
-          : '<span class="price">' + icon('fish') + f.price + '</span>') +
+        : craft ? '<span class="tiny">' + fishCostText(f) + '</span>'
+          : f.ad ? '<span class="tiny">激励视频解锁</span>'
+            : '<span class="price">' + icon('fish') + f.price + '</span>') +
       btn + '</div></div>';
   }
 
@@ -242,17 +253,19 @@ window.PDM = window.PDM || {};
     const body = $('shopBody');
     let html = '';
     if (uiState.shopTab === 'furniture') {
-      html = '<div class="shop-grid">' + core.FURNITURE.filter(f => !f.ad).map(f => furnitureCard(f)).join('') + '</div>';
+      html = '<div class="shop-grid">' + core.FURNITURE.filter(f => !f.ad && !f.fishCost).map(f => furnitureCard(f)).join('') + '</div>';
     } else if (uiState.shopTab === 'outfit') {
       html = '<div class="shop-grid">' + core.OUTFITS.filter(o => !o.ad).map(o => outfitCard(o)).join('') + '</div>';
     } else if (uiState.shopTab === 'food') {
       html = '<div class="tiny shop-note">完成专注会得到免费猫鱼条；不同口味会带来短时加成，喂食时可以选择。</div>' +
         '<div class="shop-grid">' + core.FOODS.map(f => foodCard(f)).join('') + '</div>';
     } else {
-      const adFurn = core.FURNITURE.filter(f => f.ad);
+      const fishFurn = core.FURNITURE.filter(f => f.fishCost);
+      const adFurn = core.FURNITURE.filter(f => f.ad && !f.fishCost);
       const adOutfits = core.OUTFITS.filter(o => o.ad);
       const next = core.nextLockedComic();
       html = '<div class="shop-grid">' +
+        fishFurn.map(f => furnitureCard(f, true)).join('') +
         adFurn.map(f => furnitureCard(f, true)).join('') +
         adOutfits.map(o => outfitCard(o, true)).join('') +
         (next
@@ -261,7 +274,7 @@ window.PDM = window.PDM || {};
           '<button class="buy-btn ad" style="margin-top:6px" data-action="adComic" data-id="' + next.id + '">看广告提前解锁</button></div></div>'
           : '<div class="empty-note">番外已经全部解锁啦，等小喵写新的故事。</div>') +
         '</div>' +
-        '<div class="tiny" style="margin:14px 4px 0;line-height:1.7">限定物品通过激励视频解锁，放在商店里但不会主动弹出。</div>';
+        '<div class="tiny" style="margin:14px 4px 0;line-height:1.7">鱼塘限定只能用钓到的鱼打造；激励视频只解锁服装等视觉变体。</div>';
     }
     body.innerHTML = html;
     hydrate(body);
@@ -282,8 +295,8 @@ window.PDM = window.PDM || {};
         return '<div class="book-card ' + (owned ? '' : 'locked') + '">' +
           '<div class="book-thumb"><canvas data-item="' + f.id + '"></canvas></div>' +
           '<div class="book-name">' + f.name + '</div>' +
-          '<div class="book-meta">' + slotName(f.slot) + ' · ' + (owned ? '已收集' : (f.ad ? '限定' : '商店')) + '</div>' +
-          (owned ? '' : '<div class="lock-veil">' + icon('lock') + '<span>' + (f.ad ? '看广告解锁' : '商店购买') + '</span></div>') +
+          '<div class="book-meta">' + slotName(f.slot) + ' · ' + (owned ? '已收集' : (f.ad ? '限定' : (f.fishCost ? '鱼塘限定' : '商店'))) + '</div>' +
+          (owned ? '' : '<div class="lock-veil">' + icon('lock') + '<span>' + (f.ad ? '看广告解锁' : f.fishCost ? '鱼塘打造' : '商店购买') + '</span></div>') +
           '</div>';
       }).join('') + '</div>';
     } else if (uiState.bookTab === 'outfit') {
@@ -314,7 +327,19 @@ window.PDM = window.PDM || {};
         }).join('') + '</div></div>' +
         '<div class="panel" style="margin-top:12px"><div class="panel-head"><h3>鱼塘笔记</h3></div><div class="tiny" style="line-height:1.8">连续 8 次非稀有会触发保底，40 杆不见传说会大幅提高传说概率；每轮第一次空杆不耗次数。图鉴记录累计钓到的鱼，兑换后也不会消失。</div></div>';
     } else if (uiState.bookTab === 'activity') {
-      html = '<div class="activity-grid">' + core.ACTIVITIES.map(a =>
+      const acts = core.activityInfo();
+      const actDone = acts.filter(a => a.done).length;
+      const actRows = acts.map(a =>
+        '<div class="act-row ' + (a.done ? 'done' : '') + '">' +
+          '<span class="act-check">' + (a.done ? '✓' : '○') + '</span>' +
+          '<div class="act-info"><b>' + a.def.name + '</b><span>' + a.def.desc + '</span></div>' +
+          '<em>' + (a.done ? '已完成' : '+' + a.def.reward + ' 🐟') + '</em>' +
+        '</div>'
+      ).join('');
+      html = '<div class="panel"><div class="panel-head"><h3>互动手册</h3><span class="hint">' + actDone + ' / ' + acts.length + '</span></div>' +
+        '<div class="act-list">' + actRows + '</div>' +
+        '<div class="tiny" style="margin-top:10px;line-height:1.7">每项首次完成 +2 小鱼干；全部 8 项完成再 +10。互动手册只在第一次完成时计数。</div></div>' +
+        '<div class="activity-grid" style="margin-top:12px">' + core.ACTIVITIES.map(a =>
         '<article class="activity-card"><div class="activity-icon">' + a.icon + '</div><div><h3>' + a.name + '</h3><p>' + a.desc + '</p><span>可在小屋中体验</span></div></article>'
       ).join('') + '</div>' +
         '<div class="panel" style="margin-top:12px"><div class="panel-head"><h3>陪伴记录</h3></div><div class="tiny" style="line-height:1.8">小喵的日常不靠抽卡解锁。摸摸、投喂、陪读和布置，都会让房间慢慢变成你们共同生活的地方。</div></div>';
