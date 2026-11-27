@@ -1119,3 +1119,207 @@
 .activity-card h3 { font-size: 13px; font-weight: 700; }
 .activity-card p { margin-top: 4px; color: var(--ink-soft); font-size: 11px; line-height: 1.6; }
 .activity-card span { display: block; margin-top: 5px; color: var(--ink-faint); font-size: 9.5px; }
+
+/* ============ 陪伴活物感：气泡 / 信箱 / 混音台 / 本轮待办 ============ */
+.icon-btn.audio-on { color: var(--coral-deep); border-color: #EFC3B4; background: var(--coral-soft); }
+
+/* 小猫气泡 */
+.cat-bubble {
+  position: absolute;
+  left: 50%; bottom: 30%;
+  transform: translateX(-50%) translateY(5px);
+  max-width: 62%;
+  padding: 7px 11px;
+  border-radius: 12px;
+  background: rgba(255, 253, 248, .96);
+  border: 1px solid rgba(229, 220, 206, .9);
+  box-shadow: 0 5px 16px rgba(80, 56, 40, .14);
+  color: var(--ink);
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
+  z-index: 4;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .26s ease, transform .26s ease, visibility .26s;
+}
+.cat-bubble.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+.cat-bubble::after {
+  content: '';
+  position: absolute;
+  left: 50%; bottom: -5px;
+  width: 9px; height: 9px;
+  margin-left: -5px;
+  background: rgba(255, 253, 248, .96);
+  border-right: 1px solid rgba(229, 220, 206, .9);
+  border-bottom: 1px solid rgba(229, 220, 206, .9);
+  transform: rotate(45deg);
+}
+
+/* 门口信箱 */
+.mail-btn { left: 10px; right: auto; bottom: 48px; width: 32px; padding: 0; justify-content: center; }
+.mail-btn svg { width: 15px; height: 15px; }
+.mail-btn.has-mail { color: var(--coral-deep); border-color: #EFC3B4; }
+.mail-dot {
+  position: absolute; top: -3px; right: -3px;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--coral);
+  box-shadow: 0 0 0 2px #FFFDF8;
+  display: none;
+}
+.mail-btn.has-mail .mail-dot { display: block; }
+#stageWrap.decorating .mail-btn { display: none; }
+@media (max-height: 620px) { .mail-btn { bottom: 44px; } }
+
+/* 信箱卡片 */
+.mail-modal { text-align: left; }
+.mail-head { font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 2px; }
+.mail-sub { font-size: 10.5px; color: var(--ink-faint); text-align: center; margin-bottom: 12px; }
+.mail-card {
+  position: relative;
+  padding: 15px 16px 14px;
+  border-radius: 13px;
+  border: 1px dashed #E3D3BD;
+  background: linear-gradient(165deg, #FFFDF8, #FBF1E3);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .6);
+}
+.mail-weather { font-size: 10.5px; color: var(--ink-faint); margin-bottom: 8px; }
+.mail-hand {
+  font-family: "Kaiti SC", "STKaiti", "Songti SC", serif;
+  font-size: 13px;
+  line-height: 1.95;
+  color: var(--ink);
+  white-space: pre-line;
+}
+.mail-gift {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-top: 11px; padding: 4px 10px;
+  border-radius: 100px;
+  background: var(--honey-soft);
+  color: #B67F35;
+  font-size: 11px; font-weight: 700;
+}
+.mail-gift svg { width: 14px; height: 14px; }
+.mail-modal .reward-actions { margin-top: 14px; }
+
+/* 白噪音混音台 */
+.mix-master {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 2px 2px 13px;
+  border-bottom: 1px dashed var(--line);
+}
+.mix-master .lab { font-size: 12.5px; font-weight: 600; }
+.mix-master .desc { font-size: 9.5px; color: var(--ink-faint); margin-top: 3px; line-height: 1.5; }
+.mix-list { padding: 6px 2px 4px; }
+.mix-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; }
+.mix-name { flex: none; width: 44px; font-size: 12px; font-weight: 600; color: var(--ink); }
+.mix-slider {
+  flex: 1; min-width: 0;
+  height: 22px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  outline: none;
+}
+.mix-slider::-webkit-slider-runnable-track {
+  height: 4px; border-radius: 100px;
+  background: #EADFD1;
+}
+.mix-slider::-moz-range-track { height: 4px; border-radius: 100px; background: #EADFD1; }
+.mix-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 17px; height: 17px;
+  margin-top: -6.5px;
+  border-radius: 50%;
+  background: var(--coral);
+  border: 2px solid #FFFDF8;
+  box-shadow: 0 1px 5px rgba(120, 82, 54, .28);
+}
+.mix-slider::-moz-range-thumb {
+  width: 15px; height: 15px;
+  border-radius: 50%;
+  background: var(--coral);
+  border: 2px solid #FFFDF8;
+  box-shadow: 0 1px 5px rgba(120, 82, 54, .28);
+}
+.mix-val { flex: none; width: 36px; text-align: right; font-size: 11px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+.mix-note { margin: 8px 2px 0; font-size: 9.5px; line-height: 1.7; color: var(--ink-faint); }
+.mix-sfx { border-top: 1px dashed var(--line); margin-top: 4px; }
+
+/* 本轮待办 */
+.todo-box {
+  margin: 0 0 7px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--card-soft);
+  overflow: hidden;
+}
+.todo-head {
+  width: 100%;
+  height: 26px;
+  padding: 0 9px;
+  display: flex; align-items: center; gap: 6px;
+  color: var(--ink-soft);
+  font-size: 10.5px;
+  font-weight: 700;
+  font-family: inherit;
+}
+.todo-title { flex: none; }
+.todo-count {
+  font-style: normal;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+.todo-toggle { margin-left: auto; font-style: normal; font-size: 9.5px; color: var(--coral-deep); }
+.todo-box.active .todo-toggle { display: none; }
+.todo-list { display: none; padding: 3px 7px 7px; }
+.todo-box.open .todo-list { display: block; }
+.todo-item {
+  width: 100%;
+  display: flex; align-items: center; gap: 7px;
+  min-height: 27px;
+  padding: 2px 5px;
+  border-radius: 7px;
+  color: var(--ink);
+  font-size: 11px;
+  font-family: inherit;
+  text-align: left;
+}
+.todo-item i { flex: none; font-style: normal; font-size: 12px; color: var(--ink-faint); }
+.todo-item span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.todo-item.done i { color: var(--sage-deep); }
+.todo-item.done span { color: var(--ink-faint); text-decoration: line-through; }
+.todo-empty { padding: 4px 6px 6px; font-size: 10px; color: var(--ink-faint); }
+.todo-edit-row { display: flex; align-items: center; gap: 5px; margin-bottom: 5px; }
+.todo-input {
+  flex: 1; min-width: 0;
+  height: 29px;
+  padding: 0 9px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  font-size: 12px;
+  font-family: inherit;
+}
+.todo-del {
+  flex: none;
+  width: 24px; height: 24px;
+  border-radius: 6px;
+  color: var(--ink-faint);
+  font-size: 15px;
+  line-height: 1;
+}
+.todo-add {
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 6px;
+  color: var(--coral-deep);
+  font-size: 10px;
+  font-weight: 700;
+  font-family: inherit;
+}
+.todo-input::placeholder { color: #BDB4A4; }

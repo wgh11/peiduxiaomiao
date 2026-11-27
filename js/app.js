@@ -34,8 +34,25 @@ window.PDM = window.PDM || {};
     drag: null,
     decorUndo: [],
     lastTouched: null,
-    debug: false
+    debug: false,
+    bubbleAt: 0,
+    bubbleTimer: 0,
+    justFinishedAt: 0,
+    todoDraft: [],
+    todoOpen: false
   };
+
+  const TODO_KEY = 'pdm.todos.v1';
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  function randOf(list) {
+    return list[Math.floor(Math.random() * list.length)];
+  }
 
   const CAT_LABEL = {
     idle: '小喵在旁边安静坐着',
@@ -154,6 +171,10 @@ window.PDM = window.PDM || {};
   }
 
   function tickCat(now) {
+    if (!document.hidden && now > app.bubbleAt) {
+      app.bubbleAt = now + 30000 + Math.random() * 30000;
+      showBubble(bubbleLine());
+    }
     ['petUntil', 'eatUntil', 'playUntil', 'napUntil'].forEach(k => {
       if (app[k] && now > app[k]) {
         app[k] = 0;
@@ -308,6 +329,7 @@ window.PDM = window.PDM || {};
         pausedAt: s.pausedAt || 0,
         breakShown: s.breakShown || 0,
         hiddenAt: s.hiddenAt || 0,
+        todos: Array.isArray(s.todos) ? s.todos : [],
         savedAt: Date.now()
       }));
     } catch (e) {}
@@ -337,6 +359,7 @@ window.PDM = window.PDM || {};
     s.pausedAt = s.pausedAt || 0;
     s.tag = s.tag || '';
     s.breakShown = s.breakShown || 0;
+    if (!Array.isArray(s.todos)) s.todos = [];
     if (!s.pausedAt) {
       // 严格模式也记录离开时长；自由模式用于暂停，严格模式仅用于展示
       s.awayMs = (s.awayMs || 0) + Math.max(0, Date.now() - savedAt);
@@ -356,6 +379,7 @@ window.PDM = window.PDM || {};
     setCatState(s.pausedAt ? 'idle' : 'read');
     app.catNextAt = performance.now() + 9000;
     updateTimerUI();
+    renderTodos();
     if (!s.pausedAt && sessionRemainSec() <= 0) {
       finishSession(true);
     } else {
@@ -448,6 +472,11 @@ window.PDM = window.PDM || {};
     if (app.session) return;
     const min = app.selMin;
     const tag = currentTag();
+    const todos = app.todoDraft
+      .map(t => String(t || '').trim())
+      .filter(Boolean)
+      .slice(0, 3)
+      .map(t => ({ text: t, done: false }));
     app.session = {
       durationSec: min * 60,
       startedAt: Date.now(),
@@ -458,7 +487,8 @@ window.PDM = window.PDM || {};
       breakShown: 0,
       tag: tag,
       left: false,
-      mode: currentStudyMode()
+      mode: currentStudyMode(),
+      todos: todos
     };
     const st = core.state();
     st.settings.lastTag = tag;
@@ -479,6 +509,10 @@ window.PDM = window.PDM || {};
     app.celebrateUntil = 0;
     setCatState('read');
     app.catNextAt = performance.now() + 9000;
+    renderTodos();
+    if (PDM.audio) PDM.audio.ensure();
+    showBubble(randOf(['那就开始吧，我陪你。', '坐好啦，我们开始。', '这一轮我安静陪着。']));
+    app.bubbleAt = performance.now() + 30000 + Math.random() * 30000;
     showStageTip('小猫坐好了，开始陪读吧', 2600);
     updateTimerUI();
     ui.toast(app.session.mode === 'strict'
@@ -510,6 +544,11 @@ window.PDM = window.PDM || {};
     app.celebrateUntil = performance.now() + 7000;
     setCatState('celebrate');
     app.catNextAt = performance.now() + 7500;
+    app.justFinishedAt = performance.now();
+    showBubble(randOf(BUBBLE.finish));
+    app.todoDraft = [];
+    saveTodoDraft();
+    renderTodos();
 
     if (minutes < 1) {
       core.logEvent('focus_partial', { minutes: 0, away: awaySec });
@@ -549,6 +588,7 @@ window.PDM = window.PDM || {};
     updateTimerUI();
     refreshAll();
     showReward(summary);
+    if (PDM.audio) PDM.audio.playSfx('ding');
     sendCatHomeLater(7400);
   }
 
@@ -716,6 +756,321 @@ window.PDM = window.PDM || {};
     }, ms || 2200);
   }
 
+  /* ---------------- 小猫气泡 ---------------- */
+  const BUBBLE = {
+    focus: [
+      '我就安静趴着，你专心～',
+      '这页快看完啦，我陪你。',
+      '要不要先喝口水？',
+      '你的笔尖沙沙的，好安心。',
+      '累了就伸个懒腰，我不走。'
+    ],
+    focusTag: {
+      '英语': ['今天背了几个词呀？', '单词一个一个来，别急。', '背完这组，我陪你歇会儿。'],
+      '阅读': ['看到哪一页啦？', '慢慢读，我在旁边。', '这段话有点长，我等你。'],
+      '刷题': ['这道题绕，先跳过也行。', '错题我都帮你记着。', '写完这题就喝口水吧。'],
+      '写作': ['写累了就伸个懒腰～', '写到哪儿啦，给我看看？', '卡住也正常，先写下一句。'],
+      '复习': ['复习完记得给自己一颗小星星。', '昨天的错题今天再看一眼？', '慢慢回顾，记得更牢。'],
+      '其他': ['不管学什么，我都在。', '你专心的样子最好看。']
+    },
+    finish: [
+      '辛苦啦！今天也超棒。',
+      '先伸个懒腰，喝口水吧。',
+      '小猫替你转了个圈～',
+      '这一轮收好啦，休息一下。'
+    ],
+    late: [
+      '都这么晚啦，早点睡好不好？',
+      '明天再战，我陪你睡。',
+      '深夜学习伤眼睛，收一收吧。',
+      '我把灯调暗一点，去睡吧。'
+    ],
+    streak: [
+      '已经连续 {n} 天啦，我记得哦。',
+      '今天也来啦，我们连着第 {n} 天了！',
+      '第 {n} 天，尾巴都翘起来了。'
+    ],
+    idle: [
+      '今天想学点什么呀？',
+      '我在这儿等你开始。',
+      '摸摸我也可以～',
+      '窗户外的光刚刚好。',
+      '要不要先坐 25 分钟？'
+    ],
+    pet: [
+      '呼噜呼噜～',
+      '再摸一下嘛。',
+      '这里最舒服啦。',
+      '嘿嘿，你的手好暖。'
+    ]
+  };
+
+  function bubbleLine() {
+    const h = new Date().getHours();
+    const st = core.state();
+    const s = app.session;
+    const streak = core.computeStreak(st);
+    if (h >= 23 || h < 5) {
+      if (Math.random() < 0.7) return randOf(BUBBLE.late);
+    }
+    if (s) {
+      const tag = s.tag;
+      if (tag && BUBBLE.focusTag[tag] && Math.random() < 0.5) return randOf(BUBBLE.focusTag[tag]);
+      return randOf(BUBBLE.focus);
+    }
+    if (app.justFinishedAt && performance.now() - app.justFinishedAt < 90000 && Math.random() < 0.55) {
+      return randOf(BUBBLE.finish);
+    }
+    if (streak >= 3 && Math.random() < 0.45) return randOf(BUBBLE.streak).replace('{n}', streak);
+    return randOf(BUBBLE.idle);
+  }
+
+  function showBubble(text) {
+    const el = $('catBubble');
+    if (!el || !text) return;
+    el.textContent = text;
+    el.classList.add('show');
+    clearTimeout(app.bubbleTimer);
+    app.bubbleTimer = setTimeout(() => el.classList.remove('show'), 4400);
+  }
+
+  /* ---------------- 本轮待办 ---------------- */
+  function loadTodoDraft() {
+    let arr = [];
+    try {
+      const raw = localStorage.getItem(TODO_KEY);
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (Array.isArray(p)) arr = p.slice(0, 3).map(v => String(v == null ? '' : v).slice(0, 30));
+      }
+    } catch (e) {}
+    app.todoDraft = arr;
+  }
+
+  function saveTodoDraft() {
+    try { localStorage.setItem(TODO_KEY, JSON.stringify(app.todoDraft.slice(0, 3))); } catch (e) {}
+  }
+
+  function renderTodos() {
+    const box = $('todoBox');
+    const list = $('todoList');
+    const countEl = $('todoCount');
+    const toggle = $('todoToggle');
+    if (!box || !list) return;
+    const s = app.session;
+    const active = !!s;
+    box.classList.toggle('active', active);
+    if (active) {
+      box.classList.add('open');
+      const todos = Array.isArray(s.todos) ? s.todos : [];
+      if (todos.length) {
+        list.innerHTML = todos.map((t, i) =>
+          '<button class="todo-item ' + (t.done ? 'done' : '') + '" data-todo="' + i + '" type="button">' +
+          '<i>' + (t.done ? '✓' : '○') + '</i><span>' + esc(t.text) + '</span></button>').join('');
+        countEl.textContent = todos.filter(t => t.done).length + '/' + todos.length;
+      } else {
+        list.innerHTML = '<div class="todo-empty">这轮没写待办，专注本身就很棒。</div>';
+        countEl.textContent = '';
+      }
+      return;
+    }
+    box.classList.toggle('open', !!app.todoOpen);
+    const draft = app.todoDraft;
+    countEl.textContent = draft.filter(t => String(t || '').trim()).length + '/3';
+    if (toggle) toggle.textContent = app.todoOpen ? '收起' : '展开';
+    if (!app.todoOpen) { list.innerHTML = ''; return; }
+    if (!draft.length) { app.todoDraft.push(''); saveTodoDraft(); }
+    const rows = app.todoDraft.map((t, i) =>
+      '<div class="todo-edit-row">' +
+      '<input class="todo-input" data-todo-in="' + i + '" maxlength="30" placeholder="第 ' + (i + 1) + ' 条要做的事" value="' + esc(t) + '">' +
+      '<button class="todo-del" data-action="todoDel" data-idx="' + i + '" type="button" aria-label="删除">×</button>' +
+      '</div>').join('');
+    const add = app.todoDraft.length < 3
+      ? '<button class="todo-add" data-action="todoAdd" type="button">＋ 再加一条</button>' : '';
+    list.innerHTML = rows + add;
+  }
+
+  function toggleTodo(i) {
+    const s = app.session;
+    if (!s || !Array.isArray(s.todos) || !s.todos[i]) return;
+    const t = s.todos[i];
+    t.done = !t.done;
+    persistSession();
+    renderTodos();
+    if (t.done) {
+      app.celebrateUntil = performance.now() + 1600;
+      setCatState('cheer');
+      app.catNextAt = performance.now() + 1900;
+      showStageTip('又完成一件，小猫原地欢呼！', 2000);
+      showBubble(randOf(['好厉害！又勾掉一件～', '干得漂亮，我替你转圈圈！', '这一条也完成啦！']));
+      if (PDM.audio) PDM.audio.playSfx('ding');
+    }
+  }
+
+  function addTodoRow() {
+    if (app.session) return;
+    if (app.todoDraft.length >= 3) return;
+    app.todoDraft.push('');
+    app.todoOpen = true;
+    saveTodoDraft();
+    renderTodos();
+    setTimeout(() => {
+      const list = $('todoList');
+      if (!list) return;
+      const inputs = list.querySelectorAll('.todo-input');
+      const el = inputs[inputs.length - 1];
+      if (el) el.focus();
+    }, 30);
+  }
+
+  function delTodoRow(i) {
+    if (app.session) return;
+    app.todoDraft.splice(i, 1);
+    saveTodoDraft();
+    renderTodos();
+  }
+
+  /* ---------------- 每日离线小事件 ---------------- */
+  function yesterdayStats() {
+    const y = core.addDays(core.dateKey(), -1);
+    const map = {};
+    let total = 0;
+    (core.state().sessions || []).forEach(s => {
+      if (s.date !== y) return;
+      const tag = s.tag || '学习';
+      map[tag] = (map[tag] || 0) + (s.minutes || 0);
+      total += s.minutes || 0;
+    });
+    const keys = Object.keys(map);
+    keys.sort((a, b) => map[b] - map[a]);
+    return { min: total, tag: keys.length ? keys[0] : '' };
+  }
+
+  function pickWeather() {
+    const tod = PDM.room.tod();
+    let pool;
+    if (tod.night) pool = ['夜里很安静，星星很亮', '窗外的灯一盏一盏暗下去', '风把窗帘吹得轻轻的'];
+    else if (tod.dusk) pool = ['傍晚的天有一点橘', '窗外有人慢慢走过', '晚风有一点点凉'];
+    else if (tod.key === 'morning') pool = ['清晨的光很软', '窗外有鸟在叫', '今天看起来是个好天气'];
+    else pool = ['今天窗外阳光很好', '云慢慢地飘过去', '风把窗帘吹起来了'];
+    return randOf(pool);
+  }
+
+  function ensureDailyMail() {
+    const st = core.state();
+    const today = core.dateKey();
+    if (st.mail && st.mail.date === today) return;
+    const hasHistory = (st.sessions || []).length > 0 || (st.checkins || []).length > 0;
+    const y = yesterdayStats();
+    const weather = pickWeather();
+    const gift = hasHistory ? 3 + Math.floor(Math.random() * 3) : 0;
+    let note;
+    if (y.min > 0) {
+      note = '昨天你学了 ' + y.min + ' 分钟' + (y.tag ? '，大部分在' + y.tag : '') + '。\n我趴在旁边，把尾巴收得整整齐齐。' +
+        (y.min >= 60 ? '\n你真厉害。' : '\n今天也一起慢慢来吧。');
+    } else if (hasHistory) {
+      note = '昨天没见到你，我把你的坐垫拍了拍。\n今天要不要一起坐一会儿？';
+    } else {
+      note = '喵～我是小喵。\n以后你学习的时候，我就在旁边陪着。';
+    }
+    st.mail = { date: today, claimed: !hasHistory, gift: gift, tag: y.tag, min: y.min, weather: weather, note: note };
+    core.save();
+  }
+
+  function updateMailBadge() {
+    const b = $('btnMail');
+    if (!b) return;
+    const m = core.state().mail || {};
+    b.classList.toggle('has-mail', !!(m.gift > 0 && !m.claimed));
+  }
+
+  function openMail() {
+    const st = core.state();
+    const m = st.mail;
+    if (!m || m.date !== core.dateKey()) {
+      ui.toast('信箱今天还空着，明天再来看看', 2200);
+      return;
+    }
+    const giftHtml = m.gift > 0
+      ? '<div class="mail-gift">' + ui.icon('fish') + ' +' + m.gift + ' 小鱼干</div>'
+      : '';
+    const actions = (m.gift > 0 && !m.claimed)
+      ? '<button class="btn primary" data-action="claimMail">收下小礼物</button>' +
+        '<button class="btn ghost" data-action="closeModal">等会儿再收</button>'
+      : '<button class="btn primary" data-action="closeModal">合上信箱</button>';
+    ui.openModal(
+      '<div class="mail-modal">' +
+      '<div class="mail-head">门口的小信箱</div>' +
+      '<div class="mail-sub">小喵在你不在的时候，偷偷留了一张纸条</div>' +
+      '<div class="mail-card">' +
+      '<div class="mail-weather">' + esc(m.weather || '') + '</div>' +
+      '<div class="mail-hand">' + esc(m.note || '') + '</div>' +
+      giftHtml +
+      '</div>' +
+      '<div class="reward-actions">' + actions + '</div>' +
+      '</div>');
+  }
+
+  function claimMail() {
+    const st = core.state();
+    const m = st.mail;
+    if (!m || m.claimed || !(m.gift > 0)) {
+      ui.closeModal();
+      return;
+    }
+    const gift = m.gift;
+    core.addBonusFish(gift, 'daily_mail');
+    m.claimed = true;
+    core.save();
+    updateMailBadge();
+    refreshAll();
+    if (PDM.audio) PDM.audio.playSfx('coin');
+    ui.closeModal();
+    ui.toast('收下小喵叼来的 ' + gift + ' 条小鱼干，今天也一起加油', 2600);
+    showBubble('嘿嘿，小鱼干收好啦～');
+  }
+
+  function maybeAutoMail() {
+    const st = core.state();
+    const m = st.mail;
+    if (!m || !st.settings.welcomeDone) return;
+    if (m.date !== core.dateKey() || m.claimed || !(m.gift > 0)) return;
+    if (document.hidden) return;
+    openMail();
+  }
+
+  /* ---------------- 环境音混音台 ---------------- */
+  function updateSoundBtn() {
+    const b = $('btnSound');
+    if (!b || !PDM.audio) return;
+    const on = PDM.audio.isOn();
+    b.classList.toggle('audio-on', on);
+    b.innerHTML = '<svg><use href="#' + (on ? 'i-sound' : 'i-mute') + '"/></svg>';
+  }
+
+  function openMixer() {
+    if (!PDM.audio) { ui.toast('当前环境不支持环境音', 2000); return; }
+    const info = PDM.audio.mixerInfo();
+    const rows = info.layers.map(l =>
+      '<div class="mix-row">' +
+      '<span class="mix-name">' + l.name + '</span>' +
+      '<input class="mix-slider" type="range" min="0" max="100" step="1" value="' + l.vol + '" data-mix="' + l.id + '">' +
+      '<b class="mix-val" id="mixVal-' + l.id + '">' + l.vol + '%</b>' +
+      '</div>').join('');
+    ui.openSheet('环境音混音台',
+      '<div class="mix-master">' +
+      '<div><div class="lab">环境音</div><div class="desc">5 条声音可叠加，拖动滑块单独调音量</div></div>' +
+      '<div class="switch ' + (info.on ? 'on' : '') + '" data-action="toggleAmbient"></div>' +
+      '</div>' +
+      '<div class="mix-list">' + rows + '</div>' +
+      '<div class="mix-note">点击右上角小喇叭可以随时开关；环境音为实时合成，不额外下载音频，包体更小。</div>' +
+      '<div class="set-row mix-sfx" style="margin-top:10px">' +
+      '<div><div class="lab">轻音效</div><div class="desc">摸摸咕噜、按钮点击、专注完成叮咚、钓鱼水花、获得鱼干</div></div>' +
+      '<div class="switch ' + (info.sfx ? 'on' : '') + '" data-action="toggleSfx"></div>' +
+      '</div>' +
+      '<p class="tiny" style="margin-top:12px;line-height:1.7">首次打开需要点一下页面，浏览器才允许播放声音。</p>');
+  }
+
   /* ---------------- refresh ---------------- */
   function refreshAll() {
     ui.refreshHeader();
@@ -732,6 +1087,8 @@ window.PDM = window.PDM || {};
     }
     updatePetBar();
     updateGoalChip();
+    updateMailBadge();
+    renderTodos();
   }
 
   /* ---------------- welcome ---------------- */
@@ -749,6 +1106,7 @@ window.PDM = window.PDM || {};
     setCatState('idle');
     app.catNextAt = performance.now() + 6000;
     setTimeout(() => showStageTip('点「开始陪读」，我会安静的', 2600), 500);
+    setTimeout(maybeAutoMail, 900);
   }
 
   /* ---------------- duration / speed ---------------- */
@@ -1108,6 +1466,7 @@ window.PDM = window.PDM || {};
         if (!r.ok) { ui.toast(r.reason === 'claimed' ? '今天的目标奖励已经领过了' : '还有目标没完成', 2200); break; }
         refreshAll();
         ui.toast('今日目标完成 · +' + r.reward + ' 小鱼干', 2400);
+        if (PDM.audio) PDM.audio.playSfx('coin');
         openGoals();
         break;
       }
@@ -1116,7 +1475,27 @@ window.PDM = window.PDM || {};
         if (!r.ok) { ui.toast(r.reason === 'claimed' ? '本周奖励已经领过了' : '本周专注天数还不够', 2200); break; }
         refreshAll();
         ui.toast('本周目标完成 · +' + r.reward + ' 小鱼干', 2400);
+        if (PDM.audio) PDM.audio.playSfx('coin');
         openGoals();
+        break;
+      }
+      case 'claimMail': {
+        claimMail();
+        break;
+      }
+      case 'toggleAmbient': {
+        const on = PDM.audio ? PDM.audio.setOn(!PDM.audio.isOn()) : false;
+        updateSoundBtn();
+        const sw = el.classList.contains('switch') ? el : el.closest('.switch');
+        if (sw) sw.classList.toggle('on', on);
+        ui.toast(on ? '环境音已开启，可以叠着听' : '环境音已关闭', 1800);
+        break;
+      }
+      case 'toggleSfx': {
+        const on = PDM.audio ? PDM.audio.setSfx(!PDM.audio.isSfxOn()) : false;
+        const sw = el.classList.contains('switch') ? el : el.closest('.switch');
+        if (sw) sw.classList.toggle('on', on);
+        ui.toast(on ? '轻音效已开启' : '轻音效已关闭', 1600);
         break;
       }
       case 'catHouseUpgrade': {
@@ -1242,6 +1621,9 @@ window.PDM = window.PDM || {};
     setCatState('pet');
     core.interact('pet');
     updatePetBar();
+    if (PDM.audio) PDM.audio.playSfx('purr');
+    showBubble(randOf(BUBBLE.pet));
+    app.bubbleAt = performance.now() + 26000;
     showStageTip('呼噜呼噜…小喵把头蹭过来', 1900);
   }
 
@@ -1548,6 +1930,47 @@ window.PDM = window.PDM || {};
       rotateCurrent();
     });
     $('btnSettings').addEventListener('click', () => ui.openSettings());
+    $('btnSound').addEventListener('click', openMixer);
+    $('btnMail').addEventListener('click', openMail);
+    $('todoHead').addEventListener('click', () => {
+      if (app.session) return;
+      app.todoOpen = !app.todoOpen;
+      renderTodos();
+    });
+    $('todoList').addEventListener('click', e => {
+      const item = e.target.closest('[data-todo]');
+      if (item) { toggleTodo(Number(item.dataset.todo)); return; }
+      if (e.target.closest('[data-action="todoAdd"]')) { addTodoRow(); return; }
+      const del = e.target.closest('[data-action="todoDel"]');
+      if (del) { delTodoRow(Number(del.dataset.idx)); return; }
+    });
+    $('todoList').addEventListener('input', e => {
+      const inp = e.target.closest('.todo-input');
+      if (!inp) return;
+      app.todoDraft[Number(inp.dataset.todoIn)] = inp.value.slice(0, 30);
+      saveTodoDraft();
+      const countEl = $('todoCount');
+      if (countEl) countEl.textContent = app.todoDraft.filter(t => String(t || '').trim()).length + '/3';
+    });
+    document.addEventListener('input', e => {
+      const sl = e.target.closest('.mix-slider');
+      if (!sl || !PDM.audio) return;
+      const id = sl.dataset.mix;
+      const v = PDM.audio.setVolume(id, sl.value);
+      const val = $('mixVal-' + id);
+      if (val) val.textContent = v + '%';
+    });
+    // 首次手势后再创建 AudioContext，避免浏览器拦截自动播放
+    const unlockAudio = () => { if (PDM.audio) PDM.audio.ensure(); };
+    document.addEventListener('pointerdown', unlockAudio, { once: true, passive: true });
+    document.addEventListener('touchstart', unlockAudio, { once: true, passive: true });
+    // 通用按钮点击音效（宠物按钮自己播呼噜，待办勾选自己播叮咚）
+    document.addEventListener('click', e => {
+      const b = e.target.closest('button');
+      if (!b || b.disabled) return;
+      if (b.dataset.pet || b.hasAttribute('data-todo')) return;
+      if (PDM.audio) PDM.audio.playSfx('click');
+    }, true);
     $('btnShare').addEventListener('click', openShare);
     $('speedChip').addEventListener('click', toggleSpeed);
     $('durationChips').addEventListener('click', e => {
@@ -1598,7 +2021,7 @@ window.PDM = window.PDM || {};
       const el = e.target.closest('[data-action]');
       if (!el) return;
       const action = el.dataset.action;
-      if (action === 'closeModal' || action === 'confirmReset' || action === 'confirmStop' || action === 'adDouble' || action.startsWith('ad') || action.startsWith('buy') || action.startsWith('decor') || action === 'openDecor' || action === 'comic' || action === 'makeup' || action === 'toggleSpeed' || action === 'toggleBreak' || action === 'exportSave' || action === 'confirmCustomMin' || action === 'share' || action === 'analytics' || action === 'resetData' || action === 'closeReward' || action === 'goShop' || action === 'wearOutfit' || action === 'closeWelcome' || action === 'goStart' || action === 'goFishing' || action === 'goals' || action === 'claimDailyGoals' || action === 'claimWeeklyGoal' || action === 'catHouseUpgrade' || action === 'catHouseVisit' || action === 'feedFood') {
+      if (action === 'closeModal' || action === 'confirmReset' || action === 'confirmStop' || action === 'adDouble' || action.startsWith('ad') || action.startsWith('buy') || action.startsWith('decor') || action === 'openDecor' || action === 'comic' || action === 'makeup' || action === 'toggleSpeed' || action === 'toggleBreak' || action === 'exportSave' || action === 'confirmCustomMin' || action === 'share' || action === 'analytics' || action === 'resetData' || action === 'closeReward' || action === 'goShop' || action === 'wearOutfit' || action === 'closeWelcome' || action === 'goStart' || action === 'goFishing' || action === 'goals' || action === 'claimDailyGoals' || action === 'claimWeeklyGoal' || action === 'catHouseUpgrade' || action === 'catHouseVisit' || action === 'feedFood' || action === 'claimMail' || action === 'toggleAmbient' || action === 'toggleSfx') {
         if (el.tagName === 'BUTTON' || el.classList.contains('switch') || el.dataset.action === 'openDecor') e.preventDefault();
         handleAction(action, el);
       }
@@ -1631,6 +2054,7 @@ window.PDM = window.PDM || {};
   /* ---------------- boot ---------------- */
   function boot() {
     core.load();
+    loadTodoDraft();
     app.debug = /(?:\?|&)debug=1(?:&|$)/.test(location.search);
     const savedSpeed = Number(core.state().settings.speed) || 1;
     app.speed = app.debug ? (savedSpeed > 1 ? savedSpeed : 1) : 1;
@@ -1640,6 +2064,7 @@ window.PDM = window.PDM || {};
       core.save();
     }
     ui.init();
+    ensureDailyMail();
     core._onAchievements = list => {
       if (!list || !list.length) return;
       if (app.settling) return; // 结算卡里统一展示
@@ -1652,10 +2077,13 @@ window.PDM = window.PDM || {};
     updateSpeedChip();
     updateModeUI();
     updatePetBar();
+    updateSoundBtn();
     updateTimerUI();
     setCatState('idle');
     app.catNextAt = performance.now() + 7000;
+    app.bubbleAt = performance.now() + 18000;
     refreshAll();
+    renderTodos();
     core.logEvent('open', {});
     core.save();
     restoreSession();
@@ -1683,6 +2111,8 @@ window.PDM = window.PDM || {};
     }, 250);
     if (!core.state().settings.welcomeDone) {
       setTimeout(showWelcome, 350);
+    } else {
+      setTimeout(maybeAutoMail, 1300);
     }
   }
 

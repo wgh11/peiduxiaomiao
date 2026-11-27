@@ -129,6 +129,7 @@ window.PDM = window.PDM || {};
     G.phase = 'recover';
     G.nextAt = performance.now() + 950;
     G.splash = performance.now();
+    if (PDM.audio) PDM.audio.playSfx('splash');
     floatText(r && r.free ? '第一次空杆，不耗次数' : (msg || '鱼儿溜走了'), 'miss');
     syncHud();
   }
@@ -137,6 +138,7 @@ window.PDM = window.PDM || {};
     if (G.phase === 'waiting' && ts >= G.biteAt) {
       G.phase = 'bite';
       G.biteUntil = ts + 1150;
+      if (PDM.audio) PDM.audio.playSfx('splash');
       syncHud();
     } else if (G.phase === 'bite' && ts >= G.biteUntil) {
       miss('收竿慢了一点点');

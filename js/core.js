@@ -282,6 +282,7 @@ window.PDM = window.PDM || {};
       streakAwards: [],
       makeupUsed: '',
       settings: { speed: 1, speedSet: false, welcomeDone: false, studyMode: 'strict', modeChosen: false, breakRemind: true, lastTag: '阅读' },
+      mail: { date: '', claimed: true, gift: 0, tag: '', min: 0, weather: '', note: '' },
       fishing: defaultFishing(),
       events: [],
       created: new Date().toISOString()
@@ -323,6 +324,7 @@ window.PDM = window.PDM || {};
         state.catHouse = Object.assign({ tier: 0, rot: 0.34 }, (parsed.catHouse && typeof parsed.catHouse === 'object') ? parsed.catHouse : {});
         state.catHouse.tier = Math.max(0, Math.min(2, Number(state.catHouse.tier) || 0));
         state.catHouse.rot = Number.isFinite(Number(state.catHouse.rot)) ? Number(state.catHouse.rot) : 0.34;
+        state.mail = Object.assign({ date: '', claimed: true, gift: 0, tag: '', min: 0, weather: '', note: '' }, (parsed.mail && typeof parsed.mail === 'object') ? parsed.mail : {});
         state.activities = Array.isArray(parsed.activities) ? parsed.activities.filter(x => ACTIVITY_TASKS.some(t => t.id === x)) : [];
         state.activityBonusDone = !!parsed.activityBonusDone;
         ensureGoals();
