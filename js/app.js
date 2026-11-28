@@ -617,6 +617,11 @@ window.PDM = window.PDM || {};
 
   function saveShare() {
     const canvas = $('shareCanvas');
+    if (PDM.wxBridge && PDM.wxBridge.isWebView) {
+      PDM.wxBridge.saveImage({ dataUrl: canvas.toDataURL('image/png') });
+      ui.toast('已请求微信保存图片，请按提示授权', 2200);
+      return;
+    }
     canvas.toBlob(blob => {
       if (!blob) return;
       const url = URL.createObjectURL(blob);
@@ -633,6 +638,11 @@ window.PDM = window.PDM || {};
 
   function nativeShare() {
     const canvas = $('shareCanvas');
+    if (PDM.wxBridge && PDM.wxBridge.isWebView) {
+      PDM.wxBridge.share({ title: '陪读小喵 · 和小喵一起学习一会儿', path: '/pages/index/index' });
+      ui.toast('请使用微信右上角菜单分享小喵', 2400);
+      return;
+    }
     canvas.toBlob(async blob => {
       if (!blob) return;
       const file = new File([blob], '陪读小喵.png', { type: 'image/png' });
@@ -1514,6 +1524,7 @@ window.PDM = window.PDM || {};
     core.logEvent('open', {});
     core.save();
     restoreSession();
+    if (window.__pdmBoot && window.__pdmBoot.done) window.__pdmBoot.done();
     setInterval(() => {
       if (app.session) {
         updateTimerUI();
