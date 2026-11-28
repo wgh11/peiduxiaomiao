@@ -1,0 +1,432 @@
+/* ==========================================================================
+   陪读小喵 · 治愈与陪伴增强模块样式 (css/healing.css)
+   适配竖屏暖色调自习室，零侵入原布局，支持 2D / 3D 双模式
+   ========================================================================== */
+
+:root {
+  --pdm-heal-bg: rgba(255, 250, 242, 0.88);
+  --pdm-heal-bg-strong: rgba(255, 249, 240, 0.96);
+  --pdm-heal-border: rgba(214, 180, 140, 0.42);
+  --pdm-heal-text: #5b4332;
+  --pdm-heal-sub: #8c6d56;
+  --pdm-heal-accent: #e59866;
+  --pdm-heal-accent-soft: rgba(229, 152, 102, 0.18);
+  --pdm-heal-shadow: 0 8px 26px rgba(91, 67, 50, 0.14);
+  --pdm-heal-radius: 18px;
+}
+
+/* 1. 全屏昼夜氛围光影与粒子层（绝对不阻挡点击） */
+#pdm-heal-atmosphere {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 12;
+  transition: background 1.2s ease, opacity 1.2s ease;
+  mix-blend-mode: multiply;
+  opacity: 0.72;
+}
+
+#pdm-heal-atmosphere[data-period="morning"] {
+  background: radial-gradient(circle at 78% 16%, rgba(255, 246, 214, 0.34), rgba(255, 238, 206, 0.08) 55%, rgba(235, 244, 255, 0.08) 100%);
+}
+
+#pdm-heal-atmosphere[data-period="afternoon"] {
+  background: radial-gradient(circle at 82% 24%, rgba(255, 224, 168, 0.30), rgba(255, 236, 204, 0.08) 58%, rgba(255, 248, 235, 0.02) 100%);
+}
+
+#pdm-heal-atmosphere[data-period="dusk"] {
+  background: linear-gradient(160deg, rgba(255, 174, 118, 0.24) 0%, rgba(235, 146, 128, 0.16) 52%, rgba(118, 92, 134, 0.16) 100%);
+}
+
+#pdm-heal-atmosphere[data-period="night"] {
+  background: radial-gradient(circle at 50% 58%, rgba(255, 206, 138, 0.14) 0%, rgba(44, 52, 84, 0.28) 62%, rgba(24, 29, 52, 0.44) 100%);
+}
+
+#pdm-heal-atmosphere[data-period="night"][data-lamp="on"] {
+  background: radial-gradient(circle at 52% 52%, rgba(255, 214, 146, 0.22) 0%, rgba(255, 186, 108, 0.08) 32%, rgba(36, 43, 72, 0.30) 70%, rgba(22, 26, 46, 0.42) 100%);
+}
+
+#pdm-heal-atmosphere[data-period="off"] {
+  background: transparent;
+  opacity: 0;
+}
+
+#pdm-heal-particles {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 13;
+}
+
+/* 2. 右上/侧边轻盈治愈悬浮胶囊 */
+#pdm-heal-dock {
+  position: fixed;
+  right: 12px;
+  top: max(68px, calc(env(safe-area-inset-top, 0px) + 64px));
+  z-index: 820;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+
+.pdm-heal-pill-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: var(--pdm-heal-bg);
+  border: 1px solid var(--pdm-heal-border);
+  box-shadow: var(--pdm-heal-shadow);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.pdm-heal-icon-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--pdm-heal-text);
+  font-size: 13px;
+  line-height: 1;
+  padding: 6px 9px;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.2s ease, transform 0.16s ease, color 0.2s ease;
+  white-space: nowrap;
+}
+
+.pdm-heal-icon-btn:hover {
+  background: var(--pdm-heal-accent-soft);
+}
+
+.pdm-heal-icon-btn:active {
+  transform: scale(0.95);
+}
+
+.pdm-heal-icon-btn.is-active {
+  background: var(--pdm-heal-accent);
+  color: #fffdf9;
+}
+
+.pdm-heal-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #e59866;
+  display: inline-block;
+  animation: pdmHealPulse 2.2s ease-in-out infinite;
+}
+
+@keyframes pdmHealPulse {
+  0%, 100% { transform: scale(0.9); opacity: 0.55; }
+  50% { transform: scale(1.25); opacity: 1; }
+}
+
+/* 3. 声景与氛围抽屉面板 */
+#pdm-heal-panel {
+  width: min(286px, calc(100vw - 24px));
+  background: var(--pdm-heal-bg-strong);
+  border: 1px solid var(--pdm-heal-border);
+  border-radius: var(--pdm-heal-radius);
+  box-shadow: 0 14px 36px rgba(72, 50, 34, 0.18);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  padding: 14px;
+  color: var(--pdm-heal-text);
+  display: none;
+  animation: pdmHealFadeIn 0.22s ease;
+}
+
+#pdm-heal-panel.is-open {
+  display: block;
+}
+
+@keyframes pdmHealFadeIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.pdm-heal-section {
+  margin-bottom: 12px;
+}
+
+.pdm-heal-section:last-child {
+  margin-bottom: 0;
+}
+
+.pdm-heal-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--pdm-heal-sub);
+  margin: 0 0 7px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pdm-heal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.pdm-heal-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.pdm-heal-chip {
+  appearance: none;
+  border: 1px solid var(--pdm-heal-border);
+  background: rgba(255, 255, 255, 0.65);
+  color: var(--pdm-heal-text);
+  border-radius: 11px;
+  padding: 7px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  text-align: center;
+}
+
+.pdm-heal-chip:hover {
+  border-color: var(--pdm-heal-accent);
+}
+
+.pdm-heal-chip.is-active {
+  background: var(--pdm-heal-accent);
+  border-color: var(--pdm-heal-accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.pdm-heal-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--pdm-heal-sub);
+}
+
+.pdm-heal-slider-row input[type="range"] {
+  flex: 1;
+  accent-color: var(--pdm-heal-accent);
+  cursor: pointer;
+}
+
+.pdm-heal-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 4px 0;
+  color: var(--pdm-heal-text);
+}
+
+.pdm-heal-toggle-row input[type="checkbox"] {
+  accent-color: var(--pdm-heal-accent);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+/* 4. 小喵温柔气泡（居中偏上，不遮挡底部操控栏） */
+#pdm-heal-bubble {
+  position: fixed;
+  left: 50%;
+  top: max(124px, calc(env(safe-area-inset-top, 0px) + 118px));
+  transform: translate(-50%, -8px) scale(0.96);
+  z-index: 815;
+  max-width: min(312px, calc(100vw - 36px));
+  padding: 10px 15px;
+  border-radius: 18px;
+  background: rgba(255, 251, 245, 0.95);
+  border: 1px solid rgba(226, 189, 146, 0.55);
+  box-shadow: 0 10px 28px rgba(96, 68, 45, 0.16);
+  color: #553d2d;
+  font-size: 13px;
+  line-height: 1.55;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.32s ease, transform 0.32s ease;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+#pdm-heal-bubble.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0) scale(1);
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+#pdm-heal-bubble::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: 10px;
+  height: 10px;
+  background: rgba(255, 251, 245, 0.95);
+  border-right: 1px solid rgba(226, 189, 146, 0.55);
+  border-bottom: 1px solid rgba(226, 189, 146, 0.55);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.pdm-heal-bubble-tag {
+  display: inline-block;
+  font-size: 11px;
+  color: #c87a48;
+  background: rgba(229, 152, 102, 0.14);
+  padding: 1px 7px;
+  border-radius: 999px;
+  margin-bottom: 4px;
+}
+
+/* 5. 晚安小纸条 / 今日陪伴手账弹窗 */
+#pdm-heal-letter-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 950;
+  background: rgba(54, 39, 28, 0.44);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+#pdm-heal-letter-mask.is-open {
+  display: flex;
+  animation: pdmHealFadeIn 0.22s ease;
+}
+
+.pdm-heal-letter-card {
+  width: min(350px, 100%);
+  background: linear-gradient(180deg, #fffdf8 0%, #fff6e8 100%);
+  border: 1px solid rgba(214, 178, 138, 0.65);
+  border-radius: 22px;
+  box-shadow: 0 18px 46px rgba(58, 39, 24, 0.25);
+  padding: 20px 20px 18px;
+  color: #543d2d;
+  position: relative;
+}
+
+.pdm-heal-letter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px dashed rgba(205, 169, 132, 0.6);
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+}
+
+.pdm-heal-letter-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
+  color: #5a3f2c;
+}
+
+.pdm-heal-letter-date {
+  font-size: 11px;
+  color: #9b7c64;
+}
+
+.pdm-heal-letter-body {
+  font-size: 14px;
+  line-height: 1.75;
+  color: #5d4433;
+  white-space: pre-line;
+  margin: 0 0 14px 0;
+}
+
+.pdm-heal-letter-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(224, 194, 160, 0.5);
+  border-radius: 14px;
+  padding: 10px 8px;
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+.pdm-heal-stat-val {
+  font-size: 16px;
+  font-weight: 700;
+  color: #cf7a44;
+}
+
+.pdm-heal-stat-lbl {
+  font-size: 11px;
+  color: #8f7059;
+  margin-top: 2px;
+}
+
+.pdm-heal-letter-sign {
+  text-align: right;
+  font-size: 12px;
+  color: #9b7a60;
+  margin-bottom: 14px;
+}
+
+.pdm-heal-letter-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.pdm-heal-btn {
+  flex: 1;
+  appearance: none;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.pdm-heal-btn:active {
+  transform: scale(0.97);
+}
+
+.pdm-heal-btn-primary {
+  background: #e59866;
+  color: #fff;
+}
+
+.pdm-heal-btn-ghost {
+  background: rgba(214, 180, 140, 0.22);
+  color: #6b4e3b;
+}
+
+/* 6. 温柔抚摸爱心漂浮粒子 */
+.pdm-heal-heart {
+  position: fixed;
+  pointer-events: none;
+  z-index: 840;
+  font-size: 16px;
+  color: #eb8a7a;
+  animation: pdmHealFloatUp 1.35s ease-out forwards;
+}
+
+@keyframes pdmHealFloatUp {
+  0% { opacity: 0; transform: translate(-50%, 0) scale(0.7); }
+  20% { opacity: 1; transform: translate(-50%, -14px) scale(1.1); }
+  100% { opacity: 0; transform: translate(-50%, -56px) scale(0.92); }
+}
+

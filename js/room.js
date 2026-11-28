@@ -376,6 +376,12 @@ window.PDM = window.PDM || {};
     const S = PDM.core.state();
     const env = tod();
     env.t = opts.t == null ? performance.now() / 1000 : opts.t;
+    if (S.roomTheme === 'rainy') {
+      env.night = true;
+      env.dusk = false;
+      env.key = 'night';
+      env.label = '雨夜';
+    }
     env.night = env.night || !!opts.forceNight;
     const u = W / 400;
     const floorY = H * 0.80;
@@ -467,7 +473,8 @@ window.PDM = window.PDM || {};
     A.drawCat(ctx, catX, catY, u * 1.12, {
       state: catState,
       outfit: outfit,
-      t: env.t
+      t: env.t,
+      access: opts.access || S.accessories
     });
 
     // lamp glow overlay follows the lamp wherever it is placed
@@ -482,6 +489,23 @@ window.PDM = window.PDM || {};
     }
 
     drawParticles(ctx, W, H, env.t, level);
+
+    if (S.roomTheme === 'sakura') {
+      ctx.save();
+      ctx.fillStyle = 'rgba(244, 172, 191, .72)';
+      for (let i = 0; i < 12; i++) {
+        const px = (i * 71 + env.t * (8 + i % 3)) % W;
+        const py = (i * 43 + env.t * (5 + i % 2)) % Math.max(1, H * .72);
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.rotate(Math.sin(env.t + i) * .8);
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 2.5 * u, 1.4 * u, .4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+      ctx.restore();
+    }
 
     // time tint + vignette
     if (env.night) {
@@ -502,3 +526,4 @@ window.PDM = window.PDM || {};
 
   PDM.room = { drawRoom: drawRoom, tod: tod, defaultSpot: defaultSpot, placements: [] };
 })(window.PDM);
+

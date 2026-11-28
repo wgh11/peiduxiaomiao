@@ -482,6 +482,41 @@
 .panel-head h3 { font-size: 12.5px; }
 .panel-head .hint { font-size: 9.5px; color: var(--ink-faint); }
 
+.accessory-panel { margin-top: 0; margin-bottom: 10px; }
+.acc-slot { display: flex; align-items: flex-start; gap: 8px; margin-top: 8px; }
+.acc-slot-name { flex: none; width: 34px; padding-top: 7px; font-size: 10px; color: var(--ink-faint); }
+.acc-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.acc-chip { min-height: 28px; padding: 5px 8px; border-radius: 9px; border: 1px solid var(--line); background: var(--card-soft); color: var(--ink-soft); font-size: 10px; }
+.acc-chip em { display: block; margin-top: 2px; font-style: normal; font-size: 8px; color: var(--ink-faint); }
+.acc-chip em svg { display: inline-block; width: 11px; height: 11px; margin-right: 2px; vertical-align: -2px; }
+.acc-chip.on { border-color: var(--coral); background: var(--coral-soft); color: var(--coral-deep); }
+.acc-chip.locked { opacity: .72; }
+.theme-shelf { display: grid; gap: 8px; }
+.theme-card { display: flex; align-items: center; gap: 9px; padding: 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+.theme-swatch { flex: none; width: 46px; height: 38px; border-radius: 9px; background: linear-gradient(145deg, #F8DDBD, #B9DCE7); }
+.theme-swatch.rainy { background: linear-gradient(145deg, #526581, #F6C28E); }
+.theme-swatch.sakura { background: linear-gradient(145deg, #F5B6C7, #FDE9D8); }
+.theme-swatch.on { box-shadow: inset 0 0 0 2px var(--coral); }
+.theme-info { min-width: 0; flex: 1; }
+.theme-info h4 { font-size: 11px; }
+.theme-info p { margin-top: 2px; color: var(--ink-faint); font-size: 9px; line-height: 1.35; }
+.theme-card .buy-btn { flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 3px; min-width: 58px; white-space: nowrap; }
+.theme-card .buy-btn svg { display: inline-block; width: 12px; height: 12px; vertical-align: -2px; }
+
+/* 房间优先：减少计时卡片的垂直占用，让 3D 小屋成为主视觉 */
+#timerCard { padding: 10px 14px 9px; }
+.timer-time { font-size: 46px; margin-top: 1px; }
+.timer-sub { margin-top: 2px; min-height: 13px; }
+.progress { margin: 8px 0 8px; }
+.study-modes { margin: 6px 0 3px; padding: 3px; }
+.study-modes button { height: 28px; }
+.mode-hint { margin-bottom: 5px; min-height: 13px; font-size: 10px; }
+.task-tag-row { margin: 5px 0 6px; }
+.task-tag-row select { height: 30px; }
+.durations { margin-bottom: 7px; gap: 6px; }
+.durations button { height: 32px; }
+.timer-actions .btn { height: 44px; }
+
 .bars { display: flex; align-items: flex-end; gap: 7px; height: 104px; }
 .bar-col { flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 3px; }
 .bar-val { font-size: 8.5px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
@@ -1059,3 +1094,26 @@
 .activity-card h3 { font-size: 13px; font-weight: 700; }
 .activity-card p { margin-top: 4px; color: var(--ink-soft); font-size: 11px; line-height: 1.6; }
 .activity-card span { display: block; margin-top: 5px; color: var(--ink-faint); font-size: 9.5px; }
+
+/* 互动手册：与图鉴的紧凑卡片保持一致，避免奖励和说明挤成竖排 */
+.act-list { display: grid; gap: 7px; }
+.act-row {
+  display: flex; align-items: center; gap: 9px;
+  min-height: 48px; padding: 8px 10px;
+  border: 1px solid var(--line); border-radius: 11px;
+  background: var(--card-soft);
+}
+.act-check {
+  flex: none; width: 22px; height: 22px;
+  display: grid; place-items: center;
+  border-radius: 50%; background: var(--honey-soft);
+  color: var(--honey); font-size: 14px; font-weight: 700;
+}
+.act-info { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.act-info b { font-size: 11.5px; line-height: 1.3; }
+.act-info span { color: var(--ink-faint); font-size: 9.5px; line-height: 1.4; }
+.act-row em { flex: none; white-space: nowrap; font-style: normal; color: var(--coral-deep); font-size: 10px; font-weight: 700; }
+.act-row.done { border-color: #D4E4D8; background: var(--sage-soft); }
+.act-row.done .act-check { background: #CBE2D1; color: var(--sage-deep); }
+.act-row.done em { color: var(--sage-deep); }
+

@@ -1,0 +1,141 @@
+[
+  {
+    "id": "a_beret",
+    "name": "贝雷帽",
+    "slot": "head",
+    "price": 45,
+    "how": "shop",
+    "desc": "歪戴一点点，今天有点文艺"
+  },
+  {
+    "id": "a_bearband",
+    "name": "小熊发箍",
+    "slot": "head",
+    "price": 0,
+    "how": "streak7",
+    "cond": "连续打卡 7 天",
+    "desc": "两只小耳朵，走路会晃"
+  },
+  {
+    "id": "a_gradcap",
+    "name": "学士帽",
+    "slot": "head",
+    "price": 0,
+    "how": "level4",
+    "cond": "等级达到 Lv.4",
+    "desc": "为了那一天，先戴上试试"
+  },
+  {
+    "id": "a_shades",
+    "name": "小墨镜",
+    "slot": "head",
+    "price": 0,
+    "how": "activity",
+    "cond": "完成全部互动手册",
+    "desc": "小猫也有酷酷的时候"
+  },
+  {
+    "id": "a_bucket",
+    "name": "奶油渔夫帽",
+    "slot": "head",
+    "price": 50,
+    "how": "shop",
+    "desc": "帽檐软软的，像刚烤好的面包"
+  },
+  {
+    "id": "a_daisy",
+    "name": "小雏菊花环",
+    "slot": "head",
+    "price": 0,
+    "how": "streak3",
+    "cond": "连续打卡 3 天",
+    "desc": "绕着耳朵一圈小小的白花"
+  },
+  {
+    "id": "a_bow",
+    "name": "粉蝴蝶结",
+    "slot": "head",
+    "price": 35,
+    "how": "shop",
+    "desc": "轻轻一扎，整只猫都甜起来"
+  },
+  {
+    "id": "a_bunny",
+    "name": "软萌兔耳发箍",
+    "slot": "head",
+    "price": 0,
+    "how": "level3",
+    "cond": "等级达到 Lv.3",
+    "desc": "两只长耳朵会跟着步伐轻轻晃"
+  },
+  {
+    "id": "a_scarf",
+    "name": "红格子围巾",
+    "slot": "neck",
+    "price": 60,
+    "how": "shop",
+    "desc": "冬天写题的时候最暖"
+  },
+  {
+    "id": "a_bell",
+    "name": "铃铛项圈",
+    "slot": "neck",
+    "price": 0,
+    "how": "dex5",
+    "cond": "鱼图鉴收集 5 种",
+    "desc": "走两步就叮当响"
+  },
+  {
+    "id": "a_tie",
+    "name": "小领结",
+    "slot": "neck",
+    "price": 40,
+    "how": "shop",
+    "desc": "正式一点，但也只是一点点"
+  },
+  {
+    "id": "a_pearl",
+    "name": "珍珠小项链",
+    "slot": "neck",
+    "price": 0,
+    "how": "quiz5",
+    "cond": "通过 5 关刷题",
+    "desc": "三颗圆圆的小珍珠，很矜持"
+  },
+  {
+    "id": "a_sunflower",
+    "name": "向日葵围兜",
+    "slot": "neck",
+    "price": 0,
+    "how": "dex3",
+    "cond": "鱼图鉴收集 3 种",
+    "desc": "像把一小块阳光围在胸前"
+  },
+  {
+    "id": "a_glasses",
+    "name": "圆框金丝眼镜",
+    "slot": "charm",
+    "price": 70,
+    "how": "shop",
+    "desc": "戴上就像在认真看书"
+  },
+  {
+    "id": "a_wings",
+    "name": "小天使翅膀",
+    "slot": "charm",
+    "price": 0,
+    "how": "level5",
+    "cond": "等级达到 Lv.5",
+    "desc": "软软的、小小的，会轻轻扑动"
+  },
+  {
+    "id": "a_bag",
+    "name": "迷你小书包",
+    "slot": "charm",
+    "price": 0,
+    "how": "quiz1",
+    "cond": "通过 1 关刷题",
+    "desc": "刚好能装下一本练习本"
+  }
+]
+

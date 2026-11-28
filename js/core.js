@@ -85,13 +85,49 @@ window.PDM = window.PDM || {};
     { id: 'festival', name: '节日限定', price: 0, ad: true, desc: '红围巾和毛球帽，冬季限定' },
     { id: 'raincoat', name: '雨天小雨衣', price: 100, desc: '下雨也要去窗边看云' },
     { id: 'chef', name: '小厨师', price: 140, desc: '今天的猫粮由主厨亲自监督' },
-    { id: 'wizard', name: '星星魔法师', price: 180, desc: '把困意变成会发光的小星星' }
+    { id: 'wizard', name: '星星魔法师', price: 180, desc: '把困意变成会发光的小星星' },
+    { id: 'sailor', name: '学院风水手服', price: 110, desc: '白衣蓝领，红领结端端正正' },
+    { id: 'matcha', name: '抹茶绞花毛衣', price: 95, desc: '软软的墨绿毛衣，像刚泡好的茶' },
+    { id: 'dino', name: '小恐龙连体睡衣', price: 160, desc: '头上两只小角，走路一摇一摆' },
+    { id: 'hoodie', name: '奶油卫衣', price: 130, desc: '口袋里好像还藏着一块饼干' },
+    { id: 'cloak', name: '星空小斗篷', price: 180, desc: '披上就会变成夜里的一小片星空' }
   ];
 
   const FOODS = [
     { id: 'fish', name: '小鱼干', price: 8, amount: 1, desc: '最经典的陪读奖励，小喵一闻就跑过来' },
     { id: 'milk', name: '暖暖牛奶', price: 12, amount: 2, desc: '适合夜晚，喝完会舒服地眯起眼睛' },
     { id: 'cookie', name: '奶油小饼干', price: 15, amount: 2, desc: '学习告一段落时的甜甜奖励' }
+  ];
+
+  const ACCESSORIES = [
+    { id: 'a_beret', name: '贝雷帽', slot: 'head', price: 45, how: 'shop', desc: '歪戴一点点，今天有点文艺' },
+    { id: 'a_bearband', name: '小熊发箍', slot: 'head', how: 'streak7', cond: '连续打卡 7 天', desc: '两只小耳朵，走路会晃' },
+    { id: 'a_gradcap', name: '学士帽', slot: 'head', how: 'level4', cond: '等级达到 Lv.4', desc: '为了那一天，先戴上试试' },
+    { id: 'a_shades', name: '小墨镜', slot: 'head', how: 'activity', cond: '完成全部互动手册', desc: '小猫也有酷酷的时候' },
+    { id: 'a_bucket', name: '奶油渔夫帽', slot: 'head', price: 50, how: 'shop', desc: '帽檐软软的，像刚烤好的面包' },
+    { id: 'a_daisy', name: '小雏菊花环', slot: 'head', how: 'streak3', cond: '连续打卡 3 天', desc: '绕着耳朵一圈小小的白花' },
+    { id: 'a_bow', name: '粉蝴蝶结', slot: 'head', price: 35, how: 'shop', desc: '轻轻一扎，整只猫都甜起来' },
+    { id: 'a_bunny', name: '软萌兔耳发箍', slot: 'head', how: 'level3', cond: '等级达到 Lv.3', desc: '两只长耳朵会跟着步伐轻轻晃' },
+    { id: 'a_scarf', name: '红格子围巾', slot: 'neck', price: 60, how: 'shop', desc: '冬天写题的时候最暖' },
+    { id: 'a_bell', name: '铃铛项圈', slot: 'neck', how: 'dex5', cond: '鱼图鉴收集 5 种', desc: '走两步就叮当响' },
+    { id: 'a_tie', name: '小领结', slot: 'neck', price: 40, how: 'shop', desc: '正式一点，但也只是一点点' },
+    { id: 'a_pearl', name: '珍珠小项链', slot: 'neck', how: 'quiz5', cond: '通过 5 关刷题', desc: '三颗圆圆的小珍珠，很矜持' },
+    { id: 'a_sunflower', name: '向日葵围兜', slot: 'neck', how: 'dex3', cond: '鱼图鉴收集 3 种', desc: '像把一小块阳光围在胸前' },
+    { id: 'a_glasses', name: '圆框金丝眼镜', slot: 'charm', price: 70, how: 'shop', desc: '戴上就像在认真看书' },
+    { id: 'a_wings', name: '小天使翅膀', slot: 'charm', how: 'level5', cond: '等级达到 Lv.5', desc: '软软的、小小的，会轻轻扑动' },
+    { id: 'a_bag', name: '迷你小书包', slot: 'charm', how: 'quiz1', cond: '通过 1 关刷题', desc: '刚好能装下一本练习本' }
+  ];
+
+  const ROOM_THEMES = [
+    { id: 'sunny', name: '晴日木屋', price: 0, desc: '默认的小屋，午后阳光刚好' },
+    { id: 'rainy', name: '雨夜窗台', price: 180, desc: '窗外落着雨，台灯是暖黄的' },
+    { id: 'sakura', name: '樱花书房', price: 0, streak: 14, desc: '连续打卡 14 天解锁，窗外会飘樱花' }
+  ];
+
+  const CAT_HOUSE_TIERS = [
+    { tier: 0, name: '纸箱猫屋', desc: '小喵最初的小家，装得下它和一条毯子。', level: 1, furniture: 0, intimacy: 0 },
+    { tier: 1, name: '原木双层', desc: '多了一层小阁楼和更软的垫子。', level: 3, furniture: 8, intimacy: 20 },
+    { tier: 2, name: '阳光花房', desc: '玻璃花房、晒太阳的窗台，还有几盆猫草。', level: 5, furniture: 16, intimacy: 50 }
   ];
 
   // 猫咪陪伴图鉴：把“看到猫做什么”本身变成可回看的收藏内容
@@ -219,6 +255,7 @@ window.PDM = window.PDM || {};
       granted: false,      // 本轮专注是否已经发过休息资格
       castsLeft: 0,        // 本轮休息还剩几杆
       bag: {},             // 鱼篓：{ 鱼种 id: 数量 }
+      caught: {},           // 图鉴累计捕获：兑换后仍保留记录
       day: dateKey(),
       exchanged: 0,        // 今天已兑换的小鱼干
       gear: { rod: false, lamp: false },
@@ -241,6 +278,10 @@ window.PDM = window.PDM || {};
       layout: {},
       ownedOutfits: ['default'],
       outfit: 'default',
+      accessories: { owned: [], head: null, neck: null, charm: null },
+      themes: ['sunny'],
+      roomTheme: 'sunny',
+      catHouse: { tier: 1, rot: 0.34 },
       comics: ['c1'],
       comicsRead: [],
       achievements: [],
@@ -270,6 +311,17 @@ window.PDM = window.PDM || {};
         if (!state.settings.studyMode) state.settings.studyMode = 'free';
         if (typeof state.snacks !== 'number' || state.snacks < 0) state.snacks = 0;
         state.foods = Object.assign({ fish: 0, milk: 0, cookie: 0 }, parsed.foods || {});
+        state.accessories = Object.assign({ owned: [], head: null, neck: null, charm: null }, parsed.accessories || {});
+        state.accessories.owned = Array.isArray(state.accessories.owned) ? state.accessories.owned.filter(id => ACCESSORIES.some(a => a.id === id)) : [];
+        state.accessories.head = ACCESSORIES.some(a => a.id === state.accessories.head && a.slot === 'head') ? state.accessories.head : null;
+        state.accessories.neck = ACCESSORIES.some(a => a.id === state.accessories.neck && a.slot === 'neck') ? state.accessories.neck : null;
+        state.accessories.charm = ACCESSORIES.some(a => a.id === state.accessories.charm && a.slot === 'charm') ? state.accessories.charm : null;
+        state.themes = Array.isArray(parsed.themes) ? parsed.themes.filter(id => ROOM_THEMES.some(t => t.id === id)) : ['sunny'];
+        if (state.themes.indexOf('sunny') < 0) state.themes.unshift('sunny');
+        state.roomTheme = ROOM_THEMES.some(t => t.id === parsed.roomTheme && state.themes.indexOf(t.id) >= 0) ? parsed.roomTheme : 'sunny';
+        state.catHouse = Object.assign({ tier: 1, rot: 0.34 }, parsed.catHouse || {});
+        state.catHouse.tier = Math.max(1, Math.min(2, Number(state.catHouse.tier) || 1));
+        state.catHouse.rot = Number.isFinite(Number(state.catHouse.rot)) ? Number(state.catHouse.rot) : 0.34;
         state.equipped = Object.assign({ wall: null, window: null, desk: null, floor: null, ornament: null }, parsed.equipped || {});
         state.layout = (parsed.layout && typeof parsed.layout === 'object' && !Array.isArray(parsed.layout)) ? parsed.layout : {};
         // 钓鱼存档迁移
@@ -283,14 +335,18 @@ window.PDM = window.PDM || {};
         };
         const bag = (f.bag && typeof f.bag === 'object' && !Array.isArray(f.bag)) ? f.bag : {};
         state.fishing.bag = {};
+        state.fishing.caught = {};
         FISH.forEach(sp => {
           const n = safeInt(bag[sp.id], 0);
           if (n > 0) state.fishing.bag[sp.id] = n;
+          const caught = safeInt((f.caught || {})[sp.id], 0);
+          if (caught > 0) state.fishing.caught[sp.id] = caught;
         });
         // 旧存档里的 raw 按 1 条白条折算，保证鱼获不丢
         const legacyRaw = safeInt(f.raw, 0);
         if (legacyRaw > 0) {
           state.fishing.bag.baitiao = (state.fishing.bag.baitiao || 0) + legacyRaw;
+          state.fishing.caught.baitiao = (state.fishing.caught.baitiao || 0) + legacyRaw;
         }
         state.fishing.castsLeft = safeInt(state.fishing.castsLeft, 0, FISHING.castsPerBreak);
         state.fishing.exchanged = safeInt(state.fishing.exchanged, 0, FISHING.dailySnackCap);
@@ -421,6 +477,23 @@ window.PDM = window.PDM || {};
     };
   }
 
+  function completeActivity(id) {
+    if (!ACTIVITIES.some(a => a.id === id)) return false;
+    const done = state.events.some(e => e.type === 'activity_complete' && e.data && e.data.id === id);
+    if (done) return false;
+    logEvent('activity_complete', { id: id });
+    state.fish += 2;
+    save();
+    return true;
+  }
+
+  function activityInfo() {
+    return ACTIVITIES.map(def => {
+      const done = state.events.some(e => e.type === 'activity_complete' && e.data && e.data.id === def.id);
+      return { def: Object.assign({}, def, { reward: 2 }), done: done };
+    });
+  }
+
   /* ---------- economy ---------- */
   function buyItem(id) {
     const item = itemById(id);
@@ -464,6 +537,96 @@ window.PDM = window.PDM || {};
     logEvent('unlock_outfit', { id: id, via: via || 'ad' });
     save();
     return true;
+  }
+
+  function accessoryById(id) { return ACCESSORIES.find(a => a.id === id) || null; }
+
+  function accessoryUnlockable(a) {
+    if (!a) return false;
+    if (a.how === 'shop') return true;
+    const level = levelInfo().level;
+    const streak = computeStreak(state);
+    if (a.how === 'level3') return level >= 3;
+    if (a.how === 'level4') return level >= 4;
+    if (a.how === 'level5') return level >= 5;
+    if (a.how === 'streak3') return streak >= 3;
+    if (a.how === 'streak7') return streak >= 7;
+    if (a.how === 'quiz1') return state.sessions.length > 0;
+    if (a.how === 'quiz5') return state.sessions.length >= 5;
+    if (a.how === 'activity') return (state.events || []).some(e => e.type === 'activity_all');
+    if (a.how === 'dex3' || a.how === 'dex5') {
+      const n = bagCount();
+      return n >= Number(a.how.slice(3));
+    }
+    return false;
+  }
+
+  function buyAccessory(id) {
+    const a = accessoryById(id);
+    if (!a || a.how !== 'shop') return { ok: false, reason: 'locked' };
+    if (state.accessories.owned.indexOf(id) >= 0) return { ok: false, reason: 'owned' };
+    if (state.fish < a.price) return { ok: false, reason: 'fish' };
+    state.fish -= a.price;
+    state.accessories.owned.push(id);
+    logEvent('buy_accessory', { id: id, price: a.price });
+    save();
+    return { ok: true, accessory: a };
+  }
+
+  function toggleAccessory(id) {
+    const a = accessoryById(id);
+    if (!a) return { ok: false, reason: 'none' };
+    if (state.accessories.owned.indexOf(id) < 0) {
+      const bought = buyAccessory(id);
+      if (!bought.ok) return bought;
+    }
+    state.accessories[a.slot] = state.accessories[a.slot] === id ? null : id;
+    logEvent('accessory', { id: id, slot: a.slot, on: state.accessories[a.slot] === id });
+    save();
+    return { ok: true, accessory: a, on: state.accessories[a.slot] === id };
+  }
+
+  function themeById(id) { return ROOM_THEMES.find(t => t.id === id) || null; }
+
+  function setTheme(id) {
+    const t = themeById(id);
+    if (!t || state.themes.indexOf(id) < 0) return false;
+    state.roomTheme = id;
+    logEvent('room_theme', { id: id });
+    save();
+    return true;
+  }
+
+  function catHouseInfo() {
+    const tier = Math.max(1, Math.min(CAT_HOUSE_TIERS.length - 1, Number(state.catHouse && state.catHouse.tier) || 1));
+    const current = CAT_HOUSE_TIERS[tier];
+    const next = CAT_HOUSE_TIERS[tier + 1] || null;
+    const lv = levelInfo().level;
+    const canUpgrade = !!next && lv >= next.level && state.owned.length >= next.furniture && state.growth >= next.intimacy;
+    return { tier: tier, current: current, next: next, canUpgrade: canUpgrade, level: lv, furniture: state.owned.length, intimacy: state.growth };
+  }
+
+  function upgradeCatHouse() {
+    const info = catHouseInfo();
+    if (!info.next) return { ok: false, reason: 'max', info: info };
+    if (!info.canUpgrade) return { ok: false, reason: 'locked', info: info };
+    state.catHouse.tier = info.next.tier;
+    logEvent('cat_house_upgrade', { tier: state.catHouse.tier });
+    save();
+    return { ok: true, tier: state.catHouse.tier, info: catHouseInfo() };
+  }
+
+  function buyTheme(id) {
+    const t = themeById(id);
+    if (!t || state.themes.indexOf(id) >= 0) return { ok: false, reason: 'owned' };
+    if (t.streak && computeStreak(state) < t.streak) return { ok: false, reason: 'locked' };
+    if (state.fish < t.price) return { ok: false, reason: 'fish' };
+    state.fish -= t.price;
+    state.themes.push(id);
+    state.roomTheme = id;
+    logEvent('buy_theme', { id: id, price: t.price });
+    save();
+    return { ok: true, theme: t };
   }
 
   function equipItem(id) {
@@ -571,6 +734,7 @@ window.PDM = window.PDM || {};
     if (state.comicsRead.indexOf(id) < 0) {
       state.comicsRead.push(id);
       logEvent('comic_read', { id: id });
+      completeActivity('comic');
       save();
     }
   }
@@ -799,14 +963,20 @@ window.PDM = window.PDM || {};
       if (RARITY[sp2.rarity].level > RARITY[sp.rarity].level) sp = sp2;
     }
     f.bag[sp.id] = (f.bag[sp.id] || 0) + 1;
+    f.caught[sp.id] = (f.caught[sp.id] || 0) + 1;
     f.totalFish += 1;
     logEvent('fish_catch', { species: sp.id, rarity: sp.rarity, left: f.castsLeft });
+    completeActivity('fish');
     save();
     return { ok: true, hit: true, fish: sp, left: f.castsLeft };
   }
 
   function bagCount() {
     return Object.keys(state.fishing.bag || {}).reduce((a, k) => a + (state.fishing.bag[k] || 0), 0);
+  }
+
+  function fishDex() {
+    return FISH.map(sp => Object.assign({}, sp, { caught: Number((state.fishing.caught || {})[sp.id] || 0), bag: Number((state.fishing.bag || {})[sp.id] || 0) }));
   }
 
   // 兑换某一种鱼；小鱼干按鱼种价值折算，受每日上限约束
@@ -958,6 +1128,9 @@ window.PDM = window.PDM || {};
     FURNITURE: FURNITURE,
     OUTFITS: OUTFITS,
     FOODS: FOODS,
+    ACCESSORIES: ACCESSORIES,
+    ROOM_THEMES: ROOM_THEMES,
+    CAT_HOUSE_TIERS: CAT_HOUSE_TIERS,
     ACTIVITIES: ACTIVITIES,
     COMICS: COMICS,
     LEVELS: LEVELS,
@@ -974,6 +1147,7 @@ window.PDM = window.PDM || {};
     fishCast: fishCast,
     rollFish: rollFish,
     bagCount: bagCount,
+    fishDex: fishDex,
     fishExchangeSpecies: fishExchangeSpecies,
     rareDecos: rareDecos,
     canCraftRare: canCraftRare,
@@ -992,6 +1166,14 @@ window.PDM = window.PDM || {};
     grantItem: grantItem,
     buyOutfit: buyOutfit,
     grantOutfit: grantOutfit,
+    accessoryById: accessoryById,
+    buyAccessory: buyAccessory,
+    toggleAccessory: toggleAccessory,
+    themeById: themeById,
+    buyTheme: buyTheme,
+    setTheme: setTheme,
+    catHouseInfo: catHouseInfo,
+    upgradeCatHouse: upgradeCatHouse,
     equipItem: equipItem,
     isPlaced: isPlaced,
     placeItem: placeItem,
@@ -1014,6 +1196,8 @@ window.PDM = window.PDM || {};
     useFood: useFood,
     logEvent: logEvent,
     eventStats: eventStats,
+    completeActivity: completeActivity,
+    activityInfo: activityInfo,
     logSummary: logSummary,
     calendarData: calendarData,
     canMakeup: canMakeup,
@@ -1021,3 +1205,4 @@ window.PDM = window.PDM || {};
     minutesOn: minutesOn
   };
 })(window.PDM);
+

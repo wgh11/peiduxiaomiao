@@ -514,10 +514,222 @@ window.PDM = window.PDM || {};
     return g;
   }
 
+  /* ---------- GLB loading (cached, fallback to procedural) ---------- */
+  const FURNITURE_GLB = { d_lamp: 'd_lamp', fl_bed: 'fl_bed', fl_rug: 'fl_rug', fl_shelf: 'fl_shelf', o_plant: 'o_plant' };
+  const PROP_LAYOUT = {
+    mailbox: { pos: [-1.88, 0, 0.92], rot: 0.4, pick: 'mail' },
+    countdown_stand: { pos: [0.52, 0.84, -0.70], rot: -0.08, pick: 'countdown' },
+    tank_corner: { pos: [1.72, 0, 1.02], rot: -0.3, pick: 'tank' }
+  };
+  let glbManifest = null;
+  let sceneProps = {};
+
+  function glbEntry(id) {
+    return (glbManifest && glbManifest.models && glbManifest.models[id]) || null;
+  }
+
+  function glbPath(id) {
+    const e = glbEntry(id);
+    return (e && e.path) || ('assets/models/' + id + '.glb');
+  }
+
+  function applyGlbXform(root, id) {
+    const e = glbEntry(id);
+    const wrap = new THREE.Group();
+    wrap.name = 'glb:' + id;
+    if (e) {
+      const sc = e.scale || [1, 1, 1];
+      const o = e.offset || [0, 0, 0];
+      root.scale.set(sc[0], sc[1], sc[2]);
+      root.position.set(o[0], o[1], o[2]);
+    }
+    wrap.add(root);
+    return wrap;
+  }
+
+  function loadGlbScene(id) {
+    if (!PDM.glb || typeof PDM.glb.load !== 'function') return Promise.resolve(null);
+    return PDM.glb.load(glbPath(id)).then(function (gltf) {
+      return gltf && gltf.scene ? gltf.scene.clone(true) : null;
+    }).catch(function () { return null; });
+  }
+
+  function prepareGlbVisual(visual, id) {
+    visual.traverse(function (o) {
+      if (!o.isMesh) return;
+      o.castShadow = true;
+      o.receiveShadow = true;
+      if (id && id.indexOf('cathouse') === 0) o.userData.house = true;
+    });
+    markFadeIn(visual);
+    return visual;
+  }
+
+  function markFadeIn(root) {
+    const t0 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    root.userData.fadeStart = t0;
+    root.traverse(function (o) {
+      if (!o.isMesh || !o.material) return;
+      const mats = Array.isArray(o.material) ? o.material : [o.material];
+      mats.forEach(function (m) {
+        if (!m) return;
+        m.userData = m.userData || {};
+        if (m.userData._fadeFrom == null) {
+          m.userData._fadeFrom = m.opacity == null ? 1 : m.opacity;
+          m.userData._fadeWasT = !!m.transparent;
+        }
+        m.transparent = true;
+        m.opacity = 0;
+      });
+    });
+  }
+
+  function tickGlbFades(nowMs) {
+    function tick(root) {
+      if (!root || !root.userData || !root.userData.fadeStart) return;
+      const k = Math.min(1, (nowMs - root.userData.fadeStart) / 220);
+      root.traverse(function (o) {
+        if (!o.isMesh || !o.material) return;
+        const mats = Array.isArray(o.material) ? o.material : [o.material];
+        mats.forEach(function (m) {
+          if (!m || !m.userData || m.userData._fadeFrom == null) return;
+          m.opacity = m.userData._fadeFrom * k;
+          if (k >= 1) {
+            m.transparent = m.userData._fadeWasT || (m.userData._fadeFrom < 0.999);
+            m.opacity = m.userData._fadeFrom;
+            delete m.userData._fadeFrom;
+            delete m.userData._fadeWasT;
+          }
+        });
+      });
+      if (k >= 1) delete root.userData.fadeStart;
+    }
+    Object.keys(items).forEach(function (id) { tick(items[id]); });
+    tick(house);
+    Object.keys(sceneProps).forEach(function (id) { tick(sceneProps[id]); });
+  }
+
+  function clearVisuals(group, keepLight) {
+    group.children.slice().forEach(function (ch) {
+      if (keepLight && ch.isLight) return;
+      group.remove(ch);
+    });
+  }
+
+  function buildHouseDetails() {
+    const g = new THREE.Group();
+    const awning = box(.66, .055, .24, '#E6B27C');
+    awning.position.set(0, .68, .42);
+    awning.rotation.x = -.12;
+    g.add(awning);
+    [-.27, .27].forEach(x => {
+      const support = box(.025, .16, .025, '#B57D50');
+      support.position.set(x, .59, .42);
+      g.add(support);
+    });
+    const step = box(.38, .06, .18, '#D6A77A');
+    step.position.set(0, .055, .5);
+    g.add(step);
+    const post = cyl(.055, .07, .28, '#B57D50', 12);
+    post.position.set(.58, .14, .22);
+    g.add(post);
+    const cap = sph(.11, '#E8B46D', 1, .75, 1);
+    cap.position.set(.58, .31, .22);
+    g.add(cap);
+    const yarn = sph(.075, '#E8836B', 1, 1, 1);
+    yarn.position.set(.45, .08, .32);
+    g.add(yarn);
+    const mat = new THREE.MeshStandardMaterial({ color: '#F3D8C3', roughness: .95 });
+    const matGeo = new THREE.CylinderGeometry(.18, .2, .025, 20);
+    const matMesh = new THREE.Mesh(matGeo, mat);
+    matMesh.position.set(-.05, .015, .42);
+    g.add(matMesh);
+    const pot = cyl(.07, .09, .1, '#C98D63', 12);
+    pot.position.set(-.62, .05, .2);
+    g.add(pot);
+    const leaf = sph(.09, '#7FA27A', .55, 1.4, .65);
+    leaf.position.set(-.62, .17, .2);
+    g.add(leaf);
+    g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+    return g;
+  }
+
+  function attachGlbTo(group, visual, id, extra) {
+    const holder = applyGlbXform(visual, id);
+    prepareGlbVisual(holder, id);
+    const keepLight = extra && extra.keepLight;
+    clearVisuals(group, keepLight);
+    group.add(holder);
+    group.userData.glb = true;
+    group.userData.glbId = id;
+    if (id === 'd_lamp' && !group.userData.lampLight) {
+      const light = new THREE.PointLight('#FFCF91', 0, 3.2);
+      light.position.set(0, 0.38, 0.1);
+      group.add(light);
+      group.userData.lampLight = light;
+    }
+    if (extra && extra.house) {
+      holder.traverse(function (o) { if (o.isMesh) o.userData.house = true; });
+      group.add(buildHouseDetails());
+    }
+    if (extra && extra.pick) group.userData[extra.pick] = true;
+  }
+
+  function tryAttachGlb(group, id, extra) {
+    if (!group || group.userData.glb || group.userData.glbPending) return;
+    if (!PDM.glb) return;
+    group.userData.glbPending = true;
+    loadGlbScene(id).then(function (visual) {
+      group.userData.glbPending = false;
+      if (!visual) return;
+      if (group.parent == null && !(extra && extra.allowDetached)) return;
+      attachGlbTo(group, visual, id, extra);
+    });
+  }
+
+  function ensureManifest() {
+    if (!PDM.glb || typeof PDM.glb.loadManifest !== 'function') return Promise.resolve(null);
+    return PDM.glb.loadManifest().then(function (man) {
+      glbManifest = man;
+      return man;
+    }).catch(function () { return null; });
+  }
+
+  function mountSceneProp(id) {
+    if (!scene || sceneProps[id]) return sceneProps[id];
+    const layout = PROP_LAYOUT[id];
+    if (!layout) return null;
+    const g = new THREE.Group();
+    g.name = id;
+    g.userData.id = id;
+    g.userData.prop = true;
+    if (layout.pick === 'mail') g.userData.pickMail = true;
+    if (layout.pick === 'countdown') g.userData.pickCountdown = true;
+    if (layout.pick === 'tank') g.userData.pickTank = true;
+    g.position.set(layout.pos[0], layout.pos[1], layout.pos[2]);
+    g.rotation.y = layout.rot;
+    if (id === 'mailbox') {
+      const post = cyl(.035, .04, .55, '#8C6239', 12); put(post, 0, .275, 0); g.add(post);
+      const body = box(.28, .2, .18, '#F4E6CF'); put(body, 0, .66, 0); g.add(body);
+    } else if (id === 'countdown_stand') {
+      const board = box(.2, .16, .02, '#F7F0E1'); put(board, 0, .1, 0); g.add(board);
+    } else if (id === 'tank_corner') {
+      const tank = box(.56, .4, .34, '#BFE0E8', { transparent: true, opacity: .4 }); put(tank, 0, .36, 0); g.add(tank);
+    }
+    scene.add(g);
+    sceneProps[id] = g;
+    tryAttachGlb(g, id, { pick: layout.pick === 'mail' ? 'pickMail' : (layout.pick === 'countdown' ? 'pickCountdown' : 'pickTank') });
+    return g;
+  }
+
+  function initSceneProps() {
+    Object.keys(PROP_LAYOUT).forEach(mountSceneProp);
+  }
+
   /* ---------- 2D billboard cat (AI sprite sheets) ---------- */
   const CAT_ART_KEYS = ['idle', 'blink', 'read', 'sleep', 'stretch', 'cheer', 'eat', 'play', 'side', 'back',
     'pj', 'academy', 'festival', 'pj_read', 'academy_read', 'festival_read'];
-  const PROCEDURAL_OUTFITS = new Set(['raincoat', 'chef', 'wizard']);
+  const PROCEDURAL_OUTFITS = new Set(['raincoat', 'chef', 'wizard', 'sailor', 'matcha', 'dino', 'hoodie', 'cloak']);
   const CAT_ART_BASE = 'assets/cat/cat_';
   let catArt = {};          // key -> SpriteMaterial
   let catArtBox = {};       // key -> {top, cx, bottom}
@@ -659,7 +871,7 @@ window.PDM = window.PDM || {};
     ctx.closePath();
   }
 
-  function drawCatFx(state, t) {
+  function drawCatFx(state, t, access) {
     if (!catFxCtx) return;
     const box = catArtBox[catCurKey] || { top: 60, bottom: 505, cx: 256 };
     const ctx = catFxCtx;
@@ -733,20 +945,26 @@ window.PDM = window.PDM || {};
         ctx.restore();
       }
     }
+    // 配饰独立挂件层：精灵图姿态照常切换，只把配饰叠上去
+    if (access && (access.head || access.neck)) {
+      // 睡觉时整只猫趴低，配饰跟着往下挪，避免飘在半空
+      const ay = state === 'sleep' ? 560 : 496;
+      PDM.art.drawAccessoryLayer(ctx, 256, ay, 3.45, access);
+    }
     catFxTex.needsUpdate = true;
   }
 
-  function paintCat(state, outfit, t) {
+  function paintCat(state, outfit, t, access) {
     if (!catCtx || !cat) return;
     if (PROCEDURAL_OUTFITS.has(outfit)) {
       if (cat.material !== catBaseMat) cat.material = catBaseMat;
       if (t - lastCatDraw >= .055) {
         lastCatDraw = t;
         catCtx.clearRect(0, 0, 512, 512);
-        PDM.art.drawCat(catCtx, 256, 496, 3.45, { state: state, outfit: outfit, t: t });
+        PDM.art.drawCat(catCtx, 256, 496, 3.45, { state: state, outfit: outfit, t: t, access: access });
         catTex.needsUpdate = true;
       }
-      drawCatFx(state, t);
+      drawCatFx(state, t, null);
       return;
     }
     let key = catKeyFor(state, outfit);
@@ -776,13 +994,13 @@ window.PDM = window.PDM || {};
       if (t - lastCatDraw < .055) return;
       lastCatDraw = t;
       catCtx.clearRect(0, 0, 512, 512);
-      PDM.art.drawCat(catCtx, 256, 496, 3.45, { state: state, outfit: outfit || 'default', t: t });
+      PDM.art.drawCat(catCtx, 256, 496, 3.45, { state: state, outfit: outfit || 'default', t: t, access: access });
       catTex.needsUpdate = true;
       return;
     }
     if (t - catFxLast < .04) return;
     catFxLast = t;
-    drawCatFx(state, t);
+    drawCatFx(state, t, access);
   }
 
   /* ---------- cat house & snap marker ---------- */
@@ -818,7 +1036,8 @@ window.PDM = window.PDM || {};
     return g;
   }
 
-  function buildCatHouse() {
+  function buildCatHouse(tier) {
+    tier = Math.max(0, Math.min(2, Number(tier) || 0));
     const g = new THREE.Group();
     const card = '#C79A6A', cardDark = '#A87A4D', cardLight = '#DDB587';
     const body = box(.84, .66, .76, card); body.position.y = .33; g.add(body);
@@ -844,11 +1063,34 @@ window.PDM = window.PDM || {};
     [-.07, .07].forEach(x => {
       const e = box(.05, .012, .01, '#FFF3DC'); e.position.set(x, .33, .398); g.add(e);
     });
-    // tiny fish sign
-    const post = box(.02, .14, .02, '#8C6239'); post.position.set(.3, .78, .18); g.add(post);
-    const fish = sph(.06, '#E8836B', 1.4, .6, .4); fish.position.set(.3, .86, .18); g.add(fish);
+    // tiny fish sign (放在屋顶前檐，避开二档阁楼正面)
+    const post = box(.02, .14, .02, '#8C6239'); post.position.set(.3, .78, .3); g.add(post);
+    const fish = sph(.06, '#E8836B', 1.4, .6, .4); fish.position.set(.3, .86, .3); g.add(fish);
     const tail = new THREE.Mesh(new THREE.ConeGeometry(.045, .07, 3), mat('#E8836B'));
-    tail.position.set(.37, .86, .18); tail.rotation.z = -Math.PI / 2; g.add(tail);
+    tail.position.set(.37, .86, .3); tail.rotation.z = -Math.PI / 2; g.add(tail);
+
+    if (tier >= 1) {
+      // 原木双层：加一层小阁楼（下沿压住主屋顶，避免悬空）
+      const loft = box(.58, .34, .52, card); loft.position.set(0, .92, 0); g.add(loft);
+      const loftHole = new THREE.Mesh(new THREE.CircleGeometry(.12, 22), new THREE.MeshBasicMaterial({ color: '#4A3322' }));
+      loftHole.position.set(0, .92, .266); g.add(loftHole);
+      const loftRim = new THREE.Mesh(new THREE.TorusGeometry(.12, .018, 8, 22), mat(cardDark));
+      loftRim.position.set(0, .92, .268); g.add(loftRim);
+      const r3 = box(.38, .05, .6, cardLight); r3.position.set(-.17, 1.12, 0); r3.rotation.z = .34; g.add(r3);
+      const r4 = box(.38, .05, .6, cardDark); r4.position.set(.17, 1.12, 0); r4.rotation.z = -.34; g.add(r4);
+    }
+    if (tier >= 2) {
+      // 阳光花房：侧面玻璃房 + 猫草（贴住主体，且不遮挡侧面猫洞）
+      const glassMat = new THREE.MeshBasicMaterial({ color: '#CFE8E2', transparent: true, opacity: .34 });
+      const glass = new THREE.Mesh(new THREE.BoxGeometry(.34, .24, .36), glassMat);
+      glass.position.set(.6, .12, .06); g.add(glass);
+      const frame = box(.36, .03, .38, '#B99066'); frame.position.set(.6, .24, .06); g.add(frame);
+      const pot = new THREE.Mesh(new THREE.CylinderGeometry(.06, .05, .09, 12), mat('#C98D63'));
+      pot.position.set(.6, .045, .06); g.add(pot);
+      [[-.05, .02], [.04, -.03], [0, .06]].forEach(([dx, dz]) => {
+        const leaf = sph(.045, '#7FA27A'); leaf.position.set(.6 + dx, .1, .06 + dz); g.add(leaf);
+      });
+    }
 
     g.position.set(-1.68, 0, -1.02);
     g.rotation.y = .34;
@@ -896,6 +1138,7 @@ window.PDM = window.PDM || {};
   let camAz = AZ_DEFAULT, camAzGoal = AZ_DEFAULT;
   let orbit = null;
   let houseRot = .34;
+  let houseTier = 0;
   let house = null, houseFocus = false;
   let catCanvas = null, catCtx = null, catTex = null, lastCatDraw = 0;
   let catShadow = null;
@@ -1348,8 +1591,15 @@ window.PDM = window.PDM || {};
     try {
       const a = parseFloat(localStorage.getItem('pdm.camAz'));
       if (!isNaN(a)) camAz = camAzGoal = a;
-      const h = parseFloat(localStorage.getItem('pdm.catHouseRot'));
-      if (!isNaN(h)) houseRot = h;
+      // 猫屋朝向优先读主存档，旧版本再回退到独立 localStorage
+      const st = PDM.core && PDM.core.state ? PDM.core.state() : null;
+      const savedRot = st && st.catHouse ? Number(st.catHouse.rot) : NaN;
+      if (Number.isFinite(savedRot)) {
+        houseRot = savedRot;
+      } else {
+        const h = parseFloat(localStorage.getItem('pdm.catHouseRot'));
+        if (!isNaN(h)) houseRot = h;
+      }
     } catch (err) {}
     camera.position.set(
       baseTarget.x + Math.sin(camAz) * CAM_R,
@@ -1360,9 +1610,14 @@ window.PDM = window.PDM || {};
     raycaster = new THREE.Raycaster();
 
     scene.add(buildRoom());
-    house = buildCatHouse();
+    houseTier = (PDM.core && PDM.core.state && PDM.core.state().catHouse) ? PDM.core.state().catHouse.tier : 0;
+    house = buildCatHouse(houseTier);
     house.rotation.y = houseRot;
     scene.add(house);
+    ensureManifest().then(function () {
+      tryAttachGlb(house, 'cathouse_t' + houseTier, { house: true });
+      initSceneProps();
+    });
     snapRing = buildSnapMarker();
     buildLights();
     applyTod(PDM.room.tod());
@@ -1419,6 +1674,17 @@ window.PDM = window.PDM || {};
     return blueprint;
   }
 
+  function setCatHouseTier(tier) {
+    houseTier = Math.max(0, Math.min(2, Number(tier) || 0));
+    if (!scene) return houseTier;
+    if (house) scene.remove(house);
+    house = buildCatHouse(houseTier);
+    house.rotation.y = houseRot;
+    scene.add(house);
+    tryAttachGlb(house, 'cathouse_t' + houseTier, { house: true });
+    return houseTier;
+  }
+
   function beginOrbit(clientX, clientY) {
     orbit = { x: clientX, y: clientY, az: camAzGoal };
     return orbit;
@@ -1446,8 +1712,21 @@ window.PDM = window.PDM || {};
   function rotateHouse() {
     houseRot += Math.PI / 2;
     if (house) house.rotation.y = houseRot;
+    // 朝向写入主存档，换机/导存档不丢
+    try {
+      if (PDM.core && PDM.core.state) {
+        const st = PDM.core.state();
+        if (st.catHouse) { st.catHouse.rot = houseRot; PDM.core.save(); }
+      }
+    } catch (e) {}
     try { localStorage.setItem('pdm.catHouseRot', String(houseRot)); } catch (e) {}
     return houseRot;
+  }
+
+  // 小猫屋门口的位置（随猫屋朝向变化）
+  function catHouseSpot() {
+    const r = 0.62;
+    return { x: -1.68 + Math.sin(houseRot) * r, z: -1.02 + Math.cos(houseRot) * r };
   }
 
   function rotateRoom(step) {
@@ -1475,13 +1754,22 @@ window.PDM = window.PDM || {};
     const objs = [];
     if (bowlObj) objs.push(bowlObj);
     if (toyObj) objs.push(toyObj);
+    Object.keys(sceneProps).forEach(function (id) { if (sceneProps[id]) objs.push(sceneProps[id]); });
     if (!objs.length) return null;
     const ray = pointerRay(clientX, clientY);
     const hits = ray.intersectObjects(objs, true);
     if (!hits.length) return null;
     let o = hits[0].object;
-    while (o && !o.userData.pickBowl && !o.userData.pickToy) o = o.parent;
-    return o ? (o.userData.pickBowl ? 'bowl' : 'toy') : null;
+    while (o && !(o.userData.pickBowl || o.userData.pickToy || o.userData.pickMail || o.userData.pickCountdown || o.userData.pickTank)) {
+      o = o.parent;
+    }
+    if (!o) return null;
+    if (o.userData.pickBowl) return 'bowl';
+    if (o.userData.pickToy) return 'toy';
+    if (o.userData.pickMail) return 'mail';
+    if (o.userData.pickCountdown) return 'countdown';
+    if (o.userData.pickTank) return 'tank';
+    return null;
   }
 
   function moveCatTo(x, z, cb) {
@@ -1555,6 +1843,7 @@ window.PDM = window.PDM || {};
         g.userData.slot = item.slot;
         scene.add(g);
         items[id] = g;
+        if (FURNITURE_GLB[id]) tryAttachGlb(g, FURNITURE_GLB[id]);
       }
       const p = normToWorld(item.slot, L.x, L.y);
       g.position.set(p.x, p.y, p.z);
@@ -1658,16 +1947,21 @@ window.PDM = window.PDM || {};
       catLastState = state;
       lastCatDraw = 0;
     }
-    paintCat(state, opts.outfit || 'default', t);
+    paintCat(state, opts.outfit || 'default', t, opts.access);
   }
 
   function render(t, opts) {
     if (!renderer || !scene || !camera) return;
+    if (typeof tickGlbFades === 'function') tickGlbFades((typeof performance !== 'undefined' && performance.now) ? performance.now() : t * 1000);
     if (!W || !H) {
       const r = wrapEl.getBoundingClientRect();
       if (r.width > 20 && r.height > 20) resize(r.width, r.height);
     }
-    const env = PDM.room.tod();
+    let env = PDM.room.tod();
+    // 雨夜窗台主题固定成夜晚光线，避免白天大太阳叠着雨
+    if (PDM.core && PDM.core.state().roomTheme === 'rainy') {
+      env = { key: 'night', label: '雨夜', night: true, dusk: false };
+    }
     applyTod(env);
     syncItems();
     Object.values(items).forEach(g => {
@@ -1941,7 +2235,10 @@ window.PDM = window.PDM || {};
     rotateHouse: rotateHouse,
     rotateRoom: rotateRoom,
     cameraInfo: () => ({ az: camAzGoal, zoom: camZoomGoal, focused: houseFocus }),
+    setCatHouseTier: setCatHouseTier,
+    catHouseSpot: catHouseSpot,
     setPointer: setPointer,
     items: () => items
   };
 })(window.PDM);
+

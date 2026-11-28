@@ -1,0 +1,51 @@
+[
+  {
+    "id": "pet",
+    "name": "摸摸小喵",
+    "desc": "在小屋里摸摸它的头",
+    "reward": 2
+  },
+  {
+    "id": "feed",
+    "name": "投喂一次",
+    "desc": "给它一份猫鱼条、牛奶或饼干",
+    "reward": 2
+  },
+  {
+    "id": "play",
+    "name": "逗猫一次",
+    "desc": "用毛线球陪它玩一会儿",
+    "reward": 2
+  },
+  {
+    "id": "decor",
+    "name": "布置小屋",
+    "desc": "拖动或旋转一件家具",
+    "reward": 2
+  },
+  {
+    "id": "focus",
+    "name": "完成一次专注",
+    "desc": "完成一轮陪读",
+    "reward": 2
+  },
+  {
+    "id": "fish",
+    "name": "钓到一条鱼",
+    "desc": "在休息鱼塘成功收竿",
+    "reward": 2
+  },
+  {
+    "id": "quiz",
+    "name": "通过一关刷题",
+    "desc": "答对 2 题以上通关",
+    "reward": 2
+  },
+  {
+    "id": "comic",
+    "name": "读完一篇番外",
+    "desc": "在番外里读完一话",
+    "reward": 2
+  }
+]
+

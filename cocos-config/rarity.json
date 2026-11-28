@@ -1,0 +1,23 @@
+{
+  "common": {
+    "name": "普通",
+    "level": 0,
+    "color": "#8C9A88"
+  },
+  "rare": {
+    "name": "稀有",
+    "level": 1,
+    "color": "#5E8FA8"
+  },
+  "epic": {
+    "name": "史诗",
+    "level": 2,
+    "color": "#8E6FA8"
+  },
+  "legend": {
+    "name": "传说",
+    "level": 3,
+    "color": "#D79A3E"
+  }
+}
+

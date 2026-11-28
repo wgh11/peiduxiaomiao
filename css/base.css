@@ -70,6 +70,7 @@ svg { display: block; }
   max-height: 920px;
   background: var(--bg);
   overflow: hidden;
+  overflow: clip;
   display: flex;
   flex-direction: column;
   isolation: isolate;
@@ -391,3 +392,4 @@ svg { display: block; }
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-4px); }
 }
+

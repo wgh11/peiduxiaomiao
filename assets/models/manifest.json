@@ -1,0 +1,211 @@
+{
+  "version": 1,
+  "note": "用同名高精度 .glb（Tripo / Meshy / Blender 导出，glTF 2.0 binary）直接替换本目录文件即可热更新，无需改代码。scale / offset 作用于模型本地坐标系，房间摆放与旋转仍由 js/room3d.js 管理。",
+  "loader": "js/gltf-loader.js",
+  "base": "assets/models/",
+  "models": {
+    "cathouse_t0": {
+      "id": "cathouse_t0",
+      "path": "assets/models/cathouse_t0.glb",
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "kind": "cathouse",
+      "tier": 0,
+      "name": "纸箱猫屋"
+    },
+    "cathouse_t1": {
+      "id": "cathouse_t1",
+      "path": "assets/models/cathouse_t1.glb",
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "kind": "cathouse",
+      "tier": 1,
+      "name": "原木双层"
+    },
+    "cathouse_t2": {
+      "id": "cathouse_t2",
+      "path": "assets/models/cathouse_t2.glb",
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "kind": "cathouse",
+      "tier": 2,
+      "name": "阳光花房"
+    },
+    "d_lamp": {
+      "id": "d_lamp",
+      "path": "assets/models/d_lamp.glb",
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "kind": "furniture",
+      "slot": "desk",
+      "name": "蘑菇小台灯"
+    },
+    "fl_bed": {
+      "id": "fl_bed",
+      "path": "assets/models/fl_bed.glb",
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "kind": "furniture",
+      "slot": "floor",
+      "name": "云朵小床"
+    },
+    "fl_rug": {
+      "id": "fl_rug",
+      "path": "assets/models/fl_rug.glb",
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "kind": "furniture",
+      "slot": "floor",
+      "name": "圆地毯"
+    },
+    "fl_shelf": {
+      "id": "fl_shelf",
+      "path": "assets/models/fl_shelf.glb",
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "kind": "furniture",
+      "slot": "floor",
+      "name": "书架"
+    },
+    "o_plant": {
+      "id": "o_plant",
+      "path": "assets/models/o_plant.glb",
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "kind": "furniture",
+      "slot": "ornament",
+      "name": "绿植"
+    },
+    "tank_corner": {
+      "id": "tank_corner",
+      "path": "assets/models/tank_corner.glb",
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "kind": "prop",
+      "name": "角落小鱼缸",
+      "position": [
+        1.72,
+        0,
+        1.02
+      ],
+      "rotationY": -0.3
+    },
+    "mailbox": {
+      "id": "mailbox",
+      "path": "assets/models/mailbox.glb",
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "kind": "prop",
+      "name": "门口信箱",
+      "position": [
+        -1.88,
+        0,
+        0.92
+      ],
+      "rotationY": 0.4
+    },
+    "countdown_stand": {
+      "id": "countdown_stand",
+      "path": "assets/models/countdown_stand.glb",
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "kind": "prop",
+      "name": "书桌倒计时牌",
+      "position": [
+        0.52,
+        0.84,
+        -0.7
+      ],
+      "rotationY": -0.08
+    }
+  }
+}
+

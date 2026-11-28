@@ -1,0 +1,30 @@
+[
+  {
+    "tier": 0,
+    "name": "纸箱猫屋",
+    "desc": "小喵最初的小家，装得下它和一条毯子。",
+    "level": 1,
+    "furniture": 0,
+    "fish": 0,
+    "intimacy": 0
+  },
+  {
+    "tier": 1,
+    "name": "原木双层",
+    "desc": "多了一层小阁楼和更软的垫子。",
+    "level": 3,
+    "furniture": 8,
+    "fish": 0,
+    "intimacy": 20
+  },
+  {
+    "tier": 2,
+    "name": "阳光花房",
+    "desc": "玻璃花房、晒太阳的窗台，还有几盆猫草。",
+    "level": 5,
+    "furniture": 16,
+    "fish": 0,
+    "intimacy": 50
+  }
+]
+

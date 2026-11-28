@@ -431,3 +431,4 @@ window.PDM = window.PDM || {};
   PDM.furniture.drawIcon = drawIcon;
   PDM.furniture.ICON = ICON;
 })(window.PDM);
+

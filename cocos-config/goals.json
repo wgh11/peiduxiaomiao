@@ -1,0 +1,14 @@
+{
+  "daily": {
+    "focusMinutes": 15,
+    "quizClears": 1,
+    "fishCaught": 1,
+    "reward": 10
+  },
+  "weekly": {
+    "focusDays": 5,
+    "reward": 15,
+    "weekStartsOn": "monday"
+  }
+}
+

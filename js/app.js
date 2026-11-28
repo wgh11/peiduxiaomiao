@@ -111,6 +111,7 @@ window.PDM = window.PDM || {};
         t: ts / 1000,
         catState: app.cat.state,
         outfit: core.state().outfit,
+        access: core.state().accessories,
         level: core.levelInfo().level,
         focus: !!app.session
       });
@@ -124,6 +125,7 @@ window.PDM = window.PDM || {};
       t: ts / 1000,
       catState: app.cat.state,
       outfit: core.state().outfit,
+      access: core.state().accessories,
       equipped: core.state().equipped,
       level: core.levelInfo().level
     });
@@ -469,6 +471,7 @@ window.PDM = window.PDM || {};
     app.celebrateUntil = performance.now() + 7000;
     setCatState('celebrate');
     app.catNextAt = performance.now() + 7500;
+    if (completed && core.completeActivity) core.completeActivity('focus');
 
     if (minutes < 1) {
       core.logEvent('focus_partial', { minutes: 0, away: Math.round(s.awayMs / 1000) });
@@ -553,7 +556,7 @@ window.PDM = window.PDM || {};
       canvas.height = size * dpr;
       const ctx = canvas.getContext('2d');
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      PDM.art.drawCat(ctx, size / 2, size * 0.94, 0.66, { state: 'celebrate', outfit: core.state().outfit, t: 2.1 });
+      PDM.art.drawCat(ctx, size / 2, size * 0.94, 0.66, { state: 'celebrate', outfit: core.state().outfit, access: core.state().accessories, t: 2.1 });
       const oc = core.state().outfit;
       const src = (oc === 'pj' || oc === 'academy' || oc === 'festival')
         ? 'assets/cat/cat_' + oc + '.png'
@@ -836,6 +839,7 @@ window.PDM = window.PDM || {};
       }
       case 'decorDone': {
         setDecorMode(false);
+        if (core.completeActivity) core.completeActivity('decor');
         ui.toast('布置完成，小屋更好看啦');
         break;
       }
@@ -871,6 +875,50 @@ window.PDM = window.PDM || {};
         const o = core.outfitById(el.dataset.id);
         ui.toast('小喵换上了「' + o.name + '」');
         refreshAll();
+        break;
+      }
+      case 'accItem': {
+        const id = el.dataset.id;
+        const a = core.accessoryById && core.accessoryById(id);
+        if (!a) break;
+        const r = core.toggleAccessory(id);
+        if (!r.ok) {
+          ui.toast(r.reason === 'fish' ? '小鱼干还不够，再专注一会儿吧' : (a.cond || '这个配饰还没有解锁'));
+          return;
+        }
+        ui.toast(r.on ? '小喵戴上了「' + a.name + '」' : '小喵摘下了「' + a.name + '」', 1800);
+        refreshAll();
+        break;
+      }
+      case 'themeItem': {
+        const id = el.dataset.id;
+        const t = core.themeById && core.themeById(id);
+        if (!t) break;
+        const st = core.state();
+        let r = st.themes.indexOf(id) >= 0 ? { ok: core.setTheme(id) } : core.buyTheme(id);
+        if (!r.ok) {
+          ui.toast(r.reason === 'fish' ? '小鱼干还不够，再专注一会儿吧' : (t.streak ? '连续打卡 ' + t.streak + ' 天后解锁' : '这个主题暂时还不能使用'));
+          return;
+        }
+        ui.toast('小屋换上了「' + t.name + '」', 1800);
+        refreshAll();
+        break;
+      }
+      case 'catHouseUpgrade': {
+        const r = core.upgradeCatHouse && core.upgradeCatHouse();
+        if (!r || !r.ok) {
+          ui.toast(r && r.reason === 'max' ? '小喵已经住进最棒的花房啦' : '再多陪读和布置一会儿，猫屋就能升级了', 2200);
+          return;
+        }
+        if (PDM.room3d && PDM.room3d.setCatHouseTier) PDM.room3d.setCatHouseTier(r.tier);
+        ui.closeModal();
+        ui.toast('猫屋升级成「' + r.info.current.name + '」啦', 2400);
+        refreshAll();
+        break;
+      }
+      case 'catHouseVisit': {
+        ui.closeModal();
+        enterCatHouse();
         break;
       }
       case 'adItem': {
@@ -1073,6 +1121,7 @@ window.PDM = window.PDM || {};
     if (PDM.room3d) PDM.room3d.stopCat();
     app.petUntil = performance.now() + 2600;
     setCatState('pet');
+    if (core.completeActivity) core.completeActivity('pet');
     showStageTip('呼噜呼噜…小喵把头蹭过来', 1900);
   }
 
@@ -1085,6 +1134,7 @@ window.PDM = window.PDM || {};
       return;
     }
     if (!core.useFood()) return;
+    if (core.completeActivity) core.completeActivity('feed');
     updatePetBar();
     app.eatPending = true;
     app.eatUntil = 0;
@@ -1101,6 +1151,7 @@ window.PDM = window.PDM || {};
 
   function playCat() {
     if (!app.use3d) return;
+    if (core.completeActivity) core.completeActivity('play');
     PDM.room3d.playToy();
     PDM.room3d.moveCatTo(.24, .44, () => {
       app.playUntil = performance.now() + 2600;
@@ -1136,6 +1187,26 @@ window.PDM = window.PDM || {};
     $('btnDecor').classList.add('hidden');
     $('btnRotate').textContent = '旋转猫屋';
     ui.toast('小喵的小屋，点「返回书屋」回去', 2200);
+  }
+
+  function openCatHousePanel() {
+    const info = core.catHouseInfo ? core.catHouseInfo() : null;
+    if (!info) { enterCatHouse(); return; }
+    const next = info.next;
+    const progress = next
+      ? '当前进度：Lv.' + info.level + ' · 家具 ' + info.furniture + '/' + next.furniture + ' · 成长 ' + info.intimacy + '/' + next.intimacy
+      : '猫屋已经达到最高等级，小喵有自己的阳光花房啦。';
+    ui.openModal(
+      '<h2 style="font-size:17px;margin-bottom:6px">' + info.current.name + '</h2>' +
+      '<p class="tiny" style="line-height:1.7;margin-bottom:12px">' + info.current.desc + '</p>' +
+      '<div class="panel" style="margin:0 0 12px;padding:11px 12px">' +
+      (next ? '<b style="font-size:12px">下一档：' + next.name + '</b><p class="tiny" style="margin-top:5px;line-height:1.6">' + next.desc + '</p><p class="tiny" style="margin-top:5px">' + progress + '</p>' : '<p class="tiny">' + progress + '</p>') +
+      '</div>' +
+      '<div class="reward-actions">' +
+      (next ? '<button class="btn primary" data-action="catHouseUpgrade" ' + (info.canUpgrade ? '' : 'disabled') + '>升级猫屋</button>' : '') +
+      '<button class="btn ghost" data-action="catHouseVisit">进去看看</button>' +
+      '<button class="btn ghost" data-action="closeModal">先不升级</button></div>'
+    );
   }
 
   function exitCatHouse() {
@@ -1321,7 +1392,7 @@ window.PDM = window.PDM || {};
         '<button class="btn ghost" data-action="closeModal">继续专注</button></div>');
     });
     $('btnDecor').addEventListener('click', () => ui.openDecor(null));
-    $('btnCatHouse').addEventListener('click', enterCatHouse);
+    $('btnCatHouse').addEventListener('click', openCatHousePanel);
     $('btnBackRoom').addEventListener('click', exitCatHouse);
     $('btnRotate').addEventListener('click', rotateCurrent);
     $('btnTurnLeft').addEventListener('click', () => {
@@ -1394,7 +1465,7 @@ window.PDM = window.PDM || {};
       const el = e.target.closest('[data-action]');
       if (!el) return;
       const action = el.dataset.action;
-      if (action === 'closeModal' || action === 'confirmReset' || action === 'confirmStop' || action === 'adDouble' || action.startsWith('ad') || action.startsWith('buy') || action.startsWith('decor') || action === 'openDecor' || action === 'comic' || action === 'makeup' || action === 'toggleSpeed' || action === 'toggleBreak' || action === 'exportSave' || action === 'confirmCustomMin' || action === 'share' || action === 'analytics' || action === 'resetData' || action === 'closeReward' || action === 'goShop' || action === 'wearOutfit' || action === 'closeWelcome' || action === 'goStart' || action === 'goFishing') {
+      if (action === 'closeModal' || action === 'confirmReset' || action === 'confirmStop' || action === 'adDouble' || action.startsWith('ad') || action.startsWith('buy') || action.startsWith('decor') || action === 'openDecor' || action === 'comic' || action === 'makeup' || action === 'toggleSpeed' || action === 'toggleBreak' || action === 'exportSave' || action === 'confirmCustomMin' || action === 'share' || action === 'analytics' || action === 'resetData' || action === 'closeReward' || action === 'goShop' || action === 'wearOutfit' || action === 'accItem' || action === 'themeItem' || action === 'catHouseUpgrade' || action === 'catHouseVisit' || action === 'closeWelcome' || action === 'goStart' || action === 'goFishing') {
         if (el.tagName === 'BUTTON' || el.classList.contains('switch') || el.dataset.action === 'openDecor') e.preventDefault();
         handleAction(action, el);
       }
@@ -1482,3 +1553,4 @@ window.PDM = window.PDM || {};
     boot();
   }
 })(window.PDM);
+

@@ -1,0 +1,19 @@
+{
+  "castsPerBreak": 3,
+  "dailySnackCap": 8,
+  "gear": [
+    {
+      "id": "rod",
+      "name": "结实钓竿",
+      "price": 50,
+      "desc": "每轮休息多 1 杆（共 4 杆）"
+    },
+    {
+      "id": "lamp",
+      "name": "暖光夜灯",
+      "price": 80,
+      "desc": "稀有鱼更容易靠近，传说保底更快"
+    }
+  ]
+}
+

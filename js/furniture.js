@@ -618,3 +618,4 @@ window.PDM = window.PDM || {};
 
   PDM.furniture = { ITEMS: ITEMS, tape: tape };
 })(window.PDM);
+

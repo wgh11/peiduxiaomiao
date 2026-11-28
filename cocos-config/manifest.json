@@ -1,0 +1,105 @@
+{
+  "name": "peiduxiaomiao-cocos-config",
+  "source": "js/core.js",
+  "generatedBy": "scripts/export-config.js",
+  "note": "由 H5 原型的静态配置表导出，供 Cocos Creator 3.8 直接作为配置表使用。H5 仍从 js/core.js 同步加载，互不影响。",
+  "files": [
+    {
+      "file": "slots.json",
+      "const": "SLOTS",
+      "title": "家具槽位",
+      "items": 5
+    },
+    {
+      "file": "furniture.json",
+      "const": "FURNITURE",
+      "title": "家具目录",
+      "items": 29
+    },
+    {
+      "file": "outfits.json",
+      "const": "OUTFITS",
+      "title": "服装目录",
+      "items": 12
+    },
+    {
+      "file": "foods.json",
+      "const": "FOODS",
+      "title": "食物目录",
+      "items": 3
+    },
+    {
+      "file": "activities.json",
+      "const": "ACTIVITIES",
+      "title": "猫咪陪伴图鉴",
+      "items": 8
+    },
+    {
+      "file": "activity-tasks.json",
+      "const": "ACTIVITY_TASKS",
+      "title": "互动手册任务",
+      "items": 8
+    },
+    {
+      "file": "comics.json",
+      "const": "COMICS",
+      "title": "番外目录",
+      "items": 6
+    },
+    {
+      "file": "levels.json",
+      "const": "LEVELS",
+      "title": "等级表",
+      "items": 8
+    },
+    {
+      "file": "fishing.json",
+      "const": "FISHING",
+      "title": "钓鱼规则与装备",
+      "items": 2
+    },
+    {
+      "file": "rarity.json",
+      "const": "RARITY",
+      "title": "鱼类稀有度",
+      "items": 4
+    },
+    {
+      "file": "fish.json",
+      "const": "FISH",
+      "title": "鱼类图鉴",
+      "items": 9
+    },
+    {
+      "file": "cat-house-tiers.json",
+      "const": "CAT_HOUSE_TIERS",
+      "title": "猫屋档位",
+      "items": 3
+    },
+    {
+      "file": "accessories.json",
+      "const": "ACCESSORIES",
+      "title": "猫咪配饰",
+      "items": 16
+    },
+    {
+      "file": "room-themes.json",
+      "const": "ROOM_THEMES",
+      "title": "房间主题",
+      "items": 3
+    },
+    {
+      "file": "achievements.json",
+      "const": "ACHIEVEMENTS",
+      "title": "成就",
+      "items": 12
+    },
+    {
+      "file": "goals.json",
+      "const": "goalInfo",
+      "title": "每日/每周目标",
+      "items": 2
+    }
+  ]
+}
+

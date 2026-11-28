@@ -1,0 +1,23 @@
+[
+  {
+    "id": "wall",
+    "name": "墙面"
+  },
+  {
+    "id": "window",
+    "name": "窗户"
+  },
+  {
+    "id": "desk",
+    "name": "桌面"
+  },
+  {
+    "id": "floor",
+    "name": "地面"
+  },
+  {
+    "id": "ornament",
+    "name": "摆件"
+  }
+]
+

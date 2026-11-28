@@ -1,0 +1,59 @@
+[
+  {
+    "level": 1,
+    "name": "初识",
+    "min": 0,
+    "unlockId": "base",
+    "unlock": "纸箱猫屋与默认服装"
+  },
+  {
+    "level": 2,
+    "name": "熟悉",
+    "min": 30,
+    "unlockId": "mood",
+    "unlock": "心情与亲密度面板"
+  },
+  {
+    "level": 3,
+    "name": "黏人",
+    "min": 90,
+    "unlockId": "cat_house_wood",
+    "unlock": "猫屋升级资格：原木双层"
+  },
+  {
+    "level": 4,
+    "name": "默契",
+    "min": 180,
+    "unlockId": "room_theme",
+    "unlock": "房间主题购买资格"
+  },
+  {
+    "level": 5,
+    "name": "守护",
+    "min": 300,
+    "unlockId": "cat_house_green",
+    "unlock": "阳光花房升级资格"
+  },
+  {
+    "level": 6,
+    "name": "家人",
+    "min": 480,
+    "unlockId": "aquarium",
+    "unlock": "鱼缸展览资格"
+  },
+  {
+    "level": 7,
+    "name": "心有灵犀",
+    "min": 720,
+    "unlockId": "title_frame",
+    "unlock": "限定称号框与窗边星光"
+  },
+  {
+    "level": 8,
+    "name": "永远陪读",
+    "min": 1000,
+    "unlockId": "final",
+    "unlock": "终局纪念装饰与永远的书桌"
+  }
+]
+

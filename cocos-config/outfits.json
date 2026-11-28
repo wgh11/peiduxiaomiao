@@ -1,0 +1,84 @@
+[
+  {
+    "id": "default",
+    "name": "奶油小喵",
+    "price": 0,
+    "desc": "米白色的毛，配珊瑚色小项圈"
+  },
+  {
+    "id": "pj",
+    "name": "云朵睡衣",
+    "price": 80,
+    "desc": "浅蓝条纹睡衣，还带一顶睡帽"
+  },
+  {
+    "id": "academy",
+    "name": "学院风",
+    "price": 120,
+    "desc": "藏青外套配红色领结，今天很认真"
+  },
+  {
+    "id": "festival",
+    "name": "节日限定",
+    "price": 0,
+    "ad": true,
+    "desc": "红围巾和毛球帽，冬季限定"
+  },
+  {
+    "id": "raincoat",
+    "name": "雨天小雨衣",
+    "price": 100,
+    "desc": "下雨也要去窗边看云"
+  },
+  {
+    "id": "chef",
+    "name": "小厨师",
+    "price": 140,
+    "desc": "今天的猫粮由主厨亲自监督"
+  },
+  {
+    "id": "wizard",
+    "name": "星星魔法师",
+    "price": 180,
+    "desc": "把困意变成会发光的小星星"
+  },
+  {
+    "id": "sailor",
+    "name": "学院风水手服",
+    "price": 110,
+    "how": "shop",
+    "desc": "白衣蓝领，红领结端端正正"
+  },
+  {
+    "id": "matcha",
+    "name": "抹茶绞花毛衣",
+    "price": 95,
+    "how": "shop",
+    "desc": "软软的墨绿毛衣，像刚泡好的茶"
+  },
+  {
+    "id": "dino",
+    "name": "小恐龙连体睡衣",
+    "price": 0,
+    "how": "streak5",
+    "cond": "连续打卡 5 天",
+    "desc": "头上两只小角，走路一摇一摆"
+  },
+  {
+    "id": "hoodie",
+    "name": "奶油卫衣",
+    "price": 0,
+    "how": "quiz3",
+    "cond": "通过 3 关刷题",
+    "desc": "口袋里好像还藏着一块饼干"
+  },
+  {
+    "id": "cloak",
+    "name": "星空小斗篷",
+    "price": 0,
+    "how": "fish10",
+    "cond": "累计钓到 10 条鱼",
+    "desc": "披上就会变成夜里的一小片星空"
+  }
+]
+

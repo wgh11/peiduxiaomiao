@@ -1,0 +1,111 @@
+[
+  {
+    "id": "first",
+    "name": "第一次陪读",
+    "desc": "完成 1 次专注",
+    "goal": 1,
+    "reward": 8,
+    "valueExpr": "s.sessions.length",
+    "valueOf": "sessions.length"
+  },
+  {
+    "id": "hour1",
+    "name": "一小时的陪伴",
+    "desc": "累计专注 60 分钟",
+    "goal": 60,
+    "reward": 15,
+    "valueExpr": "s.growth",
+    "valueOf": "growth"
+  },
+  {
+    "id": "hour5",
+    "name": "一下午的专注",
+    "desc": "累计专注 300 分钟",
+    "goal": 300,
+    "reward": 25,
+    "valueExpr": "s.growth",
+    "valueOf": "growth"
+  },
+  {
+    "id": "streak3",
+    "name": "三日之约",
+    "desc": "连续打卡 3 天",
+    "goal": 3,
+    "reward": 0,
+    "valueExpr": "s.bestStreak || 0",
+    "valueOf": "bestStreak"
+  },
+  {
+    "id": "streak7",
+    "name": "七日默契",
+    "desc": "连续打卡 7 天",
+    "goal": 7,
+    "reward": 10,
+    "valueExpr": "s.bestStreak || 0",
+    "valueOf": "bestStreak"
+  },
+  {
+    "id": "furn5",
+    "name": "小有所成",
+    "desc": "拥有 5 件家具",
+    "goal": 5,
+    "reward": 10,
+    "valueExpr": "s.owned.length",
+    "valueOf": "owned.length"
+  },
+  {
+    "id": "furn12",
+    "name": "温馨小屋",
+    "desc": "拥有 12 件家具",
+    "goal": 12,
+    "reward": 15,
+    "valueExpr": "s.owned.length",
+    "valueOf": "owned.length"
+  },
+  {
+    "id": "furn20",
+    "name": "满屋都是你",
+    "desc": "集齐 20 件家具",
+    "goal": 20,
+    "reward": 25,
+    "valueExpr": "s.owned.length",
+    "valueOf": "owned.length"
+  },
+  {
+    "id": "outfit3",
+    "name": "衣橱初开",
+    "desc": "拥有 3 套服装",
+    "goal": 3,
+    "reward": 10,
+    "valueExpr": "s.ownedOutfits.length",
+    "valueOf": "ownedOutfits.length"
+  },
+  {
+    "id": "comic1",
+    "name": "故事读者",
+    "desc": "读完 1 篇番外",
+    "goal": 1,
+    "reward": 8,
+    "valueExpr": "s.comicsRead.length",
+    "valueOf": "comicsRead.length"
+  },
+  {
+    "id": "comic6",
+    "name": "故事收藏家",
+    "desc": "读完 6 篇番外",
+    "goal": 6,
+    "reward": 0,
+    "valueExpr": "s.comicsRead.length",
+    "valueOf": "comicsRead.length"
+  },
+  {
+    "id": "allcat",
+    "name": "满屋都是故事",
+    "desc": "集齐全部 47 件收藏",
+    "goal": 47,
+    "reward": 20,
+    "valueExpr": "s.owned.length + s.ownedOutfits.length + s.comics.length",
+    "valueOf": "owned.length + ownedOutfits.length + comics.length"
+  }
+]
+
