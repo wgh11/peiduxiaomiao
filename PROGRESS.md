@@ -12,7 +12,7 @@
 ## 2026-11-28 CloudBase 接入第一阶段
 - 已确认国内站 CloudBase 体验环境：`wgh-d4gzi1zrs0b4d5c63`（`ap-shanghai`）。
 - 已将 H5 入口、CSS、JS、Three.js、猫咪图片、GLB 模型和论文数据分批部署到 CloudBase 静态托管。
-- 当前可访问地址：`https://wgh-d4gzi1zrs0b4d5c63-1540672373.tcloudbaseapp.com/index.html?v=28`。
+- 当前可访问地址：`https://wgh-d4gzi1zrs0b4d5c63-1540672373.tcloudbaseapp.com/index.html?v=release1`。
 - 新增 `wx-miniprogram/` 原生小程序壳：使用 `web-view` 承载现有 3D 小屋，并在 `app.js` 初始化 CloudBase。
 - 新增 `js/wx-bridge.js`，预留 H5 到原生小程序的广告、分享、保存图片和日志消息桥。
 - 尚未写入真实微信 AppID，也未保存任何 SecretId/SecretKey；下一步需要在微信开发者工具填 AppID 并配置业务域名后预览。
@@ -50,7 +50,7 @@
 ## 验证
 
 - `node --check` 已通过 `miao/miao/js/*.js` 全量脚本检查。
-- 本地试玩地址：`http://127.0.0.1:8799/index.html?v=10`
+- 本地试玩地址：`http://127.0.0.1:8799/index.html?v=30`
 - 已打开装修模式确认网格显示，浏览器控制台无新增 error。
 
 ## 下一步
