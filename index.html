@@ -11,12 +11,20 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>陪读小喵 · 学习自习室桌宠</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='34' r='20' fill='%23F7E3CC'/%3E%3Cpath d='M12 18l10 8-11 5zM52 18L42 26l11 5z' fill='%23F2A48C'/%3E%3Ccircle cx='25' cy='33' r='2.6' fill='%235B4A42'/%3E%3Ccircle cx='39' cy='33' r='2.6' fill='%235B4A42'/%3E%3Cpath d='M29 40q3 3 6 0' stroke='%235B4A42' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="css/base.css?v=20261128-layout4">
+<link rel="stylesheet" href="css/base.css?v=20261128-release1">
 <link rel="stylesheet" href="css/screens.css?v=20261128-layout5">
 <link rel="stylesheet" href="css/quiz.css?v=20261127-warm">
   <link rel="stylesheet" href="css/healing.css">
 </head>
 <body>
+
+<div id="bootLoading" class="boot-loading" role="status" aria-live="polite">
+  <div class="boot-mark"><svg><use href="#i-paw"/></svg></div>
+  <div class="boot-title">小喵正在把小屋点亮</div>
+  <div class="boot-progress"><i></i></div>
+  <div class="boot-note" id="bootNote">第一次打开会准备房间和图鉴</div>
+  <button class="btn ghost boot-retry hidden" id="bootRetry">重新加载</button>
+</div>
 
 <svg class="svg-sprite" aria-hidden="true">
   <defs>
@@ -356,6 +364,35 @@
 <div id="toast" class="toast"></div>
 </div>
 
+<script>
+  (function () {
+    var wrap = document.getElementById('bootLoading');
+    var note = document.getElementById('bootNote');
+    var retry = document.getElementById('bootRetry');
+    var finished = false;
+    window.__pdmBoot = {
+      done: function () {
+        if (finished || !wrap) return;
+        finished = true;
+        wrap.classList.add('done');
+        setTimeout(function () { wrap.remove(); }, 280);
+      },
+      fail: function (message) {
+        if (!wrap) return;
+        note.textContent = message || '房间加载遇到一点问题，请重试';
+        retry.classList.remove('hidden');
+        retry.onclick = function () { location.reload(); };
+      }
+    };
+    window.addEventListener('error', function (event) {
+      if (!finished && event && event.error) window.__pdmBoot.fail('房间加载失败，请点击重新加载');
+    });
+    window.addEventListener('unhandledrejection', function () {
+      if (!finished) window.__pdmBoot.fail('网络或资源加载失败，请点击重新加载');
+    });
+  })();
+</script>
+
 <script defer src="js/core.js?v=20261128-activities"></script>
 <script defer src="js/vendor/three.min.js"></script>
 <script defer src="js/art.js?v=20261127-wardrobe"></script>
@@ -373,7 +410,7 @@
 <script defer src="js/quiz.js"></script>
 <script defer src="js/paper.js"></script>
 <script defer src="js/fishing.js"></script>
-<script defer src="js/app.js?v=20261128-activities"></script>
+<script defer src="js/app.js?v=20261128-release1"></script>
   <script defer src="js/healing.js"></script>
 </body>
 </html>
