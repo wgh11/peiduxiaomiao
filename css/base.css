@@ -379,6 +379,36 @@ svg { display: block; }
 
 .hidden { display: none !important; }
 
+/* 首屏资源加载层：避免微信 web-view / 慢网首次打开时白屏 */
+.boot-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 12px;
+  padding: 24px;
+  background: linear-gradient(160deg, #fffaf2 0%, #f6eadb 100%);
+  color: var(--ink);
+  transition: opacity .24s ease, visibility .24s ease;
+}
+.boot-loading.done { opacity: 0; visibility: hidden; pointer-events: none; }
+.boot-mark {
+  width: 58px; height: 58px; border-radius: 20px;
+  display: grid; place-items: center;
+  color: #fff8ed; background: var(--coral);
+  box-shadow: 0 12px 28px rgba(170, 96, 79, .22);
+  animation: floaty 1.8s ease-in-out infinite;
+}
+.boot-mark svg { width: 30px; height: 30px; }
+.boot-title { font-size: 16px; font-weight: 700; }
+.boot-note { color: var(--ink-faint); font-size: 12px; }
+.boot-progress { width: min(220px, 72vw); height: 4px; border-radius: 99px; overflow: hidden; background: rgba(195, 154, 91, .18); }
+.boot-progress i { display: block; width: 42%; height: 100%; border-radius: inherit; background: var(--honey); animation: bootProgress 1.35s ease-in-out infinite; }
+.boot-retry { margin-top: 4px; padding: 9px 18px; }
+@keyframes bootProgress { 0% { transform: translateX(-120%); } 100% { transform: translateX(280%); } }
+
 /* small helpers */
 .muted { color: var(--ink-soft); }
 .tiny { font-size: 11px; color: var(--ink-faint); }
