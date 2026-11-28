@@ -3,7 +3,7 @@
 当前已完成第一阶段：
 
 - 当前 H5 版本已部署到 CloudBase 静态托管：
-  `https://wgh-d4gzi1zrs0b4d5c63-1540672373.tcloudbaseapp.com/index.html?v=28`
+  `https://wgh-d4gzi1zrs0b4d5c63-1540672373.tcloudbaseapp.com/index.html?v=release1`
 - `wx-miniprogram/` 提供原生微信小程序入口。
 - `app.js` 已初始化 CloudBase 环境 `wgh-d4gzi1zrs0b4d5c63`。
 - 原生壳使用 `web-view` 承载现有 3D 小屋和商店功能，并预留消息桥接。
