@@ -478,15 +478,15 @@
   border-radius: 19px;
   box-shadow: var(--shadow-soft);
 }
-.panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; margin-bottom: 10px; }
 .panel-head h3 { font-size: 12.5px; }
-.panel-head .hint { font-size: 9.5px; color: var(--ink-faint); }
+.panel-head .hint { min-width: 0; font-size: 9.5px; color: var(--ink-faint); text-align: right; white-space: normal; }
 
 .accessory-panel { margin-top: 0; margin-bottom: 10px; }
-.acc-slot { display: flex; align-items: flex-start; gap: 8px; margin-top: 8px; }
+.acc-slot { display: flex; align-items: flex-start; gap: 8px; min-width: 0; margin-top: 8px; }
 .acc-slot-name { flex: none; width: 34px; padding-top: 7px; font-size: 10px; color: var(--ink-faint); }
-.acc-list { display: flex; flex-wrap: wrap; gap: 6px; }
-.acc-chip { min-height: 28px; padding: 5px 8px; border-radius: 9px; border: 1px solid var(--line); background: var(--card-soft); color: var(--ink-soft); font-size: 10px; }
+.acc-list { display: flex; flex: 1; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.acc-chip { max-width: 100%; min-height: 28px; padding: 5px 8px; border-radius: 9px; border: 1px solid var(--line); background: var(--card-soft); color: var(--ink-soft); font-size: 10px; }
 .acc-chip em { display: block; margin-top: 2px; font-style: normal; font-size: 8px; color: var(--ink-faint); }
 .acc-chip em svg { display: inline-block; width: 11px; height: 11px; margin-right: 2px; vertical-align: -2px; }
 .acc-chip.on { border-color: var(--coral); background: var(--coral-soft); color: var(--coral-deep); }
