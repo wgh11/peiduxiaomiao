@@ -449,6 +449,10 @@ window.PDM = window.PDM || {};
   function logEvent(type, data) {
     state.events.push({ t: Date.now(), d: dateKey(), type: type, data: data || null });
     if (state.events.length > 400) state.events = state.events.slice(-400);
+    // 在微信 web-view 中把关键事件交给原生壳；浏览器仍只保留本地记录。
+    if (PDM.wxBridge && PDM.wxBridge.log) {
+      PDM.wxBridge.log({ type: type, data: data || null, at: Date.now() });
+    }
   }
 
   function eventStats() {
