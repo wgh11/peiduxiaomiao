@@ -2,6 +2,13 @@
 
 更新日期：2026-11-28
 
+## 2026-11-28 发布前 8 项清单第一轮
+- 新增首屏加载层、进度反馈和资源失败后的重新加载入口，降低微信 web-view 慢网白屏风险。
+- 分享卡的保存图片和系统分享在 web-view 中改走 `wxBridge`；浏览器仍使用原有下载 / 系统分享回退。
+- `core.logEvent` 在微信壳中会把启动、专注、互动和广告事件交给原生层；原生层尝试写入 CloudBase `pdm_events` 集合。
+- 新增 `RELEASE_CHECKLIST.md`，逐项记录 8 类上线验收状态、证据和真正阻塞项。
+- 本轮审计结论：当前适合继续按“小程序 web-view MVP”内测；真实激励广告、AppID、业务域名、隐私材料和真机回归仍是上线阻塞项。若改为原生微信小游戏，需要另建 `game.js` / `game.json` 并迁移 DOM UI。
+
 ## 2026-11-28 CloudBase 接入第一阶段
 - 已确认国内站 CloudBase 体验环境：`wgh-d4gzi1zrs0b4d5c63`（`ap-shanghai`）。
 - 已将 H5 入口、CSS、JS、Three.js、猫咪图片、GLB 模型和论文数据分批部署到 CloudBase 静态托管。
