@@ -1,0 +1,18 @@
+{
+  "description": "陪读小喵 CloudBase 微信小程序壳",
+  "compileType": "miniprogram",
+  "miniprogramRoot": "miniprogram/",
+  "cloudfunctionRoot": "cloudfunctions/",
+  "appid": "",
+  "projectname": "peiduxiaomiao",
+  "setting": {
+    "es6": true,
+    "minified": true,
+    "postcss": true,
+    "urlCheck": true,
+    "coverView": true,
+    "lazyloadPlaceholderEnable": true
+  },
+  "condition": {}
+}
+

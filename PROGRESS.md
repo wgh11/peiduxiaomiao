@@ -2,6 +2,14 @@
 
 更新日期：2026-11-28
 
+## 2026-11-28 CloudBase 接入第一阶段
+- 已确认国内站 CloudBase 体验环境：`wgh-d4gzi1zrs0b4d5c63`（`ap-shanghai`）。
+- 已将 H5 入口、CSS、JS、Three.js、猫咪图片、GLB 模型和论文数据分批部署到 CloudBase 静态托管。
+- 当前可访问地址：`https://wgh-d4gzi1zrs0b4d5c63-1540672373.tcloudbaseapp.com/index.html?v=28`。
+- 新增 `wx-miniprogram/` 原生小程序壳：使用 `web-view` 承载现有 3D 小屋，并在 `app.js` 初始化 CloudBase。
+- 新增 `js/wx-bridge.js`，预留 H5 到原生小程序的广告、分享、保存图片和日志消息桥。
+- 尚未写入真实微信 AppID，也未保存任何 SecretId/SecretKey；下一步需要在微信开发者工具填 AppID 并配置业务域名后预览。
+
 ## 2026-11-28 排版回归修复
 - 修复限定主题页的鱼干 SVG 没有尺寸，导致「雨夜窗台」卡片被撑宽、标题竖排的问题；主题按钮现在保持横向紧凑布局。
 - 为猫咪日常互动手册补齐 `.act-row` 卡片样式，奖励、说明和完成状态恢复为可读的横向排列。

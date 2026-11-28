@@ -1,0 +1,7 @@
+{
+  "desc": "陪读小喵页面索引",
+  "rules": [
+    { "action": "allow", "page": "*" }
+  ]
+}
+

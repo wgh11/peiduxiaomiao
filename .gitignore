@@ -1,3 +1,5 @@
+.env.local
+.cloudbase/
 node_modules/
-.DS_Store
-*.log
+wx-miniprogram/miniprogram_npm/
+
