@@ -8,11 +8,14 @@ window.PDM = window.PDM || {};
 
   const ROOM = { w: 4.4, d: 3.0, h: 3.0, backZ: -1.5, leftX: -2.2, deskY: 0.84 };
   const CL = {
-    wall: '#E8E0D2', wallTop: '#FBF5EA', floor: '#B49B7E', floor2: '#A1896D',
+    wall: '#F0DCC6', wallTop: '#FFF8ED', floor: '#C79F78', floor2: '#AE815E',
     base: '#D1BFA5', desk: '#8E6F55', deskTop: '#D7C5A9', white: '#FFF9EF',
     ink: '#5B4A42', coral: '#C9826D', coralDeep: '#AA604F', sage: '#879F8E',
     honey: '#C39A5B', sky: '#D3D0C5', cream: '#F7F0E1'
   };
+  // GLB 猫屋包中的模型比例和原点不统一，默认使用程序化木屋保证首屏构图稳定。
+  // 后续替换为重新校准过的模型时可切回 true。
+  const USE_GLB_HOUSE = false;
   const MAP = {
     wall: { x: [-2.02, 2.02], y: [2.72, 0.88], z: -1.42 },
     window: { x: [0.55, 1.75], y: [2.28, 1.02], z: -1.42 },
@@ -1039,12 +1042,21 @@ window.PDM = window.PDM || {};
   function buildCatHouse(tier) {
     tier = Math.max(0, Math.min(2, Number(tier) || 0));
     const g = new THREE.Group();
-    const card = '#C79A6A', cardDark = '#A87A4D', cardLight = '#DDB587';
-    const body = box(.84, .66, .76, card); body.position.y = .33; g.add(body);
+    const card = '#C58A5B', cardDark = '#8F5C3B', cardLight = '#E7B37A';
+    const platform = box(1.04, .08, .98, '#A9704A'); platform.position.set(0, .04, .02); g.add(platform);
+    const body = box(.84, .66, .76, card); body.position.y = .35; g.add(body);
+    // 原木立柱和横梁，让猫屋有明确的建筑结构，不再像散落的低模零件。
+    [-.39, .39].forEach(x => {
+      const post = box(.055, .68, .08, cardDark); post.position.set(x, .35, .39); g.add(post);
+    });
+    const beam = box(.9, .065, .08, cardDark); beam.position.set(0, .67, .39); g.add(beam);
     const inner = new THREE.Mesh(new THREE.CircleGeometry(.2, 28), new THREE.MeshBasicMaterial({ color: '#4A3322' }));
     inner.position.set(0, .33, .386); g.add(inner);
     const ring = new THREE.Mesh(new THREE.TorusGeometry(.2, .026, 8, 26), mat(cardDark));
     ring.position.set(0, .33, .39); g.add(ring);
+    const welcome = box(.3, .12, .025, '#F5D9B5'); welcome.position.set(0, .86, .37); g.add(welcome);
+    const welcomeDot = sph(.025, '#D9795F'); welcomeDot.position.set(-.07, .86, .39); g.add(welcomeDot);
+    const welcomeDot2 = sph(.025, '#D9A34F'); welcomeDot2.position.set(.07, .86, .39); g.add(welcomeDot2);
     // side windows so any orientation still reads as a cat house
     [[.426, Math.PI / 2], [-.426, -Math.PI / 2]].forEach(([x, ry]) => {
       const hole = new THREE.Mesh(new THREE.CircleGeometry(.125, 24), new THREE.MeshBasicMaterial({ color: '#4A3322' }));
@@ -1057,6 +1069,7 @@ window.PDM = window.PDM || {};
     // roof flaps
     const r1 = box(.5, .05, .82, cardLight); r1.position.set(-.24, .7, 0); r1.rotation.z = .34; g.add(r1);
     const r2 = box(.5, .05, .82, cardDark); r2.position.set(.24, .7, 0); r2.rotation.z = -.34; g.add(r2);
+    const ridge = box(.06, .06, .86, '#7B4E35'); ridge.position.set(0, .88, 0); ridge.rotation.z = 0; g.add(ridge);
     // cushion
     const cushion = box(.44, .06, .34, '#F2C9B4'); cushion.position.set(0, .03, .1); g.add(cushion);
     // sleepy eyes inside
@@ -1068,6 +1081,13 @@ window.PDM = window.PDM || {};
     const fish = sph(.06, '#E8836B', 1.4, .6, .4); fish.position.set(.3, .86, .3); g.add(fish);
     const tail = new THREE.Mesh(new THREE.ConeGeometry(.045, .07, 3), mat('#E8836B'));
     tail.position.set(.37, .86, .3); tail.rotation.z = -Math.PI / 2; g.add(tail);
+    // 门廊台阶与侧面抓柱，增加猫咪真正会生活的细节。
+    const step2 = box(.52, .06, .18, '#D9A06B'); step2.position.set(0, .11, .54); g.add(step2);
+    const scratch = cyl(.055, .07, .34, '#B47B51', 12); scratch.position.set(.56, .2, .2); g.add(scratch);
+    for (let i = 0; i < 3; i++) {
+      const stripe = new THREE.Mesh(new THREE.TorusGeometry(.061, .008, 6, 18), mat('#F0C18B'));
+      stripe.rotation.x = Math.PI / 2; stripe.position.set(.56, .1 + i * .09, .2); g.add(stripe);
+    }
 
     if (tier >= 1) {
       // 原木双层：加一层小阁楼（下沿压住主屋顶，避免悬空）
@@ -1247,10 +1267,10 @@ window.PDM = window.PDM || {};
     const winX0 = 0.55, winX1 = 1.75, winY0 = 0.95, winY1 = 2.32;
     const wallTexV = tex(8, 160, (c, w, h) => {
       const gr = c.createLinearGradient(0, 0, 0, h);
-      gr.addColorStop(0, '#F5F5F0');
-      gr.addColorStop(.55, '#E5E4DB');
-      gr.addColorStop(.86, '#D5D1C5');
-      gr.addColorStop(1, '#C6C0B1');
+      gr.addColorStop(0, '#FFF8ED');
+      gr.addColorStop(.55, '#F3DFCA');
+      gr.addColorStop(.86, '#E9CDB0');
+      gr.addColorStop(1, '#D9B28D');
       c.fillStyle = gr; c.fillRect(0, 0, w, h);
     });
     const wallMat = new THREE.MeshStandardMaterial({ map: wallTexV, roughness: .95 });
@@ -1280,13 +1300,13 @@ window.PDM = window.PDM || {};
     // wallpaper stripes on the open part of the back wall
     const wallTex = tex(160, 160, (c, w, h) => {
       const gr = c.createLinearGradient(0, 0, 0, h);
-      gr.addColorStop(0, '#F7F7F2');
-      gr.addColorStop(.6, '#E5E4DB');
-      gr.addColorStop(1, '#D0CABD');
+      gr.addColorStop(0, '#FFF9F1');
+      gr.addColorStop(.6, '#F5E5D5');
+      gr.addColorStop(1, '#E4C8AB');
       c.fillStyle = gr; c.fillRect(0, 0, w, h);
-      c.fillStyle = 'rgba(255, 250, 240, .5)';
+      c.fillStyle = 'rgba(255, 251, 241, .7)';
       for (let x = 0; x < w; x += 40) c.fillRect(x, 0, 14, h);
-      c.fillStyle = 'rgba(214, 178, 140, .16)';
+      c.fillStyle = 'rgba(197, 137, 98, .18)';
       for (let x = 26; x < w; x += 40) c.fillRect(x, 0, 2, h);
     });
     wallTex.wrapS = wallTex.wrapT = THREE.RepeatWrapping;
@@ -1323,6 +1343,34 @@ window.PDM = window.PDM || {};
     const my = box(winX1 - winX0, .04, .06, '#FFF9F0'); my.position.set((winX0 + winX1) / 2, (winY0 + winY1) / 2, wz + .03); g.add(my);
     // sill
     const sill = box(winX1 - winX0 + .2, .07, .18, '#F6E3CB'); sill.position.set((winX0 + winX1) / 2, winY0 - .04, wz + .08); g.add(sill);
+
+    // 生活化墙面：一幅小喵海报、木质挂板和暖色串灯，把空间从空房间变成小屋。
+    const artFrame = box(.62, .62, .045, '#B77B55'); artFrame.position.set(-1.25, 1.82, wz + .04); g.add(artFrame);
+    const artPaper = box(.52, .52, .018, '#FFF4E4'); artPaper.position.set(-1.25, 1.82, wz + .075); g.add(artPaper);
+    const artDot = sph(.13, '#E9A07F', 1.15, .8, .28); artDot.position.set(-1.25, 1.88, wz + .095); g.add(artDot);
+    [-1, 1].forEach(s => {
+      const ear = new THREE.Mesh(new THREE.ConeGeometry(.045, .08, 3), mat('#D8836E'));
+      ear.position.set(-1.25 + s * .09, 2.02, wz + .095); ear.rotation.z = s * -.2; g.add(ear);
+    });
+    const cable = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-1.9, 2.42, wz + .08), new THREE.Vector3(-1.1, 2.27, wz + .08), new THREE.Vector3(-.35, 2.42, wz + .08)
+    ]), 18, .012, 5, false), mat('#C99065'));
+    g.add(cable);
+    [-1.62, -1.05, -.48].forEach((x, i) => {
+      const bulb = sph(.045, i === 1 ? '#FFD38B' : '#F4B79D', 1, 1, 1, { emissive: i === 1 ? '#FFB45E' : '#E98D78', emissiveIntensity: .8 });
+      bulb.position.set(x, 2.31 + Math.abs(x + 1.05) * .07, wz + .095); g.add(bulb);
+    });
+
+    // 中央软地毯与小边几，给猫咪留出明确的活动中心。
+    const rug = new THREE.Mesh(new THREE.CylinderGeometry(.62, .62, .025, 48), mat('#E7B39B'));
+    rug.scale.set(1.45, 1, .78); rug.position.set(-.22, .018, .55); g.add(rug);
+    const rugInner = new THREE.Mesh(new THREE.TorusGeometry(.45, .018, 8, 40), mat('#F4D4BF'));
+    rugInner.scale.set(1.45, 1, .78); rugInner.rotation.x = Math.PI / 2; rugInner.position.set(-.22, .035, .55); g.add(rugInner);
+    const sideTable = new THREE.Group();
+    const sideTop = cyl(.27, .25, .06, '#D9A06B', 20); sideTop.position.y = .52; sideTable.add(sideTop);
+    const sideLeg = cyl(.045, .055, .5, '#9D6A46', 12); sideLeg.position.y = .27; sideTable.add(sideLeg);
+    const sideBase = cyl(.2, .2, .035, '#A9754E', 16); sideBase.position.y = .035; sideTable.add(sideBase);
+    sideTable.position.set(-.9, 0, .28); g.add(sideTable);
 
     // desk
     const desk = new THREE.Group();
@@ -1615,7 +1663,7 @@ window.PDM = window.PDM || {};
     house.rotation.y = houseRot;
     scene.add(house);
     ensureManifest().then(function () {
-      tryAttachGlb(house, 'cathouse_t' + houseTier, { house: true });
+      if (USE_GLB_HOUSE) tryAttachGlb(house, 'cathouse_t' + houseTier, { house: true });
       initSceneProps();
     });
     snapRing = buildSnapMarker();
@@ -1681,7 +1729,7 @@ window.PDM = window.PDM || {};
     house = buildCatHouse(houseTier);
     house.rotation.y = houseRot;
     scene.add(house);
-    tryAttachGlb(house, 'cathouse_t' + houseTier, { house: true });
+    if (USE_GLB_HOUSE) tryAttachGlb(house, 'cathouse_t' + houseTier, { house: true });
     return houseTier;
   }
 
