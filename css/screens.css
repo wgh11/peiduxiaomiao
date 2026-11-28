@@ -486,8 +486,12 @@
 .acc-slot { display: flex; align-items: flex-start; gap: 8px; min-width: 0; margin-top: 8px; }
 .acc-slot-name { flex: none; width: 34px; padding-top: 7px; font-size: 10px; color: var(--ink-faint); }
 .acc-list { display: flex; flex: 1; flex-wrap: wrap; gap: 6px; min-width: 0; }
-.acc-chip { max-width: 100%; min-height: 28px; padding: 5px 8px; border-radius: 9px; border: 1px solid var(--line); background: var(--card-soft); color: var(--ink-soft); font-size: 10px; }
-.acc-chip em { display: block; margin-top: 2px; font-style: normal; font-size: 8px; color: var(--ink-faint); }
+.acc-chip { display: flex; flex: 1 1 88px; align-items: center; gap: 6px; max-width: 100%; min-width: 82px; min-height: 42px; padding: 5px 6px; border-radius: 10px; border: 1px solid var(--line); background: var(--card-soft); color: var(--ink-soft); font-size: 10px; text-align: left; }
+.acc-visual { flex: none; width: 32px; height: 28px; display: grid; place-items: center; border-radius: 8px; background: linear-gradient(145deg, #FFF8EC, #F1E3D4); color: var(--coral-deep); }
+.acc-visual svg { width: 31px; height: 25px; display: block; }
+.acc-copy { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.acc-copy b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9.5px; font-weight: 700; }
+.acc-copy em { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 0; font-style: normal; font-size: 8px; color: var(--ink-faint); }
 .acc-chip em svg { display: inline-block; width: 11px; height: 11px; margin-right: 2px; vertical-align: -2px; }
 .acc-chip.on { border-color: var(--coral); background: var(--coral-soft); color: var(--coral-deep); }
 .acc-chip.locked { opacity: .72; }

@@ -253,6 +253,30 @@ window.PDM = window.PDM || {};
     return s ? s.name : '';
   }
 
+  function accessoryArt(a) {
+    const id = a.id;
+    const head = id === 'a_beret' || id === 'a_bucket' || id === 'a_gradcap';
+    let shape = '';
+    if (id === 'a_beret') shape = '<path d="M7 17c2-8 18-11 26-3 2 2 1 5-2 6H8c-2 0-2-1-1-3z" fill="#D78A73"/><path d="M7 18h26" stroke="#A65B50" stroke-width="2" stroke-linecap="round"/>';
+    else if (id === 'a_bucket') shape = '<path d="M8 13h24l-3 12H11z" fill="#E9C98C"/><path d="M6 13h28" stroke="#C18E55" stroke-width="3" stroke-linecap="round"/><path d="M14 10c2-4 10-4 12 0" fill="none" stroke="#F6E5BC" stroke-width="3" stroke-linecap="round"/>';
+    else if (id === 'a_gradcap') shape = '<path d="M8 13l12-6 12 6-12 6z" fill="#566D91"/><path d="M12 15v7h16v-7" fill="#6F87AA"/><path d="M31 12v10" stroke="#D7A74E" stroke-width="2"/><circle cx="31" cy="23" r="2" fill="#D7A74E"/>';
+    else if (id === 'a_bearband') shape = '<path d="M10 13c0-8 20-8 20 0" fill="none" stroke="#A96C4C" stroke-width="3"/><circle cx="12" cy="10" r="5" fill="#B97C5A"/><circle cx="28" cy="10" r="5" fill="#B97C5A"/><circle cx="12" cy="10" r="2" fill="#F2C39D"/><circle cx="28" cy="10" r="2" fill="#F2C39D"/>';
+    else if (id === 'a_bunny') shape = '<path d="M13 14c-4-8-1-12 3-10 2 1 2 6 2 9M27 14c0-3 0-8 2-9 4-2 7 2 3 10" fill="#F2B6BC" stroke="#B46B78" stroke-width="2" stroke-linejoin="round"/><path d="M10 15c2-6 18-6 20 0" fill="none" stroke="#D78A98" stroke-width="3"/>';
+    else if (id === 'a_shades') shape = '<circle cx="13" cy="16" r="6" fill="#56606F"/><circle cx="27" cy="16" r="6" fill="#56606F"/><path d="M19 16h2M7 15l-4-2M33 15l4-2" stroke="#39414E" stroke-width="2" stroke-linecap="round"/>';
+    else if (id === 'a_daisy') shape = '<path d="M8 17c2-7 22-7 24 0" fill="none" stroke="#74A77B" stroke-width="3"/><g fill="#FFF5D8" stroke="#E0B35F" stroke-width="1"><circle cx="12" cy="13" r="4"/><circle cx="20" cy="10" r="4"/><circle cx="28" cy="13" r="4"/></g><circle cx="12" cy="13" r="1.5" fill="#E4A94F"/><circle cx="20" cy="10" r="1.5" fill="#E4A94F"/><circle cx="28" cy="13" r="1.5" fill="#E4A94F"/>';
+    else if (id === 'a_bow') shape = '<path d="M20 16c-7-8-13-6-12 0 1 5 7 4 12 1 5 3 11 4 12-1 1-6-5-8-12 0z" fill="#E98FA6"/><circle cx="20" cy="16" r="3" fill="#C76681"/>';
+    else if (id === 'a_scarf') shape = '<path d="M9 11c3 5 19 5 22 0" fill="none" stroke="#C96B62" stroke-width="5" stroke-linecap="round"/><path d="M25 15l5 13-6 2-3-13" fill="#D8796E"/><path d="M11 12l20 0" stroke="#F2B5A1" stroke-width="1.5"/>';
+    else if (id === 'a_bell') shape = '<path d="M8 13c3 5 21 5 24 0" fill="none" stroke="#D9A54C" stroke-width="4" stroke-linecap="round"/><circle cx="20" cy="22" r="6" fill="#F0C76A" stroke="#B7802E" stroke-width="2"/><path d="M18 23h4" stroke="#9B6B27" stroke-width="2" stroke-linecap="round"/>';
+    else if (id === 'a_tie') shape = '<path d="M16 11l4 4 4-4 2 7-6 10-6-10z" fill="#5D789F"/><path d="M17 11h6l-1-4h-4z" fill="#D7A74E"/>';
+    else if (id === 'a_pearl') shape = '<path d="M8 14c3 5 21 5 24 0" fill="none" stroke="#B6A3A0" stroke-width="2"/><circle cx="12" cy="16" r="3" fill="#FFF5ED" stroke="#D8C1BC"/><circle cx="20" cy="18" r="3" fill="#FFF5ED" stroke="#D8C1BC"/><circle cx="28" cy="16" r="3" fill="#FFF5ED" stroke="#D8C1BC"/>';
+    else if (id === 'a_sunflower') shape = '<g fill="#F1BE4F"><circle cx="20" cy="17" r="9"/><circle cx="20" cy="7" r="4"/><circle cx="20" cy="27" r="4"/><circle cx="10" cy="17" r="4"/><circle cx="30" cy="17" r="4"/></g><circle cx="20" cy="17" r="4" fill="#8C6641"/>';
+    else if (id === 'a_glasses') shape = '<circle cx="13" cy="16" r="6" fill="none" stroke="#9B764E" stroke-width="2"/><circle cx="27" cy="16" r="6" fill="none" stroke="#9B764E" stroke-width="2"/><path d="M19 16h2M7 15l-4-2M33 15l4-2" stroke="#9B764E" stroke-width="2" stroke-linecap="round"/>';
+    else if (id === 'a_wings') shape = '<path d="M18 15c-9-8-14-1-8 6 3 3 6 4 10 1M22 15c9-8 14-1 8 6-3 3-6 4-10 1" fill="#C9DDEF" stroke="#799CBF" stroke-width="2" stroke-linejoin="round"/>';
+    else if (id === 'a_bag') shape = '<rect x="11" y="12" width="18" height="15" rx="3" fill="#D99B69"/><path d="M15 12c0-6 10-6 10 0" fill="none" stroke="#A86B4B" stroke-width="2"/><circle cx="20" cy="19" r="2" fill="#F5D39A"/>';
+    else shape = '<circle cx="20" cy="16" r="10" fill="#D8BFA9"/><circle cx="17" cy="14" r="2" fill="#FFF7ED"/>';
+    return '<span class="acc-visual ' + (head ? 'head' : a.slot) + '" aria-hidden="true"><svg viewBox="0 0 40 32">' + shape + '</svg></span>';
+  }
+
   function accessorySection() {
     const acc = core.state().accessories || { owned: [], head: null, neck: null, charm: null };
     const chip = a => {
@@ -260,14 +284,14 @@ window.PDM = window.PDM || {};
       const on = acc[a.slot] === a.id;
       if (owned) {
         return '<button class="acc-chip ' + (on ? 'on' : '') + '" data-action="accItem" data-id="' + a.id + '">' +
-          a.name + (on ? '<em>已佩戴</em>' : '<em>佩戴</em>') + '</button>';
+          accessoryArt(a) + '<span class="acc-copy"><b>' + a.name + '</b>' + (on ? '<em>已佩戴</em>' : '<em>佩戴</em>') + '</span></button>';
       }
       if (a.how === 'shop') {
         return '<button class="acc-chip locked" data-action="accItem" data-id="' + a.id + '">' +
-          a.name + '<em>' + icon('fish') + a.price + '</em></button>';
+          accessoryArt(a) + '<span class="acc-copy"><b>' + a.name + '</b><em>' + icon('fish') + a.price + '</em></span></button>';
       }
       return '<button class="acc-chip locked" data-action="accItem" data-id="' + a.id + '">' +
-        a.name + '<em>' + (a.cond || '未解锁') + '</em></button>';
+        accessoryArt(a) + '<span class="acc-copy"><b>' + a.name + '</b><em>' + (a.cond || '未解锁') + '</em></span></button>';
     };
     const slotRow = (slot, name) => {
       const list = core.ACCESSORIES.filter(a => a.slot === slot);
