@@ -1,5 +1,5 @@
 const CLOUD_ENV_ID = 'wgh-d4gzi1zrs0b4d5c63';
-const WEB_URL = 'https://wgh-d4gzi1zrs0b4d5c63-1540672373.tcloudbaseapp.com/index.html?v=28';
+const WEB_URL = 'https://wgh-d4gzi1zrs0b4d5c63-1540672373.tcloudbaseapp.com/index.html?v=release1';
 
 App({
   globalData: {
